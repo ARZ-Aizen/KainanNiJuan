@@ -7,8 +7,11 @@ module com.kainanresto {
     requires org.kordamp.ikonli.javafx;
     requires org.kordamp.bootstrapfx.core;
 
+    // DB
     requires java.sql;
     requires org.mariadb.jdbc;
+    requires com.zaxxer.hikari;
+
 
     // JavaFX FXML loader
     opens com.kainanresto to javafx.fxml;
@@ -24,4 +27,6 @@ module com.kainanresto {
     exports com.kainanresto.dao;
     exports com.kainanresto.model;
     exports com.kainanresto.util;
+
+
 }
