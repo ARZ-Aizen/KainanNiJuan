@@ -1,4 +1,4 @@
 package com.kainanresto.model;
 
-public class FoodIngridient {
+public class FoodIngredient {
 }

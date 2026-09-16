@@ -1,0 +1,18 @@
+# ==========================================
+# Database Configuration Template
+# Copy this file as "db.properties" in the same directory.
+# ==========================================
+
+# For local development, use 127.0.0.1 or localhost.
+# For Client laptop over LAN/Router, set to the Server laptop's static IPv4 (e.g., 192.168.1.100).
+db.host=192.168.1.100
+
+# Default MariaDB/MySQL port in XAMPP
+db.port=3306
+
+# Database name in phpMyAdmin
+db.name=kainan_pos
+
+# Credentials (default XAMPP setup: root with empty password)
+db.user=root
+db.password=

@@ -37,3 +37,20 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Team Custom Overrides ###
+
+# Ignore full .idea folder except VCS mapping (prevents workspace & local run config collisions)
+.idea/
+!.idea/vcs.xml
+
+# Local database configuration (prevents teammates overwriting local/LAN MariaDB IPs)
+**/resources/**/db.properties
+db.properties
+
+# Windows desktop thumbs
+Thumbs.db
+ehthumbs.db
+
+# Log files
+*.log
