@@ -28,11 +28,11 @@ public final class DatabaseConfig {
             System.err.println("DatabaseConfig: Error reading db.properties: " + e.getMessage());
         }
 
-        String host = properties.getProperty("db.host", "localhost");
+        String host = properties.getProperty("db.host", "192.168.1.10");
         String port = properties.getProperty("db.port", "3306");
         String dbName = properties.getProperty("db.name", "kainan_pos");
-        String user = properties.getProperty("db.user", "root");
-        String password = properties.getProperty("db.password", "");
+        String user = properties.getProperty("db.user", "pos_user");
+        String password = properties.getProperty("db.password", "pos123");
 
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl("jdbc:mariadb://" + host + ":" + port + "/" + dbName);
