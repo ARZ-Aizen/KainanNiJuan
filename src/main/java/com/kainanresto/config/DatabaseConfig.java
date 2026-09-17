@@ -1,16 +1,19 @@
 package com.kainanresto.config;
 
+// HIKARI
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+
+// SQL
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
 
-public class DatabaseConfig {
+public final class DatabaseConfig {
 
-    private static HikariDataSource dataSource;
+    private static final HikariDataSource DATA_SOURCE;
 
     static {
         Properties properties = new Properties();
@@ -37,6 +40,7 @@ public class DatabaseConfig {
         config.setPassword(password);
         config.setDriverClassName("org.mariadb.jdbc.Driver");
 
+        //CONNECTION POOL SIZING AND TIMEOUTS
         config.setMaximumPoolSize(10);
         config.setMinimumIdle(2);
         config.setIdleTimeout(30000);
@@ -44,44 +48,41 @@ public class DatabaseConfig {
         config.setMaxLifetime(1800000);
 
         try {
-            dataSource = new HikariDataSource(config);
+            DATA_SOURCE = new HikariDataSource(config);
         } catch (Exception e) {
-            System.err.println("DatabaseConfig: Failed to initialize connection pool: " + e.getMessage());
+            System.err.println("DatabaseConfig: Critical failure initializing pool: " + e.getMessage());
+            throw new ExceptionInInitializerError(e);
         }
     }
 
     private DatabaseConfig() {
+        throw new UnsupportedOperationException("Utility class cannot be instantiated");
     }
 
     public static Connection getConnection() throws SQLException {
-        if (dataSource == null) {
-            throw new SQLException("DataSource not initialized. Check XAMPP MariaDB and db.properties.");
+        if (DATA_SOURCE == null || DATA_SOURCE.isClosed()) {
+            throw new SQLException("Connection pool is not available.");
         }
-        return dataSource.getConnection();
+        return DATA_SOURCE.getConnection();
     }
 
     public static void closePool() {
-        if (dataSource != null && !dataSource.isClosed()) {
-            dataSource.close();
+        if (DATA_SOURCE != null && !DATA_SOURCE.isClosed()) {
+            DATA_SOURCE.close();
         }
     }
 
-    /*
-
+    /* PANG TEST NG CONNECTION
     public static void main(String[] args) {
         System.out.println("Testing MariaDB connection via HikariCP...");
         try (Connection conn = getConnection()) {
             System.out.println("Connection status: SUCCESS!");
             System.out.println("Connected to: " + conn.getMetaData().getDatabaseProductName() + " " + conn.getMetaData().getDatabaseProductVersion());
         } catch (SQLException e) {
-            System.err.println ("Connection status: FAILED!");
+            System.err.println("Connection status: FAILED!");
             e.printStackTrace();
         } finally {
             closePool();
         }
-    }
-
-
-     */
-
+    } */
 }
