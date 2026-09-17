@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane fx:id="rootPane"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.kainanresto.controllers.DashboardController"
+            prefWidth="1440.0" prefHeight="1364.0"
+            style="-fx-background-color: #ffffff;">
+
+    <!-- ===================== TOP NAVIGATION ===================== -->
+    <top>
+        <HBox fx:id="navigationBar" prefWidth="1440.0" prefHeight="64.0"
+              alignment="CENTER_LEFT" spacing="12.0"
+              style="-fx-background-color: #ffffff; -fx-border-color: transparent transparent #e0e0e0 transparent;">
+            <padding>
+                <Insets left="80.0" right="80.0" top="12.0" bottom="12.0"/>
+            </padding>
+
+            <Label fx:id="appTitleLabel" text="Dashboard app"
+                   style="-fx-font-family: 'Inter'; -fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #000000;"/>
+
+            <Region fx:id="navSpacer" HBox.hgrow="ALWAYS"/>
+
+            <Button fx:id="moreButton" text="..." prefWidth="56.0" prefHeight="40.0"
+                    onAction="#handleMoreButton"
+                    style="-fx-background-color: #eeeeee; -fx-background-radius: 8; -fx-text-fill: #000000; -fx-font-size: 16px;"/>
+
+            <Button fx:id="shareButton" text="Share" prefHeight="40.0"
+                    onAction="#handleShareButton"
+                    style="-fx-background-color: #000000; -fx-background-radius: 8; -fx-text-fill: #ffffff; -fx-font-size: 16px; -fx-font-weight: bold;">
+                <padding>
+                    <Insets left="16.0" right="16.0"/>
+                </padding>
+            </Button>
+
+            <ImageView fx:id="avatarImageView" fitWidth="40.0" fitHeight="40.0" preserveRatio="true"/>
+
+            <Button fx:id="accountMenuButton" text="v" prefWidth="24.0" prefHeight="24.0"
+                    onAction="#handleAccountMenuButton"
+                    style="-fx-background-color: transparent; -fx-text-fill: #828282;"/>
+        </HBox>
+    </top>
+
+    <!-- ===================== MAIN CONTENT ===================== -->
+    <center>
+        <VBox fx:id="contentContainer" spacing="32.0" style="-fx-background-color: #ffffff;">
+            <padding>
+                <Insets top="32.0" right="80.0" bottom="64.0" left="80.0"/>
+            </padding>
+
+            <!-- - Toolbar: segmented control + search - -->
+            <HBox fx:id="toolbarRow" prefHeight="40.0" spacing="32.0" alignment="CENTER_LEFT">
+
+                <HBox fx:id="segmentedControl" prefWidth="167.0" prefHeight="40.0" spacing="0.0"
+                      style="-fx-background-color: #f7f7f7; -fx-background-radius: 8;">
+                    <padding>
+                        <Insets top="4.0" right="4.0" bottom="4.0" left="4.0"/>
+                    </padding>
+
+                    <fx:define>
+                        <ToggleGroup fx:id="segmentToggleGroup"/>
+                    </fx:define>
+
+                    <ToggleButton fx:id="segmentTabOne" text="Tab" selected="true" prefHeight="32.0"
+                                  toggleGroup="$segmentToggleGroup" onAction="#handleSegmentSelection"
+                                  style="-fx-background-color: #ffffff; -fx-background-radius: 4; -fx-text-fill: #000000; -fx-font-size: 16px;"/>
+                    <ToggleButton fx:id="segmentTabTwo" text="Tab" prefHeight="32.0"
+                                  toggleGroup="$segmentToggleGroup" onAction="#handleSegmentSelection"
+                                  style="-fx-background-color: transparent; -fx-background-radius: 4; -fx-text-fill: #000000; -fx-font-size: 16px;"/>
+                    <ToggleButton fx:id="segmentTabThree" text="Tab" prefHeight="32.0"
+                                  toggleGroup="$segmentToggleGroup" onAction="#handleSegmentSelection"
+                                  style="-fx-background-color: transparent; -fx-background-radius: 4; -fx-text-fill: #000000; -fx-font-size: 16px;"/>
+                </HBox>
+
+                <Region fx:id="toolbarSpacer" HBox.hgrow="ALWAYS"/>
+
+                <TextField fx:id="searchField" promptText="Search..."
+                           prefWidth="405.0" prefHeight="40.0"
+                           onAction="#handleSearch"
+                           style="-fx-background-color: #ffffff; -fx-border-color: #e0e0e0; -fx-border-radius: 8; -fx-background-radius: 8; -fx-font-size: 16px; -fx-prompt-text-fill: #828282;"/>
+            </HBox>
+
+            <!-- - KPI cards - -->
+            <HBox fx:id="cardsRow" prefHeight="172.0" spacing="32.0">
+
+                <VBox fx:id="revenueCard" prefWidth="405.0" prefHeight="172.0" spacing="16.0"
+                      HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: #ffffff; -fx-border-color: #e0e0e0; -fx-border-radius: 8; -fx-background-radius: 8;">
+                    <padding>
+                        <Insets top="24.0" right="24.0" bottom="24.0" left="24.0"/>
+                    </padding>
+                    <Label fx:id="revenueCardTitle" text="Title"
+                           style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #000000;"/>
+                    <Label fx:id="revenueCardValue" text="45,000.50"
+                           style="-fx-font-size: 40px; -fx-font-weight: bold; -fx-text-fill: #000000;"/>
+                    <Label fx:id="revenueCardDelta" text="+20% month over month"
+                           style="-fx-font-size: 16px; -fx-text-fill: #828282;"/>
+                </VBox>
+
+                <VBox fx:id="ordersCard" prefWidth="405.0" prefHeight="172.0" spacing="16.0"
+                      HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: #ffffff; -fx-border-color: #e0e0e0; -fx-border-radius: 8; -fx-background-radius: 8;">
+                    <padding>
+                        <Insets top="24.0" right="24.0" bottom="24.0" left="24.0"/>
+                    </padding>
+                    <Label fx:id="ordersCardTitle" text="Title"
+                           style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #000000;"/>
+                    <Label fx:id="ordersCardValue" text="2,405"
+                           style="-fx-font-size: 40px; -fx-font-weight: bold; -fx-text-fill: #000000;"/>
+                    <Label fx:id="ordersCardDelta" text="+33% month over month"
+                           style="-fx-font-size: 16px; -fx-text-fill: #828282;"/>
+                </VBox>
+
+                <VBox fx:id="sessionsCard" prefWidth="405.0" prefHeight="172.0" spacing="16.0"
+                      HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: #ffffff; -fx-border-color: #e0e0e0; -fx-border-radius: 8; -fx-background-radius: 8;">
+                    <padding>
+                        <Insets top="24.0" right="24.0" bottom="24.0" left="24.0"/>
+                    </padding>
+                    <Label fx:id="sessionsCardTitle" text="Title"
+                           style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #000000;"/>
+                    <Label fx:id="sessionsCardValue" text="10,353"
+                           style="-fx-font-size: 40px; -fx-font-weight: bold; -fx-text-fill: #000000;"/>
+                    <Label fx:id="sessionsCardDelta" text="-8% month over month"
+                           style="-fx-font-size: 16px; -fx-text-fill: #828282;"/>
+                </VBox>
+            </HBox>
+
+            <!-- - Row: line chart + people list - -->
+            <HBox fx:id="middleRow" prefHeight="448.0" spacing="32.0">
+
+                <VBox fx:id="lineChartCard" prefWidth="733.0" prefHeight="448.0" spacing="16.0"
+                      HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: #ffffff; -fx-border-color: #e0e0e0; -fx-border-radius: 8; -fx-background-radius: 8;">
+                    <padding>
+                        <Insets top="24.0" right="24.0" bottom="24.0" left="24.0"/>
+                    </padding>
+                    <Label fx:id="lineChartTitle" text="Title"
+                           style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #000000;"/>
+                    <LineChart fx:id="revenueLineChart" legendVisible="false"
+                               createSymbols="false" animated="false"
+                               prefWidth="685.0" prefHeight="329.0" VBox.vgrow="ALWAYS">
+                        <xAxis>
+                            <CategoryAxis fx:id="lineChartXAxis"/>
+                        </xAxis>
+                        <yAxis>
+                            <NumberAxis fx:id="lineChartYAxis" lowerBound="25000.0" upperBound="50000.0"
+                                        tickUnit="5000.0" autoRanging="false"/>
+                        </yAxis>
+                    </LineChart>
+                </VBox>
+
+                <VBox fx:id="peopleCard" prefWidth="515.0" prefHeight="448.0" spacing="16.0"
+                      style="-fx-background-color: #ffffff; -fx-border-color: #e0e0e0; -fx-border-radius: 8; -fx-background-radius: 8;">
+                    <padding>
+                        <Insets top="24.0" right="24.0" bottom="24.0" left="24.0"/>
+                    </padding>
+                    <Label fx:id="peopleListTitle" text="Title"
+                           style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #000000;"/>
+                    <ListView fx:id="peopleListView" prefWidth="467.0" prefHeight="360.0"
+                              onMouseClicked="#handlePersonSelected"
+                              VBox.vgrow="ALWAYS"
+                              style="-fx-background-color: #ffffff; -fx-border-color: transparent;"/>
+                </VBox>
+            </HBox>
+
+            <!-- - Row: sources table + bar chart - -->
+            <HBox fx:id="bottomRow" prefHeight="448.0" spacing="32.0">
+
+                <VBox fx:id="sourcesCard" prefWidth="515.0" prefHeight="448.0" spacing="16.0"
+                      style="-fx-background-color: #ffffff; -fx-border-color: #e0e0e0; -fx-border-radius: 8; -fx-background-radius: 8;">
+                    <padding>
+                        <Insets top="24.0" right="24.0" bottom="24.0" left="24.0"/>
+                    </padding>
+                    <Label fx:id="sourcesTableTitle" text="Title"
+                           style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #000000;"/>
+                    <TableView fx:id="sourcesTableView" prefWidth="467.0" prefHeight="360.0"
+                               VBox.vgrow="ALWAYS"
+                               style="-fx-background-color: #ffffff; -fx-border-color: transparent;">
+                        <columns>
+                            <TableColumn fx:id="sourceColumn" text="Source" prefWidth="304.0"/>
+                            <TableColumn fx:id="sessionsColumn" text="Sessions" prefWidth="90.0"/>
+                            <TableColumn fx:id="changeColumn" text="Change" prefWidth="73.0"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+
+                <VBox fx:id="barChartCard" prefWidth="733.0" prefHeight="448.0" spacing="16.0"
+                      HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: #ffffff; -fx-border-color: #e0e0e0; -fx-border-radius: 8; -fx-background-radius: 8;">
+                    <padding>
+                        <Insets top="24.0" right="24.0" bottom="24.0" left="24.0"/>
+                    </padding>
+                    <Label fx:id="barChartTitle" text="Title"
+                           style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #000000;"/>
+                    <BarChart fx:id="monthlyBarChart" legendVisible="false" animated="false"
+                              barGap="0.0" categoryGap="19.0"
+                              prefWidth="685.0" prefHeight="329.0" VBox.vgrow="ALWAYS">
+                        <xAxis>
+                            <CategoryAxis fx:id="barChartXAxis"/>
+                        </xAxis>
+                        <yAxis>
+                            <NumberAxis fx:id="barChartYAxis" lowerBound="30000.0" upperBound="80000.0"
+                                        tickUnit="10000.0" autoRanging="false"/>
+                        </yAxis>
+                    </BarChart>
+                </VBox>
+            </HBox>
+        </VBox>
+    </center>
+</BorderPane>
