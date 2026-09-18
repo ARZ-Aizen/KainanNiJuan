@@ -4,23 +4,21 @@ import org.mindrot.jbcrypt.BCrypt;
 
 public final class PasswordHasher {
 
-    // RAW PASSWORD - > HASH (STORING IN DB) THEN HASH - > RAW PASSWORD (FINDING ON DB)
-
-    // BEST CHOICE SA SECURE NA BALANCE LATENCY (~200ms) AND RESISTANCE SA BRUTE FORCE
-    private static final int BCRYPT_WORK_FACTOR = 12;
+    private static final int WORK_FACTOR = 12;
 
     private PasswordHasher() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
     }
 
+    //PANG HASH NG NEW USER
     public static String hash(String plainPassword) {
         if (plainPassword == null || plainPassword.isBlank()) {
-            throw new IllegalArgumentException("Password cannot be null or empty.");
+            throw new IllegalArgumentException("Password cannot be blank.");
         }
-        return BCrypt.hashpw(plainPassword, BCrypt.gensalt(BCRYPT_WORK_FACTOR));
+        return BCrypt.hashpw(plainPassword, BCrypt.gensalt(WORK_FACTOR));
     }
 
-    // CHECKS RAW PASSWORD MATCH EXISTING BCRYPT HASH
+    //PANG UNHASH SA EXISTING USER
     public static boolean verify(String plainPassword, String hashedPassword) {
         if (plainPassword == null || hashedPassword == null || hashedPassword.isBlank()) {
             return false;
@@ -28,7 +26,6 @@ public final class PasswordHasher {
         try {
             return BCrypt.checkpw(plainPassword, hashedPassword);
         } catch (IllegalArgumentException e) {
-            //CATCH HASH FORMAT ERRORS WITHOUT CRASHING
             return false;
         }
     }

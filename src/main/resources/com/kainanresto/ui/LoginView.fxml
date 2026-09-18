@@ -15,7 +15,7 @@
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.text.TextFlow?>
 
-<HBox fx:id="rootPane" alignment="CENTER" prefHeight="609.0" prefWidth="1117.0" styleClass="root-background" stylesheets="@Login.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kainanresto.controllers.LoginController">
+<HBox fx:id="rootPane" alignment="CENTER" prefHeight="609.0" prefWidth="1117.0" styleClass="root-background" stylesheets="@../styles/LoginView.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kainanresto.controllers.LoginController">
 
     <!-- ===================== LEFT: BRANDING ===================== -->
     <VBox alignment="CENTER" spacing="6" HBox.hgrow="ALWAYS">
@@ -25,7 +25,7 @@
 
         <ImageView fx:id="logoImageView" fitHeight="200.0" fitWidth="230.0" pickOnBounds="true" preserveRatio="true">
             <image>
-                <Image url="@KainanNiJuanLogo.png" />
+                <Image url="@../images/KainanNiJuanLogo.png" />
             </image>
             <VBox.margin>
                 <Insets bottom="10" />
