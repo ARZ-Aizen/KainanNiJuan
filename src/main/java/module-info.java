@@ -11,6 +11,7 @@ module com.kainanresto {
     requires java.sql;
     requires org.mariadb.jdbc;
     requires com.zaxxer.hikari;
+    requires jbcrypt;
 
 
     // JavaFX FXML loader
