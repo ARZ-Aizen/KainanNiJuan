@@ -4,7 +4,6 @@ import com.kainanresto.config.DatabaseConfig;
 import com.kainanresto.model.Role;
 import com.kainanresto.model.User;
 import com.kainanresto.util.PasswordHasher;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
