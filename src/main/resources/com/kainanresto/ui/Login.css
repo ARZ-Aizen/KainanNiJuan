@@ -1,0 +1,94 @@
+.root-background {
+    -fx-background-color: #d2eafc;
+}
+
+/* ---------- Branding (left side) ---------- */
+.brand-title {
+    -fx-font-family: "Archivo Black", "Arial Black", sans-serif;
+    -fx-font-size: 34px;
+    -fx-font-weight: 800;
+}
+
+.brand-subtitle {
+    -fx-font-family: "Archivo", "Segoe UI", sans-serif;
+    -fx-font-size: 18px;
+    -fx-text-fill: #64748b;
+}
+
+.brand-tagline {
+    -fx-font-family: "Archivo", "Segoe UI", sans-serif;
+    -fx-font-size: 13px;
+    -fx-text-fill: #64748b;
+}
+
+/* ---------- Card (right side) ---------- */
+.login-card {
+    -fx-background-color: white;
+    -fx-background-radius: 18;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 20, 0, 0, 6);
+}
+
+.welcome-title {
+    -fx-font-family: "Archivo Black", "Arial Black", sans-serif;
+    -fx-font-size: 30px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #1e293b;
+}
+
+.welcome-subtitle {
+    -fx-font-family: "Archivo", "Segoe UI", sans-serif;
+    -fx-font-size: 15px;
+    -fx-text-fill: #1e293b;
+}
+
+.input-field {
+    -fx-background-color: #f2f2f2;
+    -fx-border-color: #cfcfcf;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-font-size: 13px;
+    -fx-padding: 12 14 12 14;
+    -fx-prompt-text-fill: #8a8a8a;
+}
+
+.remember-me-text .text,
+.remember-me-text {
+    -fx-font-family: "Archivo", "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #64748b;
+}
+
+.forgot-password-link {
+    -fx-font-family: "Archivo", "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #64748b;
+    -fx-border-color: transparent;
+    -fx-underline: false;
+}
+
+.login-button {
+    -fx-background-color: #2f5fea;
+    -fx-background-radius: 8;
+    -fx-text-fill: white;
+    -fx-font-family: "Archivo", "Segoe UI", sans-serif;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-padding: 12 0 12 0;
+}
+
+.login-button:hover {
+    -fx-background-color: derive(#2f5fea, -10%);
+}
+
+.register-text {
+    -fx-font-family: "Archivo", "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #64748b;
+}
+
+.register-link {
+    -fx-font-family: "Archivo", "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #2f5fea;
+    -fx-border-color: transparent;
+}
