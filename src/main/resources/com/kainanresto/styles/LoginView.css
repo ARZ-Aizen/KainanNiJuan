@@ -1,94 +1,107 @@
-.root-background {
-    -fx-background-color: #d2eafc;
+.root {
+    -fx-font-family: "Verdana", sans-serif;
 }
 
-/* ---------- Branding (left side) ---------- */
-.brand-title {
-    -fx-font-family: "Archivo Black", "Arial Black", sans-serif;
-    -fx-font-size: 34px;
-    -fx-font-weight: 800;
+/* Dim overlay */
+.dim-overlay {
+    -fx-background-color: rgba(140, 99, 67, 0.35);
 }
 
-.brand-subtitle {
-    -fx-font-family: "Archivo", "Segoe UI", sans-serif;
-    -fx-font-size: 18px;
-    -fx-text-fill: #64748b;
-}
-
-.brand-tagline {
-    -fx-font-family: "Archivo", "Segoe UI", sans-serif;
-    -fx-font-size: 13px;
-    -fx-text-fill: #64748b;
-}
-
-/* ---------- Card (right side) ---------- */
+/* Glassmorphism login card */
 .login-card {
-    -fx-background-color: white;
-    -fx-background-radius: 18;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 20, 0, 0, 6);
+    -fx-background-color: rgba(140, 99, 67, 0.65);
+    -fx-background-radius: 22;
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-width: 1;
+    -fx-border-radius: 22;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 25, 0.2, 0, 8);
 }
 
-.welcome-title {
-    -fx-font-family: "Archivo Black", "Arial Black", sans-serif;
-    -fx-font-size: 30px;
-    -fx-font-weight: 800;
-    -fx-text-fill: #1e293b;
+.title-label {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #F9F4EC;
+    -fx-letter-spacing: 1px;
 }
 
-.welcome-subtitle {
-    -fx-font-family: "Archivo", "Segoe UI", sans-serif;
-    -fx-font-size: 15px;
-    -fx-text-fill: #1e293b;
+.subtitle-label {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #F9F4EC;
+}
+
+.field-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #F9F4EC;
 }
 
 .input-field {
-    -fx-background-color: #f2f2f2;
-    -fx-border-color: #cfcfcf;
-    -fx-border-radius: 8;
-    -fx-background-radius: 8;
+    -fx-background-color: #F9F4EC;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-padding: 10 14 10 14;
     -fx-font-size: 13px;
-    -fx-padding: 12 14 12 14;
-    -fx-prompt-text-fill: #8a8a8a;
+    -fx-pref-height: 40px;
+    -fx-min-width: 300px;
 }
 
-.remember-me-text .text,
-.remember-me-text {
-    -fx-font-family: "Archivo", "Segoe UI", sans-serif;
-    -fx-font-size: 12px;
-    -fx-text-fill: #64748b;
+.eye-toggle-button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0 14 0 0;
+    -fx-font-size: 14px;
+    -fx-text-fill: #7A5C3E;
+    -fx-cursor: hand;
+}
+
+.eye-toggle-button:hover {
+    -fx-text-fill: #4E3A26;
 }
 
 .forgot-password-link {
-    -fx-font-family: "Archivo", "Segoe UI", sans-serif;
+    -fx-text-fill: #F9F4EC;
     -fx-font-size: 12px;
-    -fx-text-fill: #64748b;
-    -fx-border-color: transparent;
+    -fx-font-weight: bold;
     -fx-underline: false;
+    -fx-border-color: transparent;
+}
+
+.forgot-password-link:hover {
+    -fx-text-fill: #FFFFFF;
+    -fx-underline: true;
 }
 
 .login-button {
-    -fx-background-color: #2f5fea;
-    -fx-background-radius: 8;
-    -fx-text-fill: white;
-    -fx-font-family: "Archivo", "Segoe UI", sans-serif;
+    -fx-background-color: #F9F4EC;
+    -fx-text-fill: #8C6343;
+    -fx-background-radius: 24;
     -fx-font-weight: bold;
-    -fx-font-size: 14px;
-    -fx-padding: 12 0 12 0;
+    -fx-font-size: 15px;
+    -fx-pref-height: 42px;
+    -fx-letter-spacing: 1px;
+    -fx-cursor: hand;
 }
 
 .login-button:hover {
-    -fx-background-color: derive(#2f5fea, -10%);
+    -fx-background-color: #EDE3D3;
 }
 
-.register-text {
-    -fx-font-family: "Archivo", "Segoe UI", sans-serif;
-    -fx-font-size: 12px;
-    -fx-text-fill: #64748b;
+.register-prompt-label {
+    -fx-text-fill: #F9F4EC;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
 }
 
 .register-link {
-    -fx-font-family: "Archivo", "Segoe UI", sans-serif;
-    -fx-font-size: 12px;
-    -fx-text-fill: #2f5fea;
+    -fx-text-fill: #F9F4EC;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-underline: false;
     -fx-border-color: transparent;
+}
+
+.register-link:hover {
+    -fx-text-fill: #FFFFFF;
+    -fx-underline: true;
 }
