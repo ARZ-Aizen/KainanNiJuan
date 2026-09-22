@@ -1,0 +1,95 @@
+.root-pane {
+    -fx-font-family: "Verdana", sans-serif;
+}
+
+/* ===== Card ===== */
+.card-pane {
+    -fx-background-color: rgba(140, 99, 67, 0.85); /* #8C6343 */
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(249, 244, 236, 0.15); /* #F9F4EC */
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+
+}
+
+.form-vbox {
+    -fx-alignment: top-center;
+}
+
+/* ===== Text ===== */
+.title-label {
+    -fx-text-fill: #F9F4EC;
+    -fx-letter-spacing: 2px;
+}
+
+.subtitle-label {
+    -fx-text-fill: #F9F4EC;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.field-label {
+    -fx-text-fill: #F9F4EC;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 2 2;
+}
+
+/* ===== Input fields ===== */
+.input-field {
+    -fx-background-color: #D5B392;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-border-color: transparent;
+    -fx-text-fill: #8C6343;
+    -fx-prompt-text-fill: #B9926D;
+    -fx-font-size: 12px;
+    -fx-padding: 8 30 8 10;
+    -fx-pref-width: 270px;
+    -fx-effect: innershadow(gaussian, rgba(0,0,0,0.25), 4, 0.0, 0, 1);
+}
+
+.input-field:focused {
+    -fx-background-color: #F9F4EC;
+}
+
+/* ===== Eye toggle button ===== */
+.eye-toggle-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #8C6343;
+    -fx-font-size: 13px;
+    -fx-padding: 0 10 0 0;
+    -fx-cursor: hand;
+}
+.eye-toggle-btn:hover {
+    -fx-text-fill: #B9926D;
+}
+
+/* ===== Register button ===== */
+.register-btn {
+    -fx-background-color: #D5B392;
+    -fx-text-fill: #8C6343;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-background-radius: 4;
+    -fx-padding: 10 0 10 0;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 4, 0, 0, 2);
+}
+.register-btn:hover {
+    -fx-background-color: #F9F4EC;
+}
+
+/* ===== Login link ===== */
+.login-link-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #F9F4EC;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-underline: true;
+    -fx-cursor: hand;
+    -fx-padding: 0;
+}
+.login-link-btn:hover {
+    -fx-text-fill: #D5B392;
+}
