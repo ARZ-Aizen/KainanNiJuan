@@ -5,6 +5,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.stage.WindowEvent;
@@ -33,6 +34,13 @@ public final class NavigationUtil {
 
             if (windowTitle != null && !windowTitle.isBlank()) {
                 stage.setTitle(windowTitle);
+            }
+
+            try {
+                Image icon = new Image(NavigationUtil.class.getResourceAsStream("/com/kainanresto/images/LOGO.png"));
+                stage.getIcons().add(icon);
+            } catch (Exception e) {
+                System.err.println("NavigationUtil: Could not load application icon - " + e.getMessage());
             }
 
             // AUTOMATIC NA PARA SA KUNG ANONG KLASENG WINDOW TYPE

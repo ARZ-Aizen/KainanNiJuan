@@ -11,6 +11,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -82,6 +83,13 @@ public class ForgotPasswordController {
         adminStage.initModality(Modality.APPLICATION_MODAL);
         adminStage.setTitle("Admin Authorization Required");
         adminStage.setResizable(false);
+
+        try {
+            adminStage.getIcons().add(new Image(getClass().getResourceAsStream("/com/kainanresto/images/LOGO.png")));
+        } catch (Exception e) {
+            // Fallback if image path is missing
+        }
+
 
         VBox vbox = new VBox(14);
         vbox.setStyle("-fx-background-color: #F9F4EC; -fx-padding: 30;");

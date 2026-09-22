@@ -4,6 +4,7 @@ import com.kainanresto.config.DatabaseConfig;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -18,6 +19,13 @@ public class Launcher extends Application {
         Scene scene = new Scene(fxmlLoader.load());
         stage.setTitle("Kainan Ni Juan - Login");
         stage.setResizable(false);
+
+        try {
+            stage.getIcons().add(new Image(getClass().getResourceAsStream("/com/kainanresto/images/LOGO.png")));
+        } catch (Exception e) {
+            System.err.println("Launcher: Could not load application icon - " + e.getMessage());
+        }
+
         stage.setScene(scene);
         stage.show();
     }
