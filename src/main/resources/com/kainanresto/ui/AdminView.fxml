@@ -1,14 +1,335 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.chart.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.kainanresto.controllers.AdminController"
-            prefHeight="400.0" prefWidth="600.0">
+<!--
+    Restaurant Admin Dashboard
+    Design reference resolution: 1920 x 1080
+    Color palette: #D5B392 (light tan) #B9926D (mid tan) #8C6343 (dark brown/sidebar) #F9F4EC (page background)
 
+    NOTE: All icons below are TEXT / SHAPE placeholders (e.g. Labels with unicode glyphs or plain Circles)
+    because no icon asset files were supplied. Replace the "icon-placeholder" styled nodes with real
+    ImageView / SVG icons when assets become available.
+-->
+
+<AnchorPane prefHeight="1080.0" prefWidth="1920.0" stylesheets="@../styles/DashboardView.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kainanresto.controllers.AdminController">
+
+    <HBox AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0" AnchorPane.topAnchor="0">
+
+        <!-- ============================== SIDEBAR ============================== -->
+        <VBox fx:id="sidebarRoot" maxWidth="240.0" minWidth="240.0" prefWidth="240.0" styleClass="sidebar">
+
+            <!-- Brand / profile block -->
+            <VBox spacing="2.0" styleClass="sidebar-brand">
+                <padding><Insets bottom="24.0" left="20.0" right="20.0" top="28.0" /></padding>
+                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                    <StackPane styleClass="brand-icon-circle">
+                        <!-- placeholder logo glyph -->
+                        <Label styleClass="brand-icon-text" text="KJ" />
+                    </StackPane>
+                    <VBox spacing="1.0">
+                        <Label fx:id="restaurantNameLabel" styleClass="brand-name" text="Kainan ni Juan" />
+                        <Label fx:id="portalTypeLabel" styleClass="brand-subtitle" text="Admin Portal" />
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <Separator styleClass="sidebar-separator" />
+
+            <!-- Navigation items -->
+            <VBox spacing="4.0" styleClass="nav-list">
+                <padding><Insets bottom="12.0" left="12.0" right="12.0" top="16.0" /></padding>
+
+                <Button fx:id="navDashboardBtn" maxWidth="Infinity" onAction="#onNavDashboard" styleClass="nav-item, nav-item-active">
+                    <graphic>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                            <Label styleClass="nav-icon" text="■" />
+                            <Label styleClass="nav-label" text="Dashboard" />
+                        </HBox>
+                    </graphic>
+                </Button>
+
+                <Button fx:id="navInventoryBtn" maxWidth="Infinity" onAction="#onNavInventory" styleClass="nav-item">
+                    <graphic>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                            <Label styleClass="nav-icon" text="📦" />
+                            <Label styleClass="nav-label" text="Inventory" />
+                        </HBox>
+                    </graphic>
+                </Button>
+
+                <Button fx:id="navMenuBtn" maxWidth="Infinity" onAction="#onNavMenu" styleClass="nav-item">
+                    <graphic>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                            <Label styleClass="nav-icon" text="🍴" />
+                            <Label styleClass="nav-label" text="Menu" />
+                        </HBox>
+                    </graphic>
+                </Button>
+
+                <Button fx:id="navSalesOrdersBtn" maxWidth="Infinity" onAction="#onNavSalesOrders" styleClass="nav-item">
+                    <graphic>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                            <Label styleClass="nav-icon" text="💳" />
+                            <Label styleClass="nav-label" text="Sales &amp; Orders" />
+                        </HBox>
+                    </graphic>
+                </Button>
+
+                <Button fx:id="navTeamManagementBtn" maxWidth="Infinity" onAction="#onNavTeamManagement" styleClass="nav-item">
+                    <graphic>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                            <Label styleClass="nav-icon" text="👥" />
+                            <Label styleClass="nav-label" text="Account Management" />
+                        </HBox>
+                    </graphic>
+                </Button>
+
+                <Button fx:id="navSettingsBtn" maxWidth="Infinity" onAction="#onNavSettings" styleClass="nav-item">
+                    <graphic>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                            <Label styleClass="nav-icon" text="⚙" />
+                            <Label styleClass="nav-label" text="Settings" />
+                        </HBox>
+                    </graphic>
+                </Button>
+            </VBox>
+
+            <Region VBox.vgrow="ALWAYS" />
+
+            <!-- Logout -->
+            <VBox styleClass="sidebar-footer">
+                <padding><Insets bottom="24.0" left="12.0" right="12.0" top="12.0" /></padding>
+                <Button fx:id="logoutBtn" maxWidth="Infinity" onAction="#handleLogout" styleClass="nav-item, logout-item">
+                    <graphic>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                            <Label styleClass="nav-icon" text="←" />
+                            <Label accessibleRole="BUTTON" styleClass="nav-label" text="Logout" />
+                        </HBox>
+                    </graphic>
+                </Button>
+            </VBox>
+        </VBox>
+
+        <!-- ============================== MAIN CONTENT ============================== -->
+        <ScrollPane fitToWidth="true" styleClass="main-scroll" HBox.hgrow="ALWAYS">
+            <VBox spacing="24.0" styleClass="main-content">
+                <padding><Insets bottom="32.0" left="36.0" right="36.0" top="32.0" /></padding>
+
+                <!-- Page header -->
+                <HBox alignment="CENTER_LEFT" styleClass="header">
+                    <VBox spacing="4.0">
+                        <Label styleClass="page-title" text="Dashboard" />
+                        <Label styleClass="page-subtitle" text="Overview of restaurant health and inventory diagnostics" />
+                    </VBox>
+                    <Region HBox.hgrow="ALWAYS" />
+                    <HBox alignment="CENTER_LEFT" spacing="8.0" styleClass="date-badge">
+                        <Label styleClass="date-icon" text="📅" />
+                        <Label fx:id="currentDateLabel" styleClass="date-label" text="Monday, September 21, 2026" />
+                    </HBox>
+                </HBox>
+
+                <!-- Stat cards row -->
+                <HBox fx:id="statCardsRow" spacing="20.0">
+
+                    <VBox spacing="10.0" styleClass="stat-card" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT">
+                            <Label styleClass="stat-card-title" text="Today's Sales" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <StackPane styleClass="stat-icon-badge">
+                                <Label styleClass="stat-icon-text" text="₱" />
+                            </StackPane>
+                        </HBox>
+                        <Label fx:id="todaysSalesValueLabel" styleClass="stat-card-value" text="--" />
+                        <Label fx:id="todaysSalesDeltaLabel" styleClass="stat-card-delta-positive" text="+0.0% from yesterday" />
+                    </VBox>
+
+                    <VBox spacing="10.0" styleClass="stat-card" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT">
+                            <Label styleClass="stat-card-title" text="Transactions" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <StackPane styleClass="stat-icon-badge">
+                                <Label styleClass="stat-icon-text" text="💳" />
+                            </StackPane>
+                        </HBox>
+                        <Label fx:id="transactionsValueLabel" styleClass="stat-card-value" text="--" />
+                        <Label fx:id="transactionsSubLabel" styleClass="stat-card-sub" text="Average spend: --" />
+                    </VBox>
+
+                    <VBox spacing="10.0" styleClass="stat-card" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT">
+                            <Label styleClass="stat-card-title" text="Completed Orders" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <StackPane styleClass="stat-icon-badge">
+                                <Label styleClass="stat-icon-text" text="✓" />
+                            </StackPane>
+                        </HBox>
+                        <Label fx:id="completedOrdersValueLabel" styleClass="stat-card-value" text="--" />
+                        <Label fx:id="completedOrdersSubLabel" styleClass="stat-card-sub" text="-- pending in kitchen" />
+                    </VBox>
+
+                    <VBox spacing="10.0" styleClass="stat-card" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT">
+                            <Label styleClass="stat-card-title" text="Total Menu Items" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <StackPane styleClass="stat-icon-badge">
+                                <Label styleClass="stat-icon-text" text="🍴" />
+                            </StackPane>
+                        </HBox>
+                        <Label fx:id="totalMenuItemsValueLabel" styleClass="stat-card-value" text="--" />
+                        <Label fx:id="totalMenuItemsSubLabel" styleClass="stat-card-sub" text="-- seasonal specials active" />
+                    </VBox>
+                </HBox>
+
+                <!-- Weekly analytics row -->
+                <HBox spacing="20.0">
+
+                    <!-- Chart card -->
+                    <VBox prefWidth="600.0" spacing="16.0" styleClass="card" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT">
+                            <Label styleClass="card-title" text="Weekly Sales Analytics" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <HBox spacing="0.0" styleClass="toggle-group">
+                                <Button fx:id="rangeTodayBtn" onAction="#onRangeToday" styleClass="toggle-btn" text="Today" />
+                                <Button fx:id="rangeWeekBtn" onAction="#onRangeWeek" styleClass="toggle-btn, toggle-btn-active" text="This Week" />
+                                <Button fx:id="rangeMonthBtn" onAction="#onRangeMonth" styleClass="toggle-btn" text="This Month" />
+                            </HBox>
+                        </HBox>
+                        <Label styleClass="card-subtitle" text="Visualizing net revenue trends over the past 7 days" />
+
+                        <HBox spacing="16.0">
+                            <BarChart fx:id="weeklySalesChart" animated="false" legendVisible="false" prefHeight="260.0" styleClass="weekly-bar-chart" HBox.hgrow="ALWAYS">
+                                <xAxis>
+                                    <CategoryAxis fx:id="weeklySalesXAxis" side="BOTTOM" />
+                                </xAxis>
+                                <yAxis>
+                                    <NumberAxis fx:id="weeklySalesYAxis" side="LEFT" />
+                                </yAxis>
+                            </BarChart>
+
+                            <!-- Side summary panel -->
+                            <VBox minWidth="220.0" prefWidth="220.0" spacing="18.0" styleClass="weekly-summary-panel">
+                                <VBox spacing="4.0">
+                                    <Label styleClass="summary-label" text="Total Weekly Sales" />
+                                    <Label fx:id="totalWeeklySalesLabel" styleClass="summary-value" text="--" />
+                                </VBox>
+                                <Separator />
+                                <VBox spacing="4.0">
+                                    <Label styleClass="summary-label" text="Weekly Orders Count" />
+                                    <Label fx:id="weeklyOrdersCountLabel" styleClass="summary-value" text="--" />
+                                </VBox>
+                                <Separator />
+                                <VBox spacing="4.0">
+                                    <Label styleClass="summary-label" text="Avg Order Value" />
+                                    <Label fx:id="avgOrderValueLabel" styleClass="summary-value" text="--" />
+                                </VBox>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                </HBox>
+
+                <!-- Bottom row: Best-selling items + Inventory alerts -->
+                <HBox spacing="20.0">
+
+                    <!-- Best-selling menu items -->
+                    <VBox prefWidth="470.0" spacing="14.0" styleClass="card" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT">
+                            <Label styleClass="card-title" text="Best-Selling Menu Items" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Label styleClass="pill-badge" text="Volume Ranked" />
+                        </HBox>
+
+                        <!-- Populated by controller: one row per item -->
+                        <VBox fx:id="bestSellingItemsContainer" spacing="10.0">
+                            <!-- PLACEHOLDER ROWS (structure only - replace via controller) -->
+                            <HBox alignment="CENTER_LEFT" spacing="14.0" styleClass="ranked-row">
+                                <StackPane styleClass="rank-circle"><Label styleClass="rank-number" text="1" /></StackPane>
+                                <Label styleClass="ranked-row-name" text="Menu Item Placeholder" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Label styleClass="ranked-row-count" text="-- sold" />
+                            </HBox>
+                            <HBox alignment="CENTER_LEFT" spacing="14.0" styleClass="ranked-row">
+                                <StackPane styleClass="rank-circle"><Label styleClass="rank-number" text="2" /></StackPane>
+                                <Label styleClass="ranked-row-name" text="Menu Item Placeholder" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Label styleClass="ranked-row-count" text="-- sold" />
+                            </HBox>
+                            <HBox alignment="CENTER_LEFT" spacing="14.0" styleClass="ranked-row">
+                                <StackPane styleClass="rank-circle"><Label styleClass="rank-number" text="3" /></StackPane>
+                                <Label styleClass="ranked-row-name" text="Menu Item Placeholder" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Label styleClass="ranked-row-count" text="-- sold" />
+                            </HBox>
+                            <HBox alignment="CENTER_LEFT" spacing="14.0" styleClass="ranked-row">
+                                <StackPane styleClass="rank-circle"><Label styleClass="rank-number" text="4" /></StackPane>
+                                <Label styleClass="ranked-row-name" text="Menu Item Placeholder" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Label styleClass="ranked-row-count" text="-- sold" />
+                            </HBox>
+                            <HBox alignment="CENTER_LEFT" spacing="14.0" styleClass="ranked-row">
+                                <StackPane styleClass="rank-circle"><Label styleClass="rank-number" text="5" /></StackPane>
+                                <Label styleClass="ranked-row-name" text="Menu Item Placeholder" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Label styleClass="ranked-row-count" text="-- sold" />
+                            </HBox>
+                        </VBox>
+                    </VBox>
+
+                    <!-- Inventory alerts -->
+                    <VBox prefWidth="470.0" spacing="14.0" styleClass="card" HBox.hgrow="ALWAYS">
+                        <Label styleClass="card-title" text="Inventory Alerts" />
+
+                        <VBox spacing="10.0">
+                            <HBox alignment="CENTER_LEFT" spacing="6.0">
+                                <Label styleClass="alert-dot-warning" text="●" />
+                                <Label styleClass="alert-section-label-warning" text="LOW STOCK WARNING" />
+                            </HBox>
+
+                            <!-- Populated by controller -->
+                            <VBox fx:id="lowStockAlertsContainer" spacing="8.0">
+                                <HBox alignment="CENTER_LEFT" styleClass="alert-row">
+                                    <Label styleClass="alert-row-name" text="Ingredient Placeholder" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label styleClass="alert-row-value-warning" text="-- remaining" />
+                                </HBox>
+                                <HBox alignment="CENTER_LEFT" styleClass="alert-row">
+                                    <Label styleClass="alert-row-name" text="Ingredient Placeholder" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label styleClass="alert-row-value-warning" text="-- remaining" />
+                                </HBox>
+                                <HBox alignment="CENTER_LEFT" styleClass="alert-row">
+                                    <Label styleClass="alert-row-name" text="Ingredient Placeholder" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label styleClass="alert-row-value-warning" text="-- remaining" />
+                                </HBox>
+                            </VBox>
+
+                            <HBox alignment="CENTER_LEFT" spacing="6.0">
+                                <Label styleClass="alert-dot-critical" text="●" />
+                                <Label styleClass="alert-section-label-critical" text="OUT OF STOCK CRITICAL" />
+                            </HBox>
+
+                            <!-- Populated by controller -->
+                            <VBox fx:id="outOfStockAlertsContainer" spacing="8.0">
+                                <HBox alignment="CENTER_LEFT" styleClass="alert-row">
+                                    <Label styleClass="alert-row-name" text="Ingredient Placeholder" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label styleClass="alert-row-value-critical" text="Unavailable" />
+                                </HBox>
+                                <HBox alignment="CENTER_LEFT" styleClass="alert-row">
+                                    <Label styleClass="alert-row-name" text="Ingredient Placeholder" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label styleClass="alert-row-value-critical" text="-- pieces left" />
+                                </HBox>
+                            </VBox>
+                        </VBox>
+                    </VBox>
+                </HBox>
+
+            </VBox>
+        </ScrollPane>
+    </HBox>
 </AnchorPane>

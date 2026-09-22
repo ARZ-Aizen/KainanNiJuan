@@ -34,6 +34,10 @@ public final class NavigationUtil {
             if (windowTitle != null && !windowTitle.isBlank()) {
                 stage.setTitle(windowTitle);
             }
+
+            // AUTOMATIC NA PARA SA KUNG ANONG KLASENG WINDOW TYPE
+            configureWindowMode(stage, fxmlPath);
+
             configureCloseBehavior(stage, fxmlPath);
             stage.centerOnScreen();
             stage.show();
@@ -44,6 +48,23 @@ public final class NavigationUtil {
         }
     }
 
+    private static void configureWindowMode(Stage stage, String fxmlPath) {
+        String pathLower = fxmlPath.toLowerCase();
+
+        boolean isDashboard = pathLower.contains("adminview") || pathLower.contains("userview");
+
+        if (isDashboard) {
+            //FULL SCREEN PAG NASA LOOB NA
+            stage.setFullScreen(true);
+        } else {
+            //MINIMIZED NA PAG NASA LABAS
+            stage.setMaximized(false);
+            stage.setResizable(false);
+            stage.setWidth(1100);
+            stage.setHeight(750);
+        }
+    }
+
     private static void configureCloseBehavior(Stage stage, String fxmlPath) {
         if (fxmlPath.toLowerCase().contains("loginview")) {
             stage.setOnCloseRequest(null);
@@ -51,7 +72,7 @@ public final class NavigationUtil {
         }
 
         stage.setOnCloseRequest((WindowEvent closeEvent) -> {
-            closeEvent.consume(); // Prevent the window from abruptly exiting
+            closeEvent.consume(); //PARA DI MAGCLOSE NG TULUYAN BIGLAAN
 
             SessionManager.clearSession();
 

@@ -1,107 +1,29 @@
+/* =======================================================
+   Global Styles & Typography
+   ======================================================= */
 .root {
     -fx-font-family: "Verdana", sans-serif;
 }
 
-/* Dim overlay */
-.dim-overlay {
-    -fx-background-color: rgba(140, 99, 67, 0.35);
-}
-
-/* Glassmorphism login card */
-.login-card {
-    -fx-background-color: rgba(140, 99, 67, 0.65);
-    -fx-background-radius: 22;
-    -fx-border-color: rgba(255, 255, 255, 0.15);
-    -fx-border-width: 1;
-    -fx-border-radius: 22;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 25, 0.2, 0, 8);
-}
-
-.title-label {
-    -fx-font-size: 24px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #F9F4EC;
-    -fx-letter-spacing: 1px;
-}
-
-.subtitle-label {
-    -fx-font-size: 16px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #F9F4EC;
-}
-
-.field-label {
-    -fx-font-size: 13px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #F9F4EC;
-}
-
-.input-field {
+/* =======================================================
+   Custom Checkbox Styling (Earth-Tone Palette)
+   ======================================================= */
+.check-box .box {
     -fx-background-color: #F9F4EC;
-    -fx-background-radius: 10;
-    -fx-border-radius: 10;
-    -fx-padding: 10 14 10 14;
-    -fx-font-size: 13px;
-    -fx-pref-height: 40px;
-    -fx-min-width: 300px;
+    -fx-border-color: #D5B392;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
 }
 
-.eye-toggle-button {
-    -fx-background-color: transparent;
-    -fx-border-color: transparent;
-    -fx-padding: 0 14 0 0;
-    -fx-font-size: 14px;
-    -fx-text-fill: #7A5C3E;
-    -fx-cursor: hand;
+.check-box:selected .box {
+    -fx-background-color: #8C6343;
+    -fx-border-color: #8C6343;
 }
 
-.eye-toggle-button:hover {
-    -fx-text-fill: #4E3A26;
-}
-
-.forgot-password-link {
-    -fx-text-fill: #F9F4EC;
-    -fx-font-size: 12px;
-    -fx-font-weight: bold;
-    -fx-underline: false;
-    -fx-border-color: transparent;
-}
-
-.forgot-password-link:hover {
-    -fx-text-fill: #FFFFFF;
-    -fx-underline: true;
-}
-
-.login-button {
+.check-box:selected .mark {
     -fx-background-color: #F9F4EC;
-    -fx-text-fill: #8C6343;
-    -fx-background-radius: 24;
-    -fx-font-weight: bold;
-    -fx-font-size: 15px;
-    -fx-pref-height: 42px;
-    -fx-letter-spacing: 1px;
-    -fx-cursor: hand;
 }
 
-.login-button:hover {
-    -fx-background-color: #EDE3D3;
-}
-
-.register-prompt-label {
-    -fx-text-fill: #F9F4EC;
-    -fx-font-size: 13px;
-    -fx-font-weight: bold;
-}
-
-.register-link {
-    -fx-text-fill: #F9F4EC;
-    -fx-font-size: 15px;
-    -fx-font-weight: bold;
-    -fx-underline: false;
-    -fx-border-color: transparent;
-}
-
-.register-link:hover {
-    -fx-text-fill: #FFFFFF;
-    -fx-underline: true;
+.check-box:hover .box {
+    -fx-border-color: #8C6343;
 }

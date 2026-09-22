@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.text.Font?>
+
+<StackPane style="-fx-background-color: transparent; -fx-padding: 20;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kainanresto.controllers.AlertController">
+
+    <!-- Main Card Pane -->
+    <VBox fx:id="cardPane" maxWidth="400.0" prefWidth="380.0" spacing="15.0" style="-fx-background-color: #F9F4EC; -fx-background-radius: 12; -fx-border-color: #E5D3C2; -fx-border-radius: 12; -fx-border-width: 1;">
+        <padding>
+            <Insets bottom="20.0" left="25.0" right="25.0" top="25.0" />
+        </padding>
+        <effect>
+            <DropShadow color="#00000026" radius="15.0" />
+        </effect>
+
+        <!-- HEADER: Icon and Title on the same row, left-aligned -->
+        <HBox alignment="CENTER_LEFT" spacing="15.0">
+            <StackPane fx:id="iconPane">
+                <Circle fx:id="iconCircle" fill="#8C6343" radius="16.0" />
+                <SVGPath fx:id="iconPath" fill="WHITE" content="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" scaleX="0.7" scaleY="0.7" />
+            </StackPane>
+
+            <Label fx:id="titleLabel" text="Alert" textFill="#4A3623">
+                <font>
+                    <Font name="System Bold" size="18.0" />
+                </font>
+            </Label>
+        </HBox>
+
+        <!-- MESSAGE: Left-aligned beneath the header -->
+        <Label fx:id="messageLabel" text="Message text goes here." textFill="#5C4B3C" wrapText="true">
+            <font>
+                <Font size="14.0" />
+            </font>
+            <VBox.margin>
+                <Insets bottom="10.0" left="2.0" />
+            </VBox.margin>
+        </Label>
+
+        <!-- BUTTONS: Right-aligned at the bottom -->
+        <HBox fx:id="buttonBox" alignment="CENTER_RIGHT" spacing="12.0">
+            <!-- Secondary Button (Outlined) - Hidden by default -->
+            <Button fx:id="secondaryButton" managed="false" style="-fx-background-color: transparent; -fx-border-color: #8C6343; -fx-text-fill: #8C6343; -fx-font-weight: bold; -fx-border-radius: 8; -fx-padding: 8 20; -fx-cursor: hand; -fx-font-size: 14px;" text="Cancel" visible="false" />
+
+            <!-- Primary Button (Filled) -->
+            <Button fx:id="primaryButton" style="-fx-background-color: #8C6343; -fx-text-fill: #F9F4EC; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 25; -fx-cursor: hand; -fx-font-size: 14px;" text="OK" />
+        </HBox>
+    </VBox>
+
+</StackPane>

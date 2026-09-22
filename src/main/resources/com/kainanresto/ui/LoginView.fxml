@@ -1,104 +1,130 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Hyperlink?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.PasswordField?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+<?import javafx.scene.text.*?>
 
-<AnchorPane prefHeight="900.0" prefWidth="700.0" stylesheets="@../styles/LoginView.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kainanresto.controllers.LoginController">
+<HBox prefHeight="750.0" prefWidth="1100.0" stylesheets="@../styles/LoginView.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kainanresto.controllers.LoginController">
 
-    <!-- Background image, fills entire window -->
-    <ImageView fitHeight="900.0" fitWidth="700.0" preserveRatio="false" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0" AnchorPane.topAnchor="0">
-        <image>
-            <Image url="@../images/Background.jpg" />
-        </image>
-    </ImageView>
+    <!-- ===================== LEFT SIDE (Locked Size) ===================== -->
+    <StackPane prefWidth="550.0" minWidth="550.0" maxWidth="550.0" style="-fx-background-color: #8C6343;" HBox.hgrow="NEVER">
+        <ImageView fx:id="sideGraphic" fitHeight="620.0" fitWidth="500.0" pickOnBounds="true" preserveRatio="true">
+            <image>
+                <Image url="@../images/KAINAN NI JUAN.png" />
+            </image>
+        </ImageView>
+    </StackPane>
 
-    <!-- Dark overlay for contrast, matches the darkened photo look -->
-    <AnchorPane styleClass="dim-overlay" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+    <!-- ===================== RIGHT SIDE: FORM ===================== -->
+    <VBox alignment="CENTER" style="-fx-background-color: #F9F4EC;" HBox.hgrow="ALWAYS">
 
-    <!-- Glass login card, centered -->
-    <VBox fx:id="loginCard" alignment="TOP_CENTER" maxWidth="440.0" prefWidth="440.0" spacing="18.0" styleClass="login-card" AnchorPane.leftAnchor="70.0" AnchorPane.rightAnchor="70.0" AnchorPane.topAnchor="150.0">
+        <VBox maxWidth="500.0" spacing="12.0">
+            <padding>
+                <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
+            </padding>
 
-        <padding>
-            <Insets bottom="40.0" left="40.0" right="40.0" top="45.0" />
-        </padding>
+            <!-- ===================== HEADERS GROUP ===================== -->
+            <VBox spacing="0.0">
+                <VBox.margin>
+                    <Insets bottom="20.0" />
+                </VBox.margin>
 
-        <!-- Title block -->
-        <VBox alignment="CENTER" spacing="4.0">
-            <Label styleClass="title-label" text="KAINAN NI JUAN" />
-            <Label styleClass="subtitle-label" text="WELCOME BACK!" />
-        </VBox>
+                <!-- Title -->
+                <Label text="Welcome Back!" textFill="#8C6343">
+                    <font>
+                        <Font name="System Bold" size="36.0" />
+                    </font>
+                </Label>
 
-        <!-- Watermark logo behind the fields -->
-        <StackPane VBox.vgrow="NEVER">
-            <ImageView fitHeight="140.0" fitWidth="140.0" opacity="0.18" preserveRatio="true">
-                <image>
-                    <Image url="@../images/KainanNiJuanLogo.png" />
-                </image>
-            </ImageView>
+                <!-- Subtitle -->
+                <Label prefHeight="50.0" prefWidth="356.0" text="Login in to your account to continue to our restaurant system." textFill="#B9926D" wrapText="true">
+                    <font>
+                        <Font size="16.0" />
+                    </font>
+                    <VBox.margin>
+                        <Insets top="-2.0" />
+                    </VBox.margin>
+                </Label>
+            </VBox>
 
-            <VBox alignment="TOP_LEFT" spacing="16.0">
-                <padding>
-                    <Insets top="8.0" />
-                </padding>
+            <!-- ===================== INPUT FIELDS ===================== -->
+            <VBox spacing="18.0">
 
                 <!-- Username -->
-                <VBox spacing="6.0">
-                    <Label styleClass="field-label" text="Username" />
-                    <TextField fx:id="usernameField" promptText="" styleClass="input-field" />
-                </VBox>
+                <HBox alignment="CENTER_LEFT" spacing="12.0" style="-fx-background-color: #F9F4EC; -fx-border-color: #D5B392; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 0 15 0 15; -fx-pref-height: 50;">
+                    <!-- User Icon SVG -->
+                    <SVGPath content="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#B9926D" />
+                    <TextField fx:id="usernameField" promptText="Username" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-prompt-text-fill: #B9926D; -fx-padding: 0; -fx-font-size: 14px;" HBox.hgrow="ALWAYS" />
+                </HBox>
 
-                <!-- Password -->
-                <VBox spacing="6.0">
-                    <Label styleClass="field-label" text="Password" />
-                    <StackPane>
-                        <PasswordField fx:id="passwordField" styleClass="input-field" />
-                        <TextField fx:id="passwordVisibleField" managed="false" styleClass="input-field" visible="false" />
-                        <Button fx:id="togglePasswordButton" onAction="#handleTogglePassword"
-                                styleClass="eye-toggle-button" StackPane.alignment="CENTER_RIGHT">
+                <!-- Password Block -->
+                <VBox spacing="12.0">
+                    <!-- Password Field -->
+                    <HBox alignment="CENTER_LEFT" spacing="12.0" style="-fx-background-color: #F9F4EC; -fx-border-color: #D5B392; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 0 10 0 15; -fx-pref-height: 50;">
+                        <!-- Lock Icon SVG -->
+                        <SVGPath content="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z" fill="#B9926D" />
+                        <StackPane alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                            <PasswordField fx:id="passwordField" maxWidth="Infinity" promptText="Password" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-prompt-text-fill: #B9926D; -fx-padding: 0; -fx-font-size: 14px;" />
+                            <TextField fx:id="passwordVisibleField" managed="false" maxWidth="Infinity" promptText="Password" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-prompt-text-fill: #B9926D; -fx-padding: 0; -fx-font-size: 14px;" visible="false" />
+                        </StackPane>
+                        <!-- Toggle Button -->
+                        <Button fx:id="togglePasswordButton" onAction="#handleTogglePassword" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-cursor: hand; -fx-padding: 5;">
                             <graphic>
-                                <ImageView fitWidth="20" fitHeight="20" preserveRatio="true">
-                                    <image>
-                                        <Image url="@../images/eye-closed.png" />
-                                    </image>
-                                </ImageView>
+                                <SVGPath content="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="#8C6343" scaleX="0.8" scaleY="0.8" />
                             </graphic>
                         </Button>
-                    </StackPane>
+                    </HBox>
+
+                    <!-- Remember Me & Forgot Password Row with added top margin for spacing -->
+                    <HBox alignment="CENTER_LEFT">
+                        <VBox.margin>
+                            <Insets top="4.0" />
+                        </VBox.margin>
+                        <!-- Remember Me Checkbox -->
+                        <CheckBox fx:id="rememberMeCheckbox" style="-fx-text-fill: #8C6343; -fx-font-size: 13px; -fx-cursor: hand;" text="Remember me" />
+
+                        <!-- Region acts as a spacer to push elements to opposite sides -->
+                        <Region HBox.hgrow="ALWAYS" />
+
+                        <!-- Forgot Password Link -->
+                        <Button fx:id="forgotPasswordLink" onAction="#handleForgotPassword" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-font-weight: bold; -fx-padding: 0; -fx-font-size: 13px; -fx-cursor: hand;" text="Forgot Password?" />
+                    </HBox>
                 </VBox>
-
-                <!-- Forgot password -->
-                <HBox alignment="CENTER_RIGHT">
-                    <Hyperlink fx:id="forgotPasswordLink" onAction="#handleForgotPassword" styleClass="forgot-password-link" text="Forgot Password?" />
-                </HBox>
             </VBox>
-        </StackPane>
 
-        <!-- Login button -->
-        <Button fx:id="loginButton" maxWidth="Infinity" onAction="#handleLogin" styleClass="login-button" text="LOGIN">
-            <VBox.margin>
-                <Insets top="10.0" />
-            </VBox.margin>
-        </Button>
+            <!-- Login Button -->
+            <Button fx:id="loginButton" maxWidth="Infinity" onAction="#handleLogin" style="-fx-background-color: #8C6343; -fx-text-fill: #F9F4EC; -fx-font-weight: bold; -fx-background-radius: 25; -fx-padding: 15; -fx-font-size: 16px; -fx-cursor: hand; -fx-letter-spacing: 2px;" text="LOGIN   ➔">
+                <VBox.margin>
+                    <Insets top="15.0" />
+                </VBox.margin>
+            </Button>
 
-        <!-- Register -->
-        <VBox alignment="CENTER" spacing="2.0">
-            <VBox.margin>
-                <Insets top="6.0" />
-            </VBox.margin>
-            <Label styleClass="register-prompt-label" text="Don't have an account?" />
-            <Hyperlink fx:id="registerLink" onAction="#handleRegister" styleClass="register-link" text="Register" />
+            <!-- Divider "or" -->
+            <HBox alignment="CENTER" spacing="10.0">
+                <VBox.margin>
+                    <Insets bottom="5.0" top="15.0" />
+                </VBox.margin>
+                <Line endX="120.0" stroke="#D5B392" strokeWidth="1" />
+                <Label style="-fx-font-size: 14px;" text="or" textFill="#8C6343" />
+                <Line endX="120.0" stroke="#D5B392" strokeWidth="1" />
+            </HBox>
+
+            <!-- Register Link -->
+            <HBox alignment="CENTER" spacing="5.0">
+                <VBox.margin>
+                    <Insets top="5.0" />
+                </VBox.margin>
+                <Label text="Don't have an account?" textFill="#8C6343">
+                    <font>
+                        <Font size="14.0" />
+                    </font>
+                </Label>
+                <Button fx:id="registerLink" onAction="#handleRegister" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-font-weight: bold; -fx-underline: true; -fx-padding: 0; -fx-font-size: 14px; -fx-cursor: hand;" text="Register" />
+            </HBox>
         </VBox>
-
     </VBox>
 
-</AnchorPane>
+</HBox>

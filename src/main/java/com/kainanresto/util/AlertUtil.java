@@ -1,10 +1,15 @@
 package com.kainanresto.util;
 
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonType;
+import com.kainanresto.controllers.AlertController;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.paint.Color;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
-import java.util.Optional;
+import java.io.IOException;
 
 public final class AlertUtil {
 
@@ -12,65 +17,54 @@ public final class AlertUtil {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
     }
 
-    // SHOW INFO NA MESSAGE BOX
-
     public static void showInfo(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle(title);
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-            alert.showAndWait();
+        displayCustomAlert("INFO", title, message, false, "OK", null);
     }
-
-    // SHOW ERROR NA MESSAGE BOX
 
     public static void showError(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle(title);
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-            alert.showAndWait();
+        displayCustomAlert("ERROR", title, message, false, "OK", null);
     }
-
-    // SHOW WARNING NA MESSAGE BOX
 
     public static void showWarning(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setTitle(title);
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-            alert.showAndWait();
+        displayCustomAlert("WARNING", title, message, false, "OK", null);
     }
-
-    // YES OR NO NA MESSAGE BOX
 
     public static boolean showYesNoConfirmation(String title, String header, String message) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-            alert.setTitle(title);
-            alert.setHeaderText(header);
-            alert.setContentText(message);
-
-            ButtonType btnYes = new ButtonType("Yes");
-            ButtonType btnNo = new ButtonType("No");
-
-            alert.getButtonTypes().setAll(btnYes, btnNo);
-
-            Optional<ButtonType> result = alert.showAndWait();
-        return result.isPresent() && result.get() == btnYes;
+        String displayTitle = (header != null && !header.isEmpty()) ? header : title;
+        return displayCustomAlert("CONFIRM", displayTitle, message, true, "Yes", "No");
     }
-
-
-    // SHOW OK BUTTON SA CANCEL NA MESSAGE BOX
 
     public static boolean showOkCancelConfirmation(String title, String header, String message) {
-        Alert alert = new Alert(AlertType.CONFIRMATION);
-            alert.setTitle(title);
-            alert.setHeaderText(header);
-            alert.setContentText(message);
-
-            Optional<ButtonType> result = alert.showAndWait();
-        return result.isPresent() && result.get() == ButtonType.OK;
+        String displayTitle = (header != null && !header.isEmpty()) ? header : title;
+        return displayCustomAlert("CONFIRM", displayTitle, message, true, "OK", "Cancel");
     }
 
+    private static boolean displayCustomAlert(String type, String titleText, String messageText, boolean showSecondaryButton, String primaryBtnText, String secondaryBtnText) {
+        try {
+            FXMLLoader loader = new FXMLLoader(AlertUtil.class.getResource("/com/kainanresto/ui/CustomAlert.fxml"));
+            Parent root = loader.load();
 
+            AlertController controller = loader.getController();
+
+            Stage stage = new Stage();
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.initStyle(StageStyle.TRANSPARENT);
+
+            controller.setStage(stage);
+            controller.setAlertData(type, titleText, messageText, showSecondaryButton, primaryBtnText, secondaryBtnText);
+
+            Scene scene = new Scene(root);
+            scene.setFill(Color.TRANSPARENT);
+            stage.setScene(scene);
+
+            stage.centerOnScreen();
+            stage.showAndWait();
+
+            return controller.getResult();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

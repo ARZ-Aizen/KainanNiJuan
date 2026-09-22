@@ -7,21 +7,24 @@ module com.kainanresto {
     requires org.kordamp.ikonli.javafx;
     requires org.kordamp.bootstrapfx.core;
 
-    // DB
-    requires java.sql;
-    requires org.mariadb.jdbc;
-    requires com.zaxxer.hikari;
-    requires jbcrypt;
+    //DB
+    requires java.sql; //JAVA PANG CONNECT SA SQL TO
+    requires org.mariadb.jdbc; //SI MARIADB/MYSQL
+    requires com.zaxxer.hikari; //PARA SA PAG PROCESS TO PAG NAKA NETWORK
+    requires jbcrypt; //ENCRYPTOR TO
+    requires java.prefs; //PARA SA REMEMBER ME
+    requires javafx.base;
+    requires javafx.graphics;
 
 
-    // JavaFX FXML loader
+    //FXML LOADER TO
     opens com.kainanresto to javafx.fxml;
     opens com.kainanresto.controllers to javafx.fxml;
 
-    // Model
+    //SA DB MODEL TO
     opens com.kainanresto.model to javafx.base;
 
-    // Exported packages for access across modules
+    //MGA EXPORTED PACKAGES
     exports com.kainanresto;
     exports com.kainanresto.controllers;
     exports com.kainanresto.config;

@@ -147,4 +147,46 @@ public class UserDAO {
                 rs.getBoolean("is_active")
         );
     }
+
+    // PANG VERIFY SA FORGOT PASS IF EXISTING YUNG USER NA ADMIN
+    public boolean verifyAdminCredentials(String adminUsername, String adminPassword) {
+        String sql = "SELECT password, role FROM users WHERE username = ? AND is_active = 1 LIMIT 1";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, adminUsername);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    String storedHash = rs.getString("password");
+                    String role = rs.getString("role");
+
+                    if (PasswordHasher.verify(adminPassword, storedHash)) {
+                        return "ADMIN".equalsIgnoreCase(role) ||
+                                "MANAGER".equalsIgnoreCase(role) ||
+                                "SUPERVISOR".equalsIgnoreCase(role);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("UserDAO.verifyAdminCredentials: DB Error - " + e.getMessage());
+        }
+        return false;
+    }
+
+    //PANG VERIFY SA FORGOT PASS IF EXISTING YUNG USER
+    public boolean checkUserExists(String username) {
+        String sql = "SELECT 1 FROM users WHERE username = ? AND is_active = 1 LIMIT 1";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, username);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            System.err.println("UserDAO.checkUserExists: DB Error - " + e.getMessage());
+        }
+        return false;
+    }
+
 }
