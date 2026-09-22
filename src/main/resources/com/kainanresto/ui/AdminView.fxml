@@ -47,7 +47,7 @@
                     <graphic>
                         <HBox alignment="CENTER_LEFT" spacing="12.0">
                             <Label styleClass="nav-icon" text="■" />
-                            <Label styleClass="nav-label" text="Dashboard" />
+                            <Label styleClass="nav-label" text="Home" />
                         </HBox>
                     </graphic>
                 </Button>
