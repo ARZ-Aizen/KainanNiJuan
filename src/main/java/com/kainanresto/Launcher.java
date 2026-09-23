@@ -6,19 +6,14 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
-
 import java.io.IOException;
 
 public class Launcher extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(
-                getClass().getResource("/com/kainanresto/views/id/LoginView.fxml")
-        );
-
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com/kainanresto/views/id/LoginView.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 1100, 750);
-
         stage.setTitle("Kainan Ni Juan - Login");
         stage.setResizable(false);
 

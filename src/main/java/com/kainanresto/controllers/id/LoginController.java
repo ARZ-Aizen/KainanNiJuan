@@ -121,18 +121,8 @@ public class LoginController {
             fxmlPath = "/com/kainanresto/views/main/UserView.fxml";
         }
 
-        String title =
-                "Kainan Ni Juan POS - "
-                        + user.getFullName()
-                        + " ("
-                        + user.getRole()
-                        + ")";
-
-        NavigationUtil.switchScene(
-                event,
-                fxmlPath,
-                title
-        );
+        String title = "Kainan Ni Juan POS - " + user.getFullName() + " (" + user.getRole() + ")";
+        NavigationUtil.switchScene(event, fxmlPath, title);
     }
 
     @FXML private void handleForgotPassword(ActionEvent event) {

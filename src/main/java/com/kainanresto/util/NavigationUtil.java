@@ -23,8 +23,8 @@ public final class NavigationUtil {
         try {
             FXMLLoader loader = new FXMLLoader(NavigationUtil.class.getResource(fxmlPath));
             Parent root = loader.load();
-
             Stage stage = resolveStage(event);
+
             if (stage == null) {
                 System.err.println("NavigationUtil: Unable to locate Stage from event source: " + event.getSource());
                 return;
@@ -54,7 +54,7 @@ public final class NavigationUtil {
             configureWindowMode(stage, fxmlPath);
             configureCloseBehavior(stage, fxmlPath);
 
-            // FIX: Force the OS window to snap tightly to the 1100x750 Scene, eliminating white borders
+            //PARA MAFORCE UNG DASHBOARD SA WINDOW SIZE
             if (!isDashboard) {
                 stage.sizeToScene();
             }
@@ -91,9 +91,7 @@ public final class NavigationUtil {
 
         stage.setOnCloseRequest((WindowEvent closeEvent) -> {
             closeEvent.consume(); //PARA DI MAGCLOSE NG TULUYAN BIGLAAN
-
             SessionManager.clearSession();
-
             //PARA MAPABALIK SA LOGIN
             switchScene(closeEvent, "/com/kainanresto/views/id/LoginView.fxml", "Kainan Ni Juan POS - Login");
         });
