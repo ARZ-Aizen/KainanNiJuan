@@ -1,4 +1,4 @@
-package com.kainanresto.controllers;
+package com.kainanresto.controllers.id;
 
 import com.kainanresto.dao.UserDAO;
 import com.kainanresto.util.AlertUtil;
@@ -85,7 +85,7 @@ public class ForgotPasswordController {
         adminStage.setResizable(false);
 
         try {
-            adminStage.getIcons().add(new Image(getClass().getResourceAsStream("/com/kainanresto/images/LOGO.png")));
+            adminStage.getIcons().add(new Image(getClass().getResourceAsStream("/com/kainanresto/images/id/KainanNiJuanLogo.png")));
         } catch (Exception e) {
             // Fallback if image path is missing
         }
@@ -195,6 +195,6 @@ public class ForgotPasswordController {
     }
 
     private void navigateToLogin(ActionEvent event) {
-        NavigationUtil.switchScene(event, "/com/kainanresto/ui/LoginView.fxml", "Kainan Ni Juan - Login");
+        NavigationUtil.switchScene(event, "/com/kainanresto/views/id/LoginView.fxml", "Kainan Ni Juan - Login");
     }
 }

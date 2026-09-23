@@ -31,6 +31,12 @@ module com.kainanresto {
     exports com.kainanresto.dao;
     exports com.kainanresto.model;
     exports com.kainanresto.util;
+    exports com.kainanresto.controllers.id;
+    opens com.kainanresto.controllers.id to javafx.fxml;
+    exports com.kainanresto.controllers.main;
+    opens com.kainanresto.controllers.main to javafx.fxml;
+    exports com.kainanresto.controllers.util;
+    opens com.kainanresto.controllers.util to javafx.fxml;
 
 
 }

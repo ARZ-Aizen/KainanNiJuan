@@ -112,7 +112,7 @@
                     <execution>
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>com.kainanresto.kainannijuan/com.kainanresto.App</mainClass>
+                            <mainClass>com.kainanresto.kainannijuan/com.kainanresto.KainanNiJuan</mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>

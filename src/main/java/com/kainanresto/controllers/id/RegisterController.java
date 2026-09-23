@@ -1,4 +1,4 @@
-package com.kainanresto.controllers;
+package com.kainanresto.controllers.id;
 
 import com.kainanresto.dao.UserDAO;
 import com.kainanresto.model.Role;
@@ -143,6 +143,6 @@ public class RegisterController {
     }
 
     private void navigateToLogin(ActionEvent event) {
-        NavigationUtil.switchScene(event, "/com/kainanresto/ui/LoginView.fxml", "Kainan Ni Juan - Login");
+        NavigationUtil.switchScene(event, "/com/kainanresto/views/id/LoginView.fxml", "Kainan Ni Juan - Login");
     }
 }

@@ -14,19 +14,23 @@ public class Launcher extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(
-                getClass().getResource("/com/kainanresto/ui/AdminView.fxml")
+                getClass().getResource("/com/kainanresto/views/id/LoginView.fxml")
         );
         Scene scene = new Scene(fxmlLoader.load());
+
         stage.setTitle("Kainan Ni Juan - Login");
+        stage.setWidth(1100);
+        stage.setHeight(750);
         stage.setResizable(false);
 
         try {
-            stage.getIcons().add(new Image(getClass().getResourceAsStream("/com/kainanresto/images/LOGO.png")));
+            stage.getIcons().add(new Image(getClass().getResourceAsStream("/com/kainanresto/images/id/KainanNiJuan.png")));
         } catch (Exception e) {
             System.err.println("Launcher: Could not load application icon - " + e.getMessage());
         }
 
         stage.setScene(scene);
+        stage.centerOnScreen();
         stage.show();
     }
 

@@ -11,7 +11,7 @@
 <?import javafx.scene.shape.SVGPath?>
 <?import javafx.scene.text.Font?>
 
-<StackPane style="-fx-background-color: transparent; -fx-padding: 20;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kainanresto.controllers.AlertController">
+<StackPane style="-fx-background-color: transparent; -fx-padding: 20;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kainanresto.controllers.util.AlertController">
 
     <!-- Main Card Pane -->
     <VBox fx:id="cardPane" maxWidth="400.0" prefWidth="380.0" spacing="15.0" style="-fx-background-color: #F9F4EC; -fx-background-radius: 12; -fx-border-color: #E5D3C2; -fx-border-radius: 12; -fx-border-width: 1;">

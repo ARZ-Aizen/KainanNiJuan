@@ -1,6 +1,6 @@
 package com.kainanresto.util;
 
-import com.kainanresto.controllers.AlertController;
+import com.kainanresto.controllers.util.AlertController;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -41,7 +41,7 @@ public final class AlertUtil {
 
     private static boolean displayCustomAlert(String type, String titleText, String messageText, boolean showSecondaryButton, String primaryBtnText, String secondaryBtnText) {
         try {
-            FXMLLoader loader = new FXMLLoader(AlertUtil.class.getResource("/com/kainanresto/ui/CustomAlert.fxml"));
+            FXMLLoader loader = new FXMLLoader(AlertUtil.class.getResource("/com/kainanresto/views/util/CustomAlert.fxml"));
             Parent root = loader.load();
 
             AlertController controller = loader.getController();

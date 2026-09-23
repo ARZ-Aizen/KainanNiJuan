@@ -1,4 +1,4 @@
-package com.kainanresto.controllers;
+package com.kainanresto.controllers.util;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;

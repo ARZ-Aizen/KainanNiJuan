@@ -30,9 +30,9 @@
 -->
 
 <BorderPane fx:id="appRoot" prefHeight="1080.0" prefWidth="1920.0" styleClass="app-root"
-            stylesheets="@../styles/AdminView.css"
+            stylesheets="@../../styles/main/AdminView.css"
             xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.kainanresto.controllers.AdminController">
+            fx:controller="com.kainanresto.controllers.main.AdminController">
 
     <!-- ============================== SIDEBAR ============================== -->
     <left>
@@ -63,9 +63,9 @@
                     <graphic>
                         <HBox alignment="CENTER_LEFT" spacing="12.0">
                             <ImageView fitWidth="18.0" fitHeight="18.0" preserveRatio="true" smooth="true" styleClass="nav-icon">
-                                <image><Image url="@../images/grid-four.png" /></image>
+                                <image><Image url="@../../images/main/HomeIcon.png" /></image>
                             </ImageView>
-                            <Label styleClass="nav-label" text="Dashboard" />
+                            <Label styleClass="nav-label" text="Home" />
                         </HBox>
                     </graphic>
                 </Button>
@@ -74,7 +74,7 @@
                     <graphic>
                         <HBox alignment="CENTER_LEFT" spacing="12.0">
                             <ImageView fitWidth="18.0" fitHeight="18.0" preserveRatio="true" smooth="true" styleClass="nav-icon">
-                                <image><Image url="@../images/inventory.png" /></image>
+                                <image><Image url="@../../images/main/InventoryIcon.png" /></image>
                             </ImageView>
                             <Label styleClass="nav-label" text="Inventory" />
                         </HBox>
@@ -85,7 +85,7 @@
                     <graphic>
                         <HBox alignment="CENTER_LEFT" spacing="12.0">
                             <ImageView fitWidth="18.0" fitHeight="18.0" preserveRatio="true" smooth="true" styleClass="nav-icon">
-                                <image><Image url="@../images/fork-knife.png" /></image>
+                                <image><Image url="@../../images/main/MenuIcon.png" /></image>
                             </ImageView>
                             <Label styleClass="nav-label" text="Menu" />
                         </HBox>
@@ -96,7 +96,7 @@
                     <graphic>
                         <HBox alignment="CENTER_LEFT" spacing="12.0">
                             <ImageView fitWidth="18.0" fitHeight="18.0" preserveRatio="true" smooth="true" styleClass="nav-icon">
-                                <image><Image url="@../images/credit-card.png" /></image>
+                                <image><Image url="@../../images/main/SalesOrderIcon.png" /></image>
                             </ImageView>
                             <Label styleClass="nav-label" text="Sales &amp; Orders" />
                         </HBox>
@@ -107,7 +107,7 @@
                     <graphic>
                         <HBox alignment="CENTER_LEFT" prefHeight="0.0" prefWidth="212.0" spacing="12.0">
                             <ImageView fitWidth="18.0" fitHeight="18.0" preserveRatio="true" smooth="true" styleClass="nav-icon">
-                                <image><Image url="@../images/users-three.png" /></image>
+                                <image><Image url="@../../images/main/AccountManagementIcon.png" /></image>
                             </ImageView>
                             <Label maxWidth="130.0" styleClass="nav-label" text="Account Management" wrapText="true" />
                         </HBox>
@@ -118,7 +118,7 @@
                     <graphic>
                         <HBox alignment="CENTER_LEFT" spacing="12.0">
                             <ImageView fitWidth="18.0" fitHeight="18.0" preserveRatio="true" smooth="true" styleClass="nav-icon">
-                                <image><Image url="@../images/gear.png" /></image>
+                                <image><Image url="@../../images/main/SettingsIcon.png" /></image>
                             </ImageView>
                             <Label styleClass="nav-label" text="Settings" />
                         </HBox>
@@ -137,7 +137,7 @@
                     <graphic>
                         <HBox alignment="CENTER_LEFT" spacing="12.0">
                             <ImageView fitWidth="18.0" fitHeight="18.0" preserveRatio="true" smooth="true" styleClass="nav-icon">
-                                <image><Image url="@../images/sign-out.png" /></image>
+                                <image><Image url="@../../images/main/LogoutIcon.png" /></image>
                             </ImageView>
                             <Label styleClass="nav-label" text="Logout" />
                         </HBox>

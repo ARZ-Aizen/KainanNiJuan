@@ -1,4 +1,4 @@
-package com.kainanresto.controllers;
+package com.kainanresto.controllers.main;
 
 import com.kainanresto.model.Product;
 import com.kainanresto.util.NavigationUtil;
@@ -27,18 +27,10 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
-/**
- * Controller for AdminView.fxml — the merged Dashboard + Inventory shell.
- *
- * The sidebar, topbar and window chrome are shared. Only one of
- * {@link #dashboardView} / {@link #inventoryView} is visible+managed at a
- * time; nav button clicks toggle between them instead of switching scenes.
- */
 public class AdminController {
 
     /* ============================== SIDEBAR ============================== */
@@ -64,7 +56,6 @@ public class AdminController {
     @FXML private StackPane viewStack;
     @FXML private ScrollPane dashboardView;
     @FXML private VBox inventoryView;
-
     private static final String NAV_ACTIVE = "nav-item-active";
 
     /* ============================== DASHBOARD: STAT CARDS ============================== */
@@ -129,7 +120,7 @@ public class AdminController {
                 SessionManager.clearSession();
                 NavigationUtil.switchScene(
                         closeEvent,
-                        "/com/kainanresto/ui/LoginView.fxml",
+                        "/com/kainanresto/views/id/LoginView.fxml",
                         "Kainan Ni Juan POS - Login"
                 );
             });
@@ -202,7 +193,7 @@ public class AdminController {
         SessionManager.clearSession();
         NavigationUtil.switchScene(
                 event,
-                "/com/kainanresto/ui/LoginView.fxml",
+                "/com/kainanresto/views/id/LoginView.fxml",
                 "Kainan Ni Juan - Login"
         );
     }

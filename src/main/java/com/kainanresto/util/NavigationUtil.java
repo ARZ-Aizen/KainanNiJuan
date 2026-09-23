@@ -37,7 +37,7 @@ public final class NavigationUtil {
             }
 
             try {
-                Image icon = new Image(NavigationUtil.class.getResourceAsStream("/com/kainanresto/images/LOGO.png"));
+                Image icon = new Image(NavigationUtil.class.getResourceAsStream("/com/kainanresto/images/id/KainanNiJuanLogo.png"));
                 stage.getIcons().add(icon);
             } catch (Exception e) {
                 System.err.println("NavigationUtil: Could not load application icon - " + e.getMessage());
@@ -85,7 +85,7 @@ public final class NavigationUtil {
             SessionManager.clearSession();
 
             //PARA MAPABALIK SA LOGIN
-            switchScene(closeEvent, "/com/kainanresto/ui/LoginView.fxml", "Kainan Ni Juan POS - Login");
+            switchScene(closeEvent, "/com/kainanresto/views/id/LoginView.fxml", "Kainan Ni Juan POS - Login");
         });
     }
 
