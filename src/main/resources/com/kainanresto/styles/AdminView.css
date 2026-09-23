@@ -1,14 +1,35 @@
 /* ==========================================================================
-   Inventory view stylesheet
-   Palette: #D5B392  #B9926D  #8C6343  #F9F4EC
+   AdminView stylesheet — merged Dashboard + Inventory
+   Palette: #D5B392 (light tan) | #B9926D (mid tan) | #8C6343 (dark brown) | #F9F4EC (cream background)
+
+   Structure:
+     1. Base / root
+     2. Sidebar          -> shared, identical in both source files (kept once)
+     3. Shared topbar     -> was duplicated as Dashboard's ".header" block and
+                             Inventory's ".topbar" block; the merged FXML now
+                             has ONE shared header, so only Inventory's
+                             version survives (Dashboard's .header/.date-*
+                             rules are dropped as dead code, see bottom note)
+     4. Card system       -> ".card"/".card-title" existed in BOTH files with
+                             DIFFERENT sizing (Dashboard's 3 small cards vs.
+                             Inventory's 1 large card). Base = Dashboard's
+                             (used more often); Inventory's larger look is
+                             now an explicit modifier: ".page-card" /
+                             ".card-title-lg" (see bottom note for the 2-line
+                             FXML change this needs).
+     5. Dashboard-only sections (stat cards, toggle group, chart, rankings, alerts)
+     6. Inventory-only sections (filters, table, status chips)
    ========================================================================== */
+
+* {
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", "Arial", sans-serif;
+}
 
 .app-root {
     -fx-background-color: #F9F4EC;
-    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", sans-serif;
 }
 
-/* ============================== SIDEBAR ============================== */
+/* ============================== SIDEBAR (shared) ============================== */
 
 .sidebar {
     -fx-background-color: #8C6343;
@@ -69,15 +90,17 @@
     -fx-background-color: #D5B392;
 }
 
-.nav-item-active .nav-label,
-.nav-item-active .nav-icon {
+.nav-item-active .nav-label {
     -fx-text-fill: #8C6343;
     -fx-font-weight: bold;
 }
 
+/* Icon glyph (ImageView, PNG assets). Raster icons can't be recolored via
+   CSS the way a font icon could — if you want the icon itself to change
+   color on the active nav item, ship a second "-active" PNG variant per
+   icon and swap the Image in the controller when setActiveNav() runs. */
 .nav-icon {
-    -fx-text-fill: #F9F4EC;
-    -fx-font-size: 13px;
+    -fx-opacity: 0.92;
 }
 
 .nav-label {
@@ -89,12 +112,13 @@
     -fx-background-color: #8C6343;
 }
 
-.logout-item .nav-label,
-.logout-item .nav-icon {
+.logout-item .nav-label {
     -fx-text-fill: #F1E4D4;
 }
 
-/* ============================== TOP BAR ============================== */
+/* ============================== SHARED TOPBAR ============================== */
+/* Used by both the Dashboard and Inventory content views now that they share
+   one header bar (pageTitleLabel / pageSubtitleLabel / currentDateLabel). */
 
 .content-root {
     -fx-background-color: #F9F4EC;
@@ -102,8 +126,6 @@
 
 .topbar {
     -fx-background-color: #FFFFFF;
-    -fx-background-radius: 14px;
-    -fx-border-radius: 14px;
     -fx-border-color: #EFE3D2;
     -fx-border-width: 1px;
     -fx-padding: 20;
@@ -131,22 +153,241 @@
     -fx-font-size: 13px;
 }
 
-/* ============================== CONTENT CARD ============================== */
+/* ============================== CARD SYSTEM (shared, generic) ============================== */
 
-.content-body {
-    -fx-background-color: #F9F4EC;
-}
-
-.card {
+.card, .stat-card {
     -fx-background-color: #FFFFFF;
-    -fx-background-radius: 16px;
-    -fx-effect: dropshadow(gaussian, rgba(140, 99, 67, 0.12), 20, 0, 0, 5);
+    -fx-background-radius: 14px;
+    -fx-border-radius: 14px;
+    -fx-border-color: #EFE3D2;
+    -fx-border-width: 1px;
+    -fx-padding: 20;
+    -fx-effect: dropshadow(gaussian, rgba(140,99,67,0.08), 12, 0, 0, 3);
 }
 
 .card-title {
-    -fx-text-fill: #3F2D1E;
-    -fx-font-size: 23px;
+    -fx-text-fill: #3E2C1C;
+    -fx-font-size: 15px;
     -fx-font-weight: bold;
+}
+
+.card-subtitle {
+    -fx-text-fill: #9A8770;
+    -fx-font-size: 11px;
+}
+
+/* Modifiers for the single large "page" card (Inventory's table card) so it
+   keeps its own bigger, borderless look without redefining .card globally. */
+.page-card {
+    -fx-background-radius: 16px;
+    -fx-border-width: 0;
+    -fx-effect: dropshadow(gaussian, rgba(140, 99, 67, 0.12), 20, 0, 0, 5);
+}
+
+.card-title-lg {
+    -fx-font-size: 23px;
+    -fx-text-fill: #3F2D1E;
+}
+
+/* ============================== DASHBOARD: STAT CARDS ============================== */
+
+.stat-card-title {
+    -fx-text-fill: #8C7A67;
+    -fx-font-size: 12px;
+}
+
+.stat-icon-badge {
+    -fx-background-color: #F5E9D9;
+    -fx-background-radius: 8px;
+    -fx-min-width: 30.0;
+    -fx-min-height: 30.0;
+    -fx-max-width: 30.0;
+    -fx-max-height: 30.0;
+}
+
+.stat-icon-text {
+    -fx-text-fill: #B9926D;
+    -fx-font-size: 13px;
+}
+
+.stat-card-value {
+    -fx-text-fill: #3E2C1C;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.stat-card-delta-positive {
+    -fx-text-fill: #4C8B5A;
+    -fx-font-size: 11px;
+}
+
+.stat-card-sub {
+    -fx-text-fill: #9A8770;
+    -fx-font-size: 11px;
+}
+
+/* ============================== DASHBOARD: TOGGLE GROUP ============================== */
+
+.toggle-group {
+    -fx-background-color: #F5EEE3;
+    -fx-background-radius: 8px;
+    -fx-padding: 3;
+}
+
+.toggle-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 6px;
+    -fx-text-fill: #8C7A67;
+    -fx-font-size: 11px;
+    -fx-padding: 6 14 6 14;
+    -fx-cursor: hand;
+}
+
+.toggle-btn-active {
+    -fx-background-color: #B9926D;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+}
+
+/* ============================== DASHBOARD: WEEKLY CHART ============================== */
+
+.main-scroll {
+    -fx-background-color: #F9F4EC;
+    -fx-background: #F9F4EC;
+}
+
+.main-content {
+    -fx-background-color: #F9F4EC;
+}
+
+.weekly-bar-chart {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.weekly-bar-chart .chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.weekly-bar-chart .axis {
+    -fx-tick-label-fill: #9A8770;
+    -fx-font-size: 10px;
+}
+
+.weekly-bar-chart .default-color0.chart-bar {
+    -fx-bar-fill: #D5B392;
+}
+
+.weekly-bar-chart .chart-horizontal-grid-lines,
+.weekly-bar-chart .chart-vertical-grid-lines {
+    -fx-stroke: #F0E6D8;
+}
+
+.weekly-summary-panel {
+    -fx-background-color: #FBF6EE;
+    -fx-background-radius: 10px;
+    -fx-padding: 16;
+}
+
+.summary-label {
+    -fx-text-fill: #9A8770;
+    -fx-font-size: 11px;
+}
+
+.summary-value {
+    -fx-text-fill: #3E2C1C;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+/* ============================== DASHBOARD: BEST-SELLING LIST ============================== */
+
+.pill-badge {
+    -fx-background-color: #F5E9D9;
+    -fx-text-fill: #B9926D;
+    -fx-font-size: 10px;
+    -fx-padding: 4 10 4 10;
+    -fx-background-radius: 12px;
+}
+
+.ranked-row {
+    -fx-padding: 6 0 6 0;
+}
+
+.rank-circle {
+    -fx-background-color: #F5E9D9;
+    -fx-background-radius: 50%;
+    -fx-min-width: 26.0;
+    -fx-min-height: 26.0;
+    -fx-max-width: 26.0;
+    -fx-max-height: 26.0;
+}
+
+.rank-number {
+    -fx-text-fill: #8C6343;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.ranked-row-name {
+    -fx-text-fill: #3E2C1C;
+    -fx-font-size: 13px;
+}
+
+.ranked-row-count {
+    -fx-text-fill: #9A8770;
+    -fx-font-size: 12px;
+}
+
+/* ============================== DASHBOARD: INVENTORY ALERTS ============================== */
+
+.alert-dot-warning {
+    -fx-text-fill: #D9A441;
+    -fx-font-size: 9px;
+}
+
+.alert-dot-critical {
+    -fx-text-fill: #C1473A;
+    -fx-font-size: 9px;
+}
+
+.alert-section-label-warning {
+    -fx-text-fill: #D9A441;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.alert-section-label-critical {
+    -fx-text-fill: #C1473A;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.alert-row {
+    -fx-padding: 4 0 4 0;
+}
+
+.alert-row-name {
+    -fx-text-fill: #3E2C1C;
+    -fx-font-size: 12px;
+}
+
+.alert-row-value-warning {
+    -fx-text-fill: #D9A441;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.alert-row-value-critical {
+    -fx-text-fill: #C1473A;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+/* ============================== INVENTORY: CONTENT BODY ============================== */
+
+.content-body {
+    -fx-background-color: #F9F4EC;
 }
 
 /* ---------- Filters ---------- */
@@ -227,7 +468,7 @@
     -fx-background-color: derive(#8C6343, -18%);
 }
 
-/* ============================== TABLE ============================== */
+/* ============================== INVENTORY: TABLE ============================== */
 
 .inventory-table {
     -fx-background-color: transparent;

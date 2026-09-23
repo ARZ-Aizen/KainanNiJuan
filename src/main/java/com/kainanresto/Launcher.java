@@ -14,7 +14,7 @@ public class Launcher extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(
-                getClass().getResource("/com/kainanresto/ui/LoginView.fxml")
+                getClass().getResource("/com/kainanresto/ui/AdminView.fxml")
         );
         Scene scene = new Scene(fxmlLoader.load());
         stage.setTitle("Kainan Ni Juan - Login");
