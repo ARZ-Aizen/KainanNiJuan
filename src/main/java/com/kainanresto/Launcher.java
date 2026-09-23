@@ -16,11 +16,10 @@ public class Launcher extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(
                 getClass().getResource("/com/kainanresto/views/id/LoginView.fxml")
         );
-        Scene scene = new Scene(fxmlLoader.load());
+
+        Scene scene = new Scene(fxmlLoader.load(), 1100, 750);
 
         stage.setTitle("Kainan Ni Juan - Login");
-        stage.setWidth(1100);
-        stage.setHeight(750);
         stage.setResizable(false);
 
         try {

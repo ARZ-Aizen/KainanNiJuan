@@ -11,14 +11,69 @@
 
 <HBox prefHeight="750.0" prefWidth="1100.0" stylesheets="@../../styles/id/RegisterView.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kainanresto.controllers.id.RegisterController">
 
-    <!-- ===================== LEFT SIDE (Locked Size) ===================== -->
-    <StackPane prefWidth="550.0" minWidth="550.0" maxWidth="550.0" style="-fx-background-color: #8C6343;" HBox.hgrow="NEVER">
-        <ImageView fx:id="sideGraphic" fitHeight="620.0" fitWidth="500.0" pickOnBounds="true" preserveRatio="true">
+    <!-- ===================== LEFT SIDE (Full Image Overlay) ===================== -->
+    <StackPane maxWidth="550.0" minWidth="550.0" prefWidth="550.0" HBox.hgrow="NEVER">
+
+        <!-- 1. Background Image -->
+        <ImageView fx:id="sideGraphic" fitHeight="750.0" fitWidth="550.0" pickOnBounds="true" preserveRatio="false">
             <image>
-                <Image url="@../../images/id/KainanNiJuan.png" />
+                <Image url="@../../images/id/KainanNiJuanBg.png" />
             </image>
         </ImageView>
+
+        <!-- 2. Brown Tint Overlay -->
+        <Region style="-fx-background-color: rgba(140, 99, 67, 0.75);" />
+
+        <!-- 3. Text & Logo Overlay Elements -->
+        <VBox alignment="CENTER_LEFT" spacing="20.0">
+            <padding>
+                <!-- Reduced top and bottom padding to bring the footer up -->
+                <Insets bottom="45.0" left="45.0" right="45.0" top="40.0" />
+            </padding>
+
+            <!-- Top: Logo & Brand Name -->
+            <HBox alignment="CENTER_LEFT" spacing="12.0">
+                <StackPane style="-fx-background-color: #F9F4EC; -fx-background-radius: 50%; -fx-min-width: 75; -fx-min-height: 75; -fx-max-width: 75; -fx-max-height: 75; -fx-padding: 0;">
+                    <ImageView fitHeight="75.0" fitWidth="75.0" preserveRatio="false">
+                        <image>
+                            <Image url="@../../images/id/KainanNiJuanLogo.png" />
+                        </image>
+                        <clip>
+                            <Circle centerX="37.5" centerY="37.5" radius="30.0" />
+                        </clip>
+                    </ImageView>
+                </StackPane>
+                <Label style="-fx-text-fill: #F9F4EC; -fx-font-size: 20px; -fx-font-weight: bold;" text="Kainan Ni Juan" />
+            </HBox>
+
+            <!-- Spacer pushes content to the middle -->
+            <Region VBox.vgrow="ALWAYS" />
+
+            <!-- Middle: Catchphrase & Description -->
+            <VBox spacing="12.0">
+                <Label style="-fx-text-fill: #F9F4EC; -fx-font-size: 38px; -fx-font-style: italic; -fx-font-weight: bold;" text="Good Food, Great Mood." wrapText="true" />
+
+                <VBox spacing="4.0">
+                    <Label style="-fx-text-fill: #EFE3D2; -fx-font-size: 16px;" text="Welcome to Kainan ni Juan" />
+                    <Label style="-fx-text-fill: #EFE3D2; -fx-font-size: 14px; -fx-line-spacing: 4px;" text="Manage your restaurant with ease and keep every order organized." wrapText="true" />
+                </VBox>
+            </VBox>
+
+            <!-- Spacer pushes footer to the bottom -->
+            <Region VBox.vgrow="ALWAYS" />
+
+            <!-- Bottom: Trust Badge / Footer -->
+            <HBox alignment="CENTER_LEFT" spacing="12.0">
+                <HBox spacing="-10.0">
+                    <StackPane style="-fx-background-color: #D5B392; -fx-background-radius: 50%; -fx-min-width: 24; -fx-min-height: 24; -fx-border-color: #F9F4EC; -fx-border-radius: 50%; -fx-border-width: 2;" />
+                    <StackPane style="-fx-background-color: #B9926D; -fx-background-radius: 50%; -fx-min-width: 24; -fx-min-height: 24; -fx-border-color: #F9F4EC; -fx-border-radius: 50%; -fx-border-width: 2;" />
+                    <StackPane style="-fx-background-color: #8C6343; -fx-background-radius: 50%; -fx-min-width: 24; -fx-min-height: 24; -fx-border-color: #F9F4EC; -fx-border-radius: 50%; -fx-border-width: 2;" />
+                </HBox>
+                <Label style="-fx-text-fill: #EFE3D2; -fx-font-size: 12px; -fx-font-style: italic;" text="Trusted by many Filipinos" />
+            </HBox>
+        </VBox>
     </StackPane>
+
 
     <!-- ===================== RIGHT SIDE ===================== -->
     <VBox alignment="CENTER" style="-fx-background-color: #F9F4EC;" HBox.hgrow="ALWAYS">
@@ -59,21 +114,21 @@
                 <HBox alignment="CENTER_LEFT" spacing="12.0" style="-fx-background-color: #F9F4EC; -fx-border-color: #D5B392; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 0 15 0 15; -fx-pref-height: 50;">
                     <!-- SVG -->
                     <SVGPath content="M3 5v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2zm12 4c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3zm-9 8c0-2 4-3.1 6-3.1s6 1.1 6 3.1v1H6v-1z" fill="#B9926D" />
-                    <TextField fx:id="nameField" promptText="Full Name" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-prompt-text-fill: #B9926D; -fx-padding: 0; -fx-font-size: 14px;" HBox.hgrow="ALWAYS" />
+                    <TextField fx:id="nameField" onAction="#handleFullNameEnter" promptText="Full Name" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-prompt-text-fill: #B9926D; -fx-padding: 0; -fx-font-size: 14px;" HBox.hgrow="ALWAYS" />
                 </HBox>
 
                 <!-- USER -->
                 <HBox alignment="CENTER_LEFT" spacing="12.0" style="-fx-background-color: #F9F4EC; -fx-border-color: #D5B392; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 0 15 0 15; -fx-pref-height: 50;">
                     <!-- SVG -->
                     <SVGPath content="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#B9926D" />
-                    <TextField fx:id="usernameField" promptText="Username" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-prompt-text-fill: #B9926D; -fx-padding: 0; -fx-font-size: 14px;" HBox.hgrow="ALWAYS" />
+                    <TextField fx:id="usernameField" onAction="#handleUsernameEnter" promptText="Username" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-prompt-text-fill: #B9926D; -fx-padding: 0; -fx-font-size: 14px;" HBox.hgrow="ALWAYS" />
                 </HBox>
 
                 <!-- DROPDOWN TO  -->
                 <HBox alignment="CENTER_LEFT" spacing="12.0" style="-fx-background-color: #F9F4EC; -fx-border-color: #D5B392; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 0 15 0 15; -fx-pref-height: 50;">
                     <!-- SVG -->
                     <SVGPath content="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" fill="#B9926D" />
-                    <ComboBox fx:id="roleComboBox" maxWidth="Infinity" promptText="Select Role" style="-fx-background-color: transparent; -fx-padding: 0; -fx-font-size: 14px; -fx-base: transparent; -fx-control-inner-background: #F9F4EC; -fx-text-base-color: #8C6343; -fx-mark-color: #8C6343;" HBox.hgrow="ALWAYS">
+                    <ComboBox fx:id="roleComboBox" onAction="#handleRoleEnter" maxWidth="Infinity" promptText="Select Role" style="-fx-background-color: transparent; -fx-padding: 0; -fx-font-size: 14px; -fx-base: transparent; -fx-control-inner-background: #F9F4EC; -fx-text-base-color: #8C6343; -fx-mark-color: #8C6343;" HBox.hgrow="ALWAYS">
                         <items>
                             <FXCollections fx:factory="observableArrayList">
                                 <String fx:value="CASHIER" />
@@ -89,8 +144,8 @@
                     <!-- SVG -->
                     <SVGPath content="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z" fill="#B9926D" />
                     <StackPane alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
-                        <PasswordField fx:id="passwordField" maxWidth="Infinity" promptText="Password" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-prompt-text-fill: #B9926D; -fx-padding: 0; -fx-font-size: 14px;" />
-                        <TextField fx:id="passwordVisibleField" managed="false" maxWidth="Infinity" promptText="Password" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-prompt-text-fill: #B9926D; -fx-padding: 0; -fx-font-size: 14px;" visible="false" />
+                        <PasswordField fx:id="passwordField" maxWidth="Infinity" onAction="#handlePasswordEnter" promptText="Password" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-prompt-text-fill: #B9926D; -fx-padding: 0; -fx-font-size: 14px;" />
+                        <TextField fx:id="passwordVisibleField" managed="false" maxWidth="Infinity" onAction="#handlePasswordEnter" promptText="Password" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-prompt-text-fill: #B9926D; -fx-padding: 0; -fx-font-size: 14px;" visible="false" />
                     </StackPane>
                     <!-- EYE BUTTON -->
                     <Button fx:id="togglePasswordBtn" onAction="#handleTogglePassword" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-cursor: hand; -fx-padding: 5;">
@@ -105,8 +160,8 @@
                     <!-- LOCK SVG -->
                     <SVGPath content="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z" fill="#B9926D" />
                     <StackPane alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
-                        <PasswordField fx:id="confirmPasswordField" maxWidth="Infinity" promptText="Confirm Password" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-prompt-text-fill: #B9926D; -fx-padding: 0; -fx-font-size: 14px;" />
-                        <TextField fx:id="confirmPasswordVisibleField" managed="false" maxWidth="Infinity" promptText="Confirm Password" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-prompt-text-fill: #B9926D; -fx-padding: 0; -fx-font-size: 14px;" visible="false" />
+                        <PasswordField fx:id="confirmPasswordField" maxWidth="Infinity" onAction="#handleRegister" promptText="Confirm Password" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-prompt-text-fill: #B9926D; -fx-padding: 0; -fx-font-size: 14px;" />
+                        <TextField fx:id="confirmPasswordVisibleField" managed="false" maxWidth="Infinity" onAction="#handleRegister" promptText="Confirm Password" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-prompt-text-fill: #B9926D; -fx-padding: 0; -fx-font-size: 14px;" visible="false" />
                     </StackPane>
                     <!-- EYE BUTTON -->
                     <Button fx:id="toggleConfirmPasswordBtn" onAction="#handleToggleConfirmPassword" style="-fx-background-color: transparent; -fx-text-fill: #8C6343; -fx-cursor: hand; -fx-padding: 5;">

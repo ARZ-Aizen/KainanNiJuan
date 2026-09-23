@@ -30,7 +30,14 @@ public final class NavigationUtil {
                 return;
             }
 
-            stage.setScene(new Scene(root));
+            String pathLower = fxmlPath.toLowerCase();
+            boolean isDashboard = pathLower.contains("adminview") || pathLower.contains("userview");
+
+            if (isDashboard) {
+                stage.setScene(new Scene(root));
+            } else {
+                stage.setScene(new Scene(root, 1100, 750));
+            }
 
             if (windowTitle != null && !windowTitle.isBlank()) {
                 stage.setTitle(windowTitle);
@@ -45,8 +52,13 @@ public final class NavigationUtil {
 
             // AUTOMATIC NA PARA SA KUNG ANONG KLASENG WINDOW TYPE
             configureWindowMode(stage, fxmlPath);
-
             configureCloseBehavior(stage, fxmlPath);
+
+            // FIX: Force the OS window to snap tightly to the 1100x750 Scene, eliminating white borders
+            if (!isDashboard) {
+                stage.sizeToScene();
+            }
+
             stage.centerOnScreen();
             stage.show();
 
@@ -68,8 +80,6 @@ public final class NavigationUtil {
             //MINIMIZED NA PAG NASA LABAS
             stage.setMaximized(false);
             stage.setResizable(false);
-            stage.setWidth(1100);
-            stage.setHeight(750);
         }
     }
 

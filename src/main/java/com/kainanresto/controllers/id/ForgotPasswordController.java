@@ -40,6 +40,10 @@ public class ForgotPasswordController {
         }
     }
 
+    @FXML private void handleNewPasswordEnter(ActionEvent event) {
+        handleNext(event);
+    }
+
     @FXML private void handleTogglePassword() {
         passwordVisible = !passwordVisible;
         newPasswordVisibleField.setManaged(passwordVisible);
@@ -183,6 +187,11 @@ public class ForgotPasswordController {
             }
         });
 
+        //SHORTCUT KEY LANG TO
+        adminUserField.setOnAction(e -> adminPassField.requestFocus());
+        adminPassField.setOnAction(e -> authorizeButton.fire());
+        adminPassVisibleField.setOnAction(e -> authorizeButton.fire());
+
         vbox.getChildren().addAll(titleLabel, descLabel, adminUserBox, adminPassBox, authorizeButton);
         Scene scene = new Scene(vbox, 420, 360);
         adminStage.setScene(scene);
@@ -196,5 +205,14 @@ public class ForgotPasswordController {
 
     private void navigateToLogin(ActionEvent event) {
         NavigationUtil.switchScene(event, "/com/kainanresto/views/id/LoginView.fxml", "Kainan Ni Juan - Login");
+    }
+
+    // SHORTCUT KEY LANG TO
+    @FXML private void handleTargetUsernameEnter(ActionEvent event) {
+        if (passwordVisible) {
+            newPasswordVisibleField.requestFocus();
+        } else {
+            newPasswordField.requestFocus();
+        }
     }
 }

@@ -47,6 +47,7 @@ public class RegisterController {
         nameField.setTextFormatter(nameFormatter);
     }
 
+    //SHOW PASSWORD
     @FXML private void handleTogglePassword() {
         passwordVisible = !passwordVisible;
 
@@ -61,6 +62,7 @@ public class RegisterController {
         }
     }
 
+    //SHOW CONFIRM PASS
     @FXML private void handleToggleConfirmPassword() {
         confirmPasswordVisible = !confirmPasswordVisible;
 
@@ -75,6 +77,7 @@ public class RegisterController {
         }
     }
 
+    //REGIS BUTTON
     @FXML private void handleRegister(ActionEvent event) {
         String fullName = nameField.getText().trim();
         String username = usernameField.getText().trim();
@@ -138,6 +141,7 @@ public class RegisterController {
         }
     }
 
+    //NAVIGATION TO
     @FXML private void handleLoginLink(ActionEvent event) {
         navigateToLogin(event);
     }
@@ -145,4 +149,30 @@ public class RegisterController {
     private void navigateToLogin(ActionEvent event) {
         NavigationUtil.switchScene(event, "/com/kainanresto/views/id/LoginView.fxml", "Kainan Ni Juan - Login");
     }
+
+    //SHORTCUT KEY LANG TO
+    @FXML private void handleFullNameEnter(ActionEvent event) {
+        usernameField.requestFocus();
+    }
+
+    @FXML private void handleUsernameEnter(ActionEvent event) {
+        roleComboBox.requestFocus();
+    }
+
+    @FXML private void handleRoleEnter(ActionEvent event) {
+        if (passwordVisible) {
+            passwordVisibleField.requestFocus();
+        } else {
+            passwordField.requestFocus();
+        }
+    }
+
+    @FXML private void handlePasswordEnter(ActionEvent event) {
+        if (confirmPasswordVisible) {
+            confirmPasswordVisibleField.requestFocus();
+        } else {
+            confirmPasswordField.requestFocus();
+        }
+    }
+
 }
