@@ -727,7 +727,7 @@
     -fx-cursor: hand;
 }
 .filter-pill:hover,
-.filter-pill:open { -fx-border-color: #8C6343; }
+.filter-pill-active { -fx-border-color: #8C6343; }
 .filter-pill-label { -fx-text-fill: #6E625C; -fx-font-size: 13px; -fx-font-weight: 500; }
 .filter-pill-value { -fx-text-fill: #2E2520; -fx-font-size: 13px; -fx-font-weight: 600; }
 
