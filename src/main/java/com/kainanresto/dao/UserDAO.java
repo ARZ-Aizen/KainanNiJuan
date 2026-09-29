@@ -255,4 +255,42 @@ public class UserDAO {
         return accounts;
     }
 
+    public boolean updateAccount(int userId, String fullName, String username, String newPassword, AccountRole role, AccountStatus status) {
+        boolean updatePassword = (newPassword != null && !newPassword.isEmpty());
+
+        String sql;
+        if (updatePassword) {
+            sql = "UPDATE users SET full_name = ?, username = ?, password = ?, role = ?, is_active = ? WHERE user_id = ?";
+        } else {
+            sql = "UPDATE users SET full_name = ?, username = ?, role = ?, is_active = ? WHERE user_id = ?";
+        }
+
+        try (Connection conn = com.kainanresto.config.DatabaseConfig.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, fullName);
+            pstmt.setString(2, username);
+
+            int paramIndex = 3;
+
+            if (updatePassword) {
+                String hashedPassword = com.kainanresto.util.PasswordHasher.hash(newPassword);
+                pstmt.setString(paramIndex++, hashedPassword);
+            }
+
+            pstmt.setString(paramIndex++, role.name());
+
+            int isActive = (status == AccountStatus.ACTIVE) ? 1 : 0;
+            pstmt.setInt(paramIndex++, isActive);
+            pstmt.setInt(paramIndex, userId);
+
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            System.err.println("Error updating account details: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
