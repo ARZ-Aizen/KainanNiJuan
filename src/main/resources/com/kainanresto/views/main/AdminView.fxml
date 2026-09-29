@@ -16,6 +16,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.shape.SVGPath?>
 <?import javafx.scene.layout.FlowPane?>
@@ -58,17 +59,6 @@
                     <graphic>
                         <StackPane styleClass="nav-icon-host">
                             <SVGPath fx:id="dashboardIcon" styleClass="phosphor-icon" />
-                        </StackPane>
-                    </graphic>
-                </Button>
-
-                <Button fx:id="navInventoryBtn" onAction="#onNavInventory"
-                        styleClass="nav-item"
-                        mnemonicParsing="false" contentDisplay="GRAPHIC_ONLY">
-                    <tooltip><Tooltip text="Inventory" /></tooltip>
-                    <graphic>
-                        <StackPane styleClass="nav-icon-host">
-                            <SVGPath fx:id="inventoryIcon" styleClass="phosphor-icon" />
                         </StackPane>
                     </graphic>
                 </Button>
@@ -157,13 +147,13 @@
                     <!-- ============================== DASHBOARD VIEW ============================== -->
                     <ScrollPane fx:id="dashboardView"
                                 fitToWidth="true"
-                                fitToHeight="false"
+                                fitToHeight="true"
                                 hbarPolicy="NEVER"
                                 vbarPolicy="AS_NEEDED"
                                 pannable="false"
                                 styleClass="dashboard-scroll">
                         <content>
-                            <VBox styleClass="dashboard-content" spacing="24.0">
+                            <VBox styleClass="dashboard-content" spacing="28.0" visible="true">
                                 <!-- Stat Cards -->
                                 <HBox fx:id="statCardsRow" spacing="20.0" styleClass="stat-cards-row" fillHeight="true">
                                     <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
@@ -224,7 +214,7 @@
                                 </HBox>
 
                                 <!-- Weekly Sales Analytics -->
-                                <VBox styleClass="section-card, analytics-card" spacing="24.0">
+                                <VBox styleClass="section-card, analytics-card" spacing="24.0" VBox.vgrow="ALWAYS">
                                     <HBox alignment="CENTER_LEFT">
                                         <VBox spacing="4.0">
                                             <Label text="Weekly Sales Analytics" styleClass="section-title" />
@@ -239,10 +229,10 @@
                                     </HBox>
 
                                     <HBox spacing="32.0" alignment="CENTER_LEFT">
-                                        <StackPane HBox.hgrow="ALWAYS" prefHeight="220.0" styleClass="chart-wrapper">
+                                        <StackPane HBox.hgrow="ALWAYS" prefHeight="28.0" styleClass="chart-wrapper">
                                             <BarChart fx:id="weeklySalesChart"
-                                                      prefHeight="220.0"
-                                                      minHeight="200.0"
+                                                      prefHeight="280.0"
+                                                      minHeight="260.0"
                                                       legendVisible="false"
                                                       animated="false"
                                                       horizontalGridLinesVisible="false"
@@ -262,7 +252,7 @@
                                             </BarChart>
                                         </StackPane>
 
-                                        <VBox prefWidth="320.0" styleClass="analytics-summary-card" spacing="16.0">
+                                        <VBox prefWidth="380.0" maxHeight="-Infinity" styleClass="analytics-summary-card" spacing="20.0">
                                             <VBox spacing="4.0">
                                                 <Label text="Total Weekly Sales" styleClass="summary-label" />
                                                 <Label fx:id="totalWeeklySalesLabel" text="—" styleClass="summary-value" />
@@ -498,11 +488,6 @@
 
                     <!-- ============ ACCOUNT MANAGEMENT ============ -->
                     <VBox fx:id="accountsView" visible="false" managed="false" spacing="24" styleClass="accounts-page">
-                        <HBox>
-                            <padding>
-                                <Insets top="10" right="10" bottom="10" left="10"/>
-                            </padding>
-                        </HBox>
 
                         <!-- Filter card -->
                         <VBox styleClass="accounts-card, accounts-filter-card">
@@ -557,6 +542,110 @@
                             </TableView>
                         </VBox>
                     </VBox>
+
+                    <!-- ============ EDIT ACCOUNT ============ -->
+                    <!-- ============ EDIT ACCOUNT ============ -->
+                    <ScrollPane fx:id="editAccountView" visible="false" managed="false"
+                                fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
+                                styleClass="edit-account-scroll">
+                        <content>
+                            <StackPane alignment="CENTER" styleClass="edit-account-page">
+                                <VBox alignment="CENTER" styleClass="edit-account-column">
+                                    <VBox spacing="24" maxWidth="600" prefWidth="600">
+
+                                        <!-- Account Information -->
+                                        <VBox styleClass="edit-card" spacing="16">
+                                            <VBox spacing="4">
+                                                <Label text="Account Information" styleClass="edit-card-title"/>
+                                                <Label text="Manage user's personal details and platform login identifiers."
+                                                       styleClass="edit-card-subtitle" wrapText="true"/>
+                                            </VBox>
+
+                                            <VBox spacing="8">
+                                                <HBox spacing="4" alignment="CENTER_LEFT">
+                                                    <Label text="Full Name" styleClass="edit-field-label"/>
+                                                    <Label text="*" styleClass="edit-required"/>
+                                                </HBox>
+                                                <TextField fx:id="editAccountNameField" styleClass="edit-input"/>
+                                            </VBox>
+
+                                            <VBox spacing="8">
+                                                <HBox spacing="4" alignment="CENTER_LEFT">
+                                                    <Label text="Username" styleClass="edit-field-label"/>
+                                                    <Label text="*" styleClass="edit-required"/>
+                                                </HBox>
+                                                <TextField fx:id="editAccountUsernameField" styleClass="edit-input"/>
+                                            </VBox>
+
+                                            <VBox spacing="8">
+                                                <Label text="Password" styleClass="edit-field-label"/>
+                                                <StackPane alignment="CENTER_RIGHT">
+                                                    <PasswordField fx:id="editAccountPasswordField" text="********"
+                                                                   editable="false" styleClass="edit-input"/>
+                                                    <Button fx:id="editAccountChangePasswordBtn" text="Change Password"
+                                                            onAction="#onEditAccountChangePassword"
+                                                            styleClass="edit-change-pw-btn" mnemonicParsing="false">
+                                                        <StackPane.margin><Insets right="6"/></StackPane.margin>
+                                                    </Button>
+                                                </StackPane>
+                                            </VBox>
+                                        </VBox>
+
+                                        <!-- Access & Status -->
+                                        <VBox styleClass="edit-card" spacing="16">
+                                            <VBox spacing="4">
+                                                <Label text="Access &amp; Status" styleClass="edit-card-title"/>
+                                                <Label text="Set platform authorization role levels and login availability status."
+                                                       styleClass="edit-card-subtitle" wrapText="true"/>
+                                            </VBox>
+                                            <HBox spacing="20">
+                                                <VBox spacing="8" HBox.hgrow="ALWAYS" prefWidth="0">
+                                                    <HBox spacing="4" alignment="CENTER_LEFT">
+                                                        <Label text="Assigned Role" styleClass="edit-field-label"/>
+                                                        <Label text="*" styleClass="edit-required"/>
+                                                    </HBox>
+                                                    <ComboBox fx:id="editAccountRoleCombo" maxWidth="Infinity" styleClass="edit-combo"/>
+                                                </VBox>
+                                                <VBox spacing="8" HBox.hgrow="ALWAYS" prefWidth="0">
+                                                    <HBox spacing="4" alignment="CENTER_LEFT">
+                                                        <Label text="Account Status" styleClass="edit-field-label"/>
+                                                        <Label text="*" styleClass="edit-required"/>
+                                                    </HBox>
+                                                    <ComboBox fx:id="editAccountStatusCombo" maxWidth="Infinity" styleClass="edit-combo"/>
+                                                </VBox>
+                                            </HBox>
+                                        </VBox>
+
+                                        <!-- System Meta Details -->
+                                        <VBox styleClass="edit-card, edit-meta-card" spacing="12">
+                                            <Label text="System Meta Details" styleClass="edit-meta-title"/>
+                                            <HBox alignment="CENTER_LEFT">
+                                                <Label text="Date Created" styleClass="edit-meta-key"/>
+                                                <Region HBox.hgrow="ALWAYS"/>
+                                                <Label fx:id="editAccountCreatedLabel" text="—" styleClass="edit-meta-value"/>
+                                            </HBox>
+                                            <Region styleClass="edit-meta-divider"/>
+                                            <HBox alignment="CENTER_LEFT">
+                                                <Label text="Last Login Activity" styleClass="edit-meta-key"/>
+                                                <Region HBox.hgrow="ALWAYS"/>
+                                                <Label fx:id="editAccountLastLoginLabel" text="—" styleClass="edit-meta-value"/>
+                                            </HBox>
+                                        </VBox>
+
+                                        <!-- Footer -->
+                                        <Region styleClass="edit-footer-divider"/>
+                                        <HBox alignment="CENTER_RIGHT" spacing="16">
+                                            <Label fx:id="editAccountErrorLabel" styleClass="settings-error" visible="false" managed="false"/>
+                                            <Button text="Cancel" onAction="#onEditAccountCancel"
+                                                    styleClass="edit-cancel-btn" mnemonicParsing="false"/>
+                                            <Button text="Save Changes" onAction="#onEditAccountSave"
+                                                    styleClass="edit-save-btn" mnemonicParsing="false"/>
+                                        </HBox>
+                                    </VBox>
+                                </VBox>
+                            </StackPane>
+                        </content>
+                    </ScrollPane>
 
                     <!-- ============ SETTINGS ============ -->
                     <HBox fx:id="settingsView" visible="false" managed="false" spacing="24" alignment="TOP_LEFT" styleClass="settings-page">
@@ -775,28 +864,6 @@
                     </HBox>
 
                     <!-- Inventory is intentionally present in the same FXML so navigation can expand later. -->
-                    <VBox fx:id="inventoryView" visible="false" managed="false" styleClass="placeholder-view">
-                        <Label text="Inventory" styleClass="placeholder-title" />
-                        <Label text="Inventory page will be added to this same FXML." styleClass="placeholder-subtitle" />
-                        <VBox fx:id="inventoryCard" visible="false" managed="false">
-                            <HBox>
-                                <ComboBox fx:id="categoryFilterCombo" />
-                                <TextField fx:id="itemNameSearchField" />
-                                <Button fx:id="deleteBtn" onAction="#onDelete" />
-                            </HBox>
-                            <TableView fx:id="inventoryTable">
-                                <columns>
-                                    <TableColumn fx:id="skuColumn" text="SKU" />
-                                    <TableColumn fx:id="itemNameColumn" text="Item Name" />
-                                    <TableColumn fx:id="categoryColumn" text="Category" />
-                                    <TableColumn fx:id="uomColumn" text="UOM" />
-                                    <TableColumn fx:id="qtyOnHandColumn" text="Quantity on Hand" />
-                                    <TableColumn fx:id="parLevelColumn" text="Par Level" />
-                                    <TableColumn fx:id="statusColumn" text="Status" />
-                                </columns>
-                            </TableView>
-                        </VBox>
-                    </VBox>
                 </StackPane>
             </center>
         </BorderPane>

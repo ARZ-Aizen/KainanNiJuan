@@ -46,6 +46,19 @@ public class LoginController {
             rememberMeCheckbox.setSelected(true);
             passwordField.requestFocus();
         }
+
+        // FIX: Synchronize text between both fields in real-time
+        passwordField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (!passwordVisibleField.getText().equals(newVal)) {
+                passwordVisibleField.setText(newVal);
+            }
+        });
+
+        passwordVisibleField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (!passwordField.getText().equals(newVal)) {
+                passwordField.setText(newVal);
+            }
+        });
     }
 
     @FXML private void handleTogglePassword() {
@@ -56,17 +69,24 @@ public class LoginController {
         passwordField.setManaged(!passwordVisible);
         passwordField.setVisible(!passwordVisible);
 
-        if (togglePasswordButton.getGraphic() instanceof SVGPath) {
-            SVGPath svgPath = (SVGPath) togglePasswordButton.getGraphic();
+        // Switch focus and keep caret at the end of the text
+        if (passwordVisible) {
+            passwordVisibleField.requestFocus();
+            passwordVisibleField.positionCaret(passwordVisibleField.getText().length());
+        } else {
+            passwordField.requestFocus();
+            passwordField.positionCaret(passwordField.getText().length());
+        }
+
+        if (togglePasswordButton.getGraphic() instanceof SVGPath svgPath) {
             svgPath.setContent(passwordVisible ? EYE_CLOSED_SVG : EYE_OPEN_SVG);
         }
     }
 
     @FXML private void handleLogin(ActionEvent event) {
         String username = usernameField.getText().trim();
-        String password = passwordVisible
-                ? passwordVisibleField.getText()
-                : passwordField.getText();
+        // Since fields are synced, either one will have the exact text
+        String password = passwordField.getText();
 
         boolean rememberMe = rememberMeCheckbox != null
                 && rememberMeCheckbox.isSelected();
@@ -133,7 +153,6 @@ public class LoginController {
         NavigationUtil.switchScene(event, "/com/kainanresto/views/id/RegisterView.fxml", "Kainan Ni Juan - Register");
     }
 
-    // SA SHORTCUT KEY LANG TO
     @FXML private void handleUsernameEnter(ActionEvent event) {
         if (passwordVisible) {
             passwordVisibleField.requestFocus();
@@ -141,5 +160,4 @@ public class LoginController {
             passwordField.requestFocus();
         }
     }
-
 }

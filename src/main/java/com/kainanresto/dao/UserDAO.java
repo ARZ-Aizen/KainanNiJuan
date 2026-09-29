@@ -2,6 +2,8 @@ package com.kainanresto.dao;
 
 import com.kainanresto.config.DatabaseConfig;
 import com.kainanresto.model.AccountRole;
+import com.kainanresto.model.AccountRow;
+import com.kainanresto.model.AccountStatus;
 import com.kainanresto.model.User;
 import com.kainanresto.util.PasswordHasher;
 import java.sql.Connection;
@@ -10,6 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -27,8 +30,9 @@ public class UserDAO {
 
     // LOGIN
     public Optional<User> login(String username, String plainPassword) {
+        // REMOVED 'AND is_active = 1' so the user can be found even if they are inactive
         String sql = "SELECT user_id, username, password, role, full_name, is_active " +
-                "FROM users WHERE username = ? AND is_active = 1 LIMIT 1";
+                "FROM users WHERE username = ? LIMIT 1";
 
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -38,8 +42,18 @@ public class UserDAO {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     String storedHash = rs.getString("password");
+
                     if (PasswordHasher.verify(plainPassword, storedHash)) {
-                        return Optional.of(mapResultSetToUser(rs));
+                        int userId = rs.getInt("user_id");
+                        String updateSql = "UPDATE users SET last_login = NOW(), is_active = 1 WHERE user_id = ?";
+                        try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+                            updateStmt.setInt(1, userId);
+                            updateStmt.executeUpdate();
+                        }
+
+                        User loggedInUser = mapResultSetToUser(rs);
+                        loggedInUser.setActive(true);
+                        return Optional.of(loggedInUser);
                     }
                 }
             }
@@ -47,6 +61,23 @@ public class UserDAO {
             System.err.println("UserDAO.login: DB Error - " + e.getMessage());
         }
         return Optional.empty();
+    }
+
+    // LOGOUT TO
+    public OperationResult setAccountInactive(int userId) {
+        String sql = "UPDATE users SET is_active = 0 WHERE user_id = ?";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, userId);
+            int rows = stmt.executeUpdate();
+            return (rows > 0) ? OperationResult.SUCCESS : OperationResult.NOT_FOUND;
+
+        } catch (SQLException e) {
+            System.err.println("UserDAO.setAccountInactive: DB Error - " + e.getMessage());
+            return OperationResult.DATABASE_ERROR;
+        }
     }
 
     // REGISTER
@@ -84,7 +115,7 @@ public class UserDAO {
 
     // RESET PASSWORD
     public OperationResult resetPassword(String username, String newPlainPassword) {
-        String sql = "UPDATE users SET password = ? WHERE username = ? AND is_active = 1";
+        String sql = "UPDATE users SET password = ? WHERE username = ? ";
 
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -101,9 +132,9 @@ public class UserDAO {
         }
     }
 
-    // SOFT-DELETE USER
-    public OperationResult deleteUser(int userId) {
-        String sql = "UPDATE users SET is_active = 0 WHERE user_id = ?";
+    // PERMANENTLY DELETE USER FROM DATABASE
+    public OperationResult permanentDeleteUser(int userId) {
+        String sql = "DELETE FROM users WHERE user_id = ?";
 
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -113,7 +144,7 @@ public class UserDAO {
             return (rows > 0) ? OperationResult.SUCCESS : OperationResult.NOT_FOUND;
 
         } catch (SQLException e) {
-            System.err.println("UserDAO.deleteUser: DB Error - " + e.getMessage());
+            System.err.println("UserDAO.permanentDeleteUser: DB Error - " + e.getMessage());
             return OperationResult.DATABASE_ERROR;
         }
     }
@@ -150,7 +181,7 @@ public class UserDAO {
 
     // PANG VERIFY SA FORGOT PASS IF EXISTING YUNG USER NA ADMIN
     public boolean verifyAdminCredentials(String adminUsername, String adminPassword) {
-        String sql = "SELECT password, role FROM users WHERE username = ? AND is_active = 1 LIMIT 1";
+        String sql = "SELECT password, role FROM users WHERE username = ?";
 
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -174,9 +205,9 @@ public class UserDAO {
         return false;
     }
 
-    //PANG VERIFY SA FORGOT PASS IF EXISTING YUNG USER
+    // PANG VERIFY SA FORGOT PASS KAHIT  INACTIVE YUNG USER
     public boolean checkUserExists(String username) {
-        String sql = "SELECT 1 FROM users WHERE username = ? AND is_active = 1 LIMIT 1";
+        String sql = "SELECT 1 FROM users WHERE username = ? LIMIT 1";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, username);
@@ -187,6 +218,41 @@ public class UserDAO {
             System.err.println("UserDAO.checkUserExists: DB Error - " + e.getMessage());
         }
         return false;
+    }
+
+    // SETTINGS ACCOUNT MANAGEMENT TO
+    public List<AccountRow> getAllAccounts() {
+        List<AccountRow> accounts = new ArrayList<>();
+        String query = "SELECT user_id, full_name, username, role, is_active, last_login, created_at FROM users";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                long id = rs.getLong("user_id");
+                String fullName = rs.getString("full_name");
+                String username = rs.getString("username");
+
+                AccountRole role = AccountRole.valueOf(rs.getString("role").toUpperCase());
+
+                boolean isActive = rs.getBoolean("is_active");
+                AccountStatus status = isActive ? AccountStatus.ACTIVE : AccountStatus.INACTIVE;
+
+                LocalDateTime lastLogin = rs.getTimestamp("last_login") != null ?
+                        rs.getTimestamp("last_login").toLocalDateTime() : null;
+
+                // Converted to LocalDate to match your AccountRow model
+                java.time.LocalDate createdAt = rs.getTimestamp("created_at") != null ?
+                        rs.getTimestamp("created_at").toLocalDateTime().toLocalDate() : null;
+
+                // Passed an empty string ("") for the email parameter to satisfy the compiler
+                accounts.add(new AccountRow(id, fullName, username, role, status, lastLogin, createdAt));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return accounts;
     }
 
 }

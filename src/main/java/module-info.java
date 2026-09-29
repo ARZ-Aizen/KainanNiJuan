@@ -26,7 +26,6 @@ module com.kainanresto {
 
     //MGA EXPORTED PACKAGES
     exports com.kainanresto;
-    exports com.kainanresto.controllers;
     exports com.kainanresto.config;
     exports com.kainanresto.dao;
     exports com.kainanresto.model;

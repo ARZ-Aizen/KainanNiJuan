@@ -888,7 +888,9 @@
 .row-action-btn:hover { -fx-background-color: #F2EAE0; }
 
 /* ================= ACCOUNT MANAGEMENT ================= */
-.accounts-page { -fx-background-color: transparent; }
+.accounts-page {
+    -fx-padding: 32px; -fx-background-color: #F9F4EC;
+}
 
 .accounts-card {
     -fx-background-color: white;
@@ -1029,6 +1031,114 @@
 
 .accounts-empty-label { -fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-text-fill: #6E625C; }
 
+
+//* ================= EDIT ACCOUNT ================= */
+ .edit-account-scroll,
+ .edit-account-scroll > .viewport {
+     -fx-background: transparent;
+     -fx-background-color: transparent;
+     -fx-background-insets: 0;
+     -fx-padding: 0;
+     -fx-border-color: transparent;
+ }
+ .edit-account-page { -fx-padding: 48; -fx-background-color: #F9F4EC; }
+ .edit-account-column { -fx-alignment: TOP_CENTER; }
+
+ .edit-card {
+     -fx-background-color: white;
+     -fx-background-radius: 20;
+     -fx-border-color: #EAE1D4;
+     -fx-border-width: 1.5;
+     -fx-border-radius: 20;
+     -fx-padding: 28;
+     -fx-effect: dropshadow(gaussian, rgba(140,99,67,0.06), 20, 0, 0, 6);
+ }
+ .edit-card-title    { -fx-font-family: 'Inter'; -fx-font-size: 19px; -fx-font-weight: 700; -fx-text-fill: #2E2520; }
+ .edit-card-subtitle { -fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-font-weight: 400; -fx-text-fill: #6E625C; }
+ .edit-field-label   { -fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #2E2520; }
+ .edit-required      { -fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #E74C3C; }
+
+ .edit-input {
+     -fx-background-color: #FCF7F0;
+     -fx-background-insets: 0;
+     -fx-background-radius: 10;
+     -fx-border-color: #E2D3C7;
+     -fx-border-width: 1.5;
+     -fx-border-radius: 10;
+     -fx-padding: 12 16;
+     -fx-font-family: 'Inter'; -fx-font-size: 15px;
+     -fx-text-fill: #2E2520;
+     -fx-focus-color: transparent; -fx-faint-focus-color: transparent;
+ }
+ .edit-input:focused { -fx-border-color: #B9926D; }
+
+ .edit-combo {
+     -fx-background-color: #FCF7F0;
+     -fx-background-insets: 0;
+     -fx-background-radius: 10;
+     -fx-border-color: #E2D3C7;
+     -fx-border-width: 1.5;
+     -fx-border-radius: 10;
+     -fx-padding: 6 8;
+     -fx-font-family: 'Inter'; -fx-font-size: 15px;
+     -fx-focus-color: transparent; -fx-faint-focus-color: transparent;
+     -fx-cursor: hand;
+ }
+ .edit-combo:focused,
+ .edit-combo:showing { -fx-border-color: #B9926D; }
+ .edit-combo .list-cell { -fx-text-fill: #2E2520; -fx-background-color: transparent; -fx-font-size: 15px; }
+ .edit-combo .arrow-button { -fx-background-color: transparent; }
+ .edit-combo .arrow { -fx-background-color: #6E625C; -fx-scale-x: 1.2; -fx-scale-y: 1.2; }
+ .edit-combo .combo-box-popup .list-view { -fx-background-color: white; -fx-border-color: #E2D3C7; }
+ .edit-combo .combo-box-popup .list-cell:filled:hover,
+ .edit-combo .combo-box-popup .list-cell:filled:selected { -fx-background-color: #FCF7F0; -fx-text-fill: #8C6343; }
+
+ .edit-change-pw-btn {
+     -fx-background-color: white;
+     -fx-background-insets: 0;
+     -fx-background-radius: 8;
+     -fx-border-color: #8C6343; -fx-border-width: 1.5; -fx-border-radius: 8;
+     -fx-padding: 8 14;
+     -fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 600;
+     -fx-text-fill: #8C6343;
+     -fx-focus-color: transparent; -fx-faint-focus-color: transparent;
+     -fx-cursor: hand;
+ }
+ .edit-change-pw-btn:hover { -fx-background-color: #FCF7F0; }
+
+ .edit-meta-card  { -fx-padding: 22 24; }
+ .edit-meta-title { -fx-font-family: 'Inter'; -fx-font-size: 15px; -fx-font-weight: 700; -fx-text-fill: #2E2520; }
+ .edit-meta-key   { -fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-font-weight: 400; -fx-text-fill: #6E625C; }
+ .edit-meta-value { -fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #2E2520; }
+ .edit-meta-divider,
+ .edit-footer-divider {
+     -fx-background-color: #EAE1D4;
+     -fx-min-height: 1.5; -fx-pref-height: 1.5; -fx-max-height: 1.5;
+ }
+
+ .edit-cancel-btn {
+     -fx-background-color: white;
+     -fx-background-insets: 0;
+     -fx-background-radius: 10;
+     -fx-border-color: #8C6343; -fx-border-width: 1.5; -fx-border-radius: 10;
+     -fx-padding: 12 28;
+     -fx-font-family: 'Inter'; -fx-font-size: 15px; -fx-font-weight: 600;
+     -fx-text-fill: #8C6343;
+     -fx-focus-color: transparent; -fx-faint-focus-color: transparent;
+     -fx-cursor: hand;
+ }
+ .edit-cancel-btn:hover { -fx-background-color: #FCF7F0; }
+ .edit-save-btn {
+     -fx-background-color: #8C6343;
+     -fx-background-insets: 0;
+     -fx-background-radius: 10;
+     -fx-padding: 13 32;
+     -fx-font-family: 'Inter'; -fx-font-size: 15px; -fx-font-weight: 600;
+     -fx-text-fill: white;
+     -fx-focus-color: transparent; -fx-faint-focus-color: transparent;
+     -fx-cursor: hand;
+ }
+ .edit-save-btn:hover { -fx-background-color: #7A5738; }
 /* ================= SETTINGS ================= */
 .settings-page { -fx-background-color: transparent; }
 

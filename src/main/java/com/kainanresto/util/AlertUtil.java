@@ -50,6 +50,15 @@ public final class AlertUtil {
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.initStyle(StageStyle.TRANSPARENT);
 
+            javafx.stage.Window activeWindow = javafx.stage.Window.getWindows().stream()
+                    .filter(javafx.stage.Window::isFocused)
+                    .findFirst()
+                    .orElse(null);
+
+            if (activeWindow instanceof Stage) {
+                stage.initOwner(activeWindow);
+            }
+
             controller.setStage(stage);
             controller.setAlertData(type, titleText, messageText, showSecondaryButton, primaryBtnText, secondaryBtnText);
 
