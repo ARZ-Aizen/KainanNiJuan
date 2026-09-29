@@ -22,6 +22,9 @@
 
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.control.Tooltip?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
 <BorderPane fx:id="appRoot"
             prefWidth="1920.0"
             prefHeight="1051.0"
@@ -492,6 +495,284 @@
                             </TableView>
                         </VBox>
                     </VBox>
+
+                    <!-- ============ ACCOUNT MANAGEMENT ============ -->
+                    <VBox fx:id="accountsView" visible="false" managed="false" spacing="24" styleClass="accounts-page">
+                        <HBox>
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                        </HBox>
+
+                        <!-- Filter card -->
+                        <VBox styleClass="accounts-card, accounts-filter-card">
+                            <HBox alignment="CENTER_LEFT" spacing="16">
+                                <HBox fx:id="accountsSearchBox" styleClass="accounts-search-box" alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS">
+                                    <StackPane styleClass="accounts-icon-14">
+                                        <SVGPath fx:id="accountsSearchIcon" styleClass="phosphor-icon, icon-muted"/>
+                                    </StackPane>
+                                    <TextField fx:id="accountsSearchField" promptText="Search accounts by name or email..."
+                                               styleClass="accounts-search-field" HBox.hgrow="ALWAYS"/>
+                                </HBox>
+
+                                <HBox alignment="CENTER_LEFT" spacing="10">
+                                    <HBox fx:id="accountsRolePill" styleClass="accounts-pill" alignment="CENTER_LEFT" spacing="8">
+                                        <Label text="Role:" styleClass="accounts-pill-label"/>
+                                        <Label fx:id="accountsRoleValueLabel" text="All Roles" styleClass="accounts-pill-value"/>
+                                        <StackPane styleClass="accounts-icon-12">
+                                            <SVGPath styleClass="phosphor-icon, icon-muted, accounts-pill-chevron"/>
+                                        </StackPane>
+                                    </HBox>
+                                    <HBox fx:id="accountsStatusPill" styleClass="accounts-pill" alignment="CENTER_LEFT" spacing="8">
+                                        <Label text="Status:" styleClass="accounts-pill-label"/>
+                                        <Label fx:id="accountsStatusValueLabel" text="All Statuses" styleClass="accounts-pill-value"/>
+                                        <StackPane styleClass="accounts-icon-12">
+                                            <SVGPath styleClass="phosphor-icon, icon-muted, accounts-pill-chevron"/>
+                                        </StackPane>
+                                    </HBox>
+                                    <HBox fx:id="accountsLastLoginPill" styleClass="accounts-pill" alignment="CENTER_LEFT" spacing="8">
+                                        <Label text="Last Login:" styleClass="accounts-pill-label"/>
+                                        <Label fx:id="accountsLastLoginValueLabel" text="Anytime" styleClass="accounts-pill-value"/>
+                                        <StackPane styleClass="accounts-icon-12">
+                                            <SVGPath styleClass="phosphor-icon, icon-muted, accounts-pill-chevron"/>
+                                        </StackPane>
+                                    </HBox>
+                                    <Button text="Clear Filters" styleClass="accounts-clear-btn" onAction="#onAccountsClearFilters"/>
+                                </HBox>
+                            </HBox>
+                        </VBox>
+
+                        <!-- Table card -->
+                        <VBox styleClass="accounts-card, accounts-table-card" VBox.vgrow="ALWAYS">
+                            <TableView fx:id="accountsTable" styleClass="accounts-table" VBox.vgrow="ALWAYS">
+                                <columns>
+                                    <TableColumn fx:id="accountsColName"      text="NAME"       prefWidth="180" styleClass="col-first" sortable="false" reorderable="false"/>
+                                    <TableColumn fx:id="accountsColUsername"  text="USERNAME"   prefWidth="150" sortable="false" reorderable="false"/>
+                                    <TableColumn fx:id="accountsColRole"      text="ROLE"       prefWidth="120" sortable="false" reorderable="false"/>
+                                    <TableColumn fx:id="accountsColStatus"    text="STATUS"     prefWidth="110" sortable="false" reorderable="false"/>
+                                    <TableColumn fx:id="accountsColLastLogin" text="LAST LOGIN" prefWidth="160" sortable="false" reorderable="false"/>
+                                    <TableColumn fx:id="accountsColCreated"   text="CREATED DATE" prefWidth="140" sortable="false" reorderable="false"/>
+                                    <TableColumn fx:id="accountsColActions"   text="ACTIONS"    prefWidth="100" styleClass="col-center" sortable="false" reorderable="false"/>
+                                </columns>
+                            </TableView>
+                        </VBox>
+                    </VBox>
+
+                    <!-- ============ SETTINGS ============ -->
+                    <HBox fx:id="settingsView" visible="false" managed="false" spacing="24" alignment="TOP_LEFT" styleClass="settings-page">
+                        <padding>
+                            <Insets top="32" right="32" bottom="32" left="32"/>
+                        </padding>
+                        <fx:define>
+                            <ToggleGroup fx:id="settingsSyncGroup"/>
+                        </fx:define>
+
+                        <!-- Left tab list -->
+                        <VBox styleClass="settings-tabs" spacing="6" minWidth="260" prefWidth="260" maxWidth="260" maxHeight="-Infinity">
+                            <Button fx:id="settingsTabGeneralBtn" text="General" styleClass="settings-tab, settings-tab-active"
+                                    maxWidth="Infinity" mnemonicParsing="false" onAction="#onSettingsTabGeneral">
+                                <graphic>
+                                    <StackPane styleClass="settings-host-18">
+                                        <SVGPath fx:id="settingsGeneralIcon" styleClass="phosphor-icon"/>
+                                    </StackPane>
+                                </graphic>
+                            </Button>
+                            <Button fx:id="settingsTabPreferencesBtn" text="System Preferences" styleClass="settings-tab"
+                                    maxWidth="Infinity" mnemonicParsing="false" onAction="#onSettingsTabPreferences">
+                                <graphic>
+                                    <StackPane styleClass="settings-host-18">
+                                        <SVGPath fx:id="settingsPreferencesIcon" styleClass="phosphor-icon"/>
+                                    </StackPane>
+                                </graphic>
+                            </Button>
+                            <Button fx:id="settingsTabBackupBtn" text="Backup &amp; Data" styleClass="settings-tab"
+                                    maxWidth="Infinity" mnemonicParsing="false" onAction="#onSettingsTabBackup">
+                                <graphic>
+                                    <StackPane styleClass="settings-host-18">
+                                        <SVGPath fx:id="settingsBackupTabIcon" styleClass="phosphor-icon"/>
+                                    </StackPane>
+                                </graphic>
+                            </Button>
+                            <Button fx:id="settingsTabSecurityBtn" text="Security" styleClass="settings-tab"
+                                    maxWidth="Infinity" mnemonicParsing="false" onAction="#onSettingsTabSecurity">
+                                <graphic>
+                                    <StackPane styleClass="settings-host-18">
+                                        <SVGPath fx:id="settingsSecurityIcon" styleClass="phosphor-icon"/>
+                                    </StackPane>
+                                </graphic>
+                            </Button>
+                        </VBox>
+
+                        <!-- Right: scrolling cards -->
+                        <ScrollPane fx:id="settingsScroll" styleClass="settings-scroll" fitToWidth="true" hbarPolicy="NEVER" HBox.hgrow="ALWAYS">
+                            <content>
+                                <VBox fx:id="settingsContent" styleClass="settings-content" spacing="24">
+
+                                    <!-- Restaurant Information -->
+                                    <VBox fx:id="settingsGeneralCard" styleClass="settings-card" spacing="20">
+                                        <VBox spacing="4">
+                                            <Label text="Restaurant Information" styleClass="settings-card-title"/>
+                                            <Label text="Update basic details and operations timing options for your restaurant"
+                                                   styleClass="settings-card-subtitle" wrapText="true"/>
+                                        </VBox>
+                                        <Region styleClass="settings-divider"/>
+                                        <VBox spacing="16">
+                                            <HBox spacing="24" alignment="CENTER_LEFT">
+                                                <VBox spacing="8" alignment="TOP_CENTER">
+                                                    <StackPane styleClass="settings-logo-box">
+                                                        <StackPane styleClass="settings-host-32">
+                                                            <SVGPath fx:id="settingsLogoPlaceholderIcon" styleClass="phosphor-icon, accent-icon"/>
+                                                        </StackPane>
+                                                        <ImageView fx:id="settingsLogoImage" preserveRatio="true" visible="false" managed="false"/>
+                                                    </StackPane>
+                                                    <Button text="Change Logo" styleClass="settings-link-btn" mnemonicParsing="false"
+                                                            onAction="#onSettingsChangeLogo"/>
+                                                </VBox>
+                                                <VBox spacing="16" HBox.hgrow="ALWAYS">
+                                                    <VBox spacing="6">
+                                                        <Label text="Restaurant Name" styleClass="settings-field-label"/>
+                                                        <TextField fx:id="settingsNameField" promptText="—" styleClass="settings-input"/>
+                                                    </VBox>
+                                                    <VBox spacing="6">
+                                                        <Label text="Primary Contact Email" styleClass="settings-field-label"/>
+                                                        <TextField fx:id="settingsEmailField" promptText="—" styleClass="settings-input"/>
+                                                    </VBox>
+                                                </VBox>
+                                            </HBox>
+
+                                            <Region styleClass="settings-divider"/>
+
+                                            <VBox spacing="16">
+                                                <VBox spacing="6">
+                                                    <Label text="System Time Sync Mode" styleClass="settings-field-label"/>
+                                                    <HBox styleClass="settings-segment" spacing="4">
+                                                        <ToggleButton fx:id="settingsSyncManualBtn" text="Manually Change" toggleGroup="$settingsSyncGroup"
+                                                                      styleClass="settings-segment-btn" mnemonicParsing="false"
+                                                                      maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                                                        <ToggleButton fx:id="settingsSyncAutoBtn" text="Auto Sync" toggleGroup="$settingsSyncGroup"
+                                                                      styleClass="settings-segment-btn" mnemonicParsing="false"
+                                                                      maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                                                    </HBox>
+                                                </VBox>
+                                                <HBox spacing="16">
+                                                    <VBox spacing="6" HBox.hgrow="ALWAYS" prefWidth="0">
+                                                        <Label text="System Date" styleClass="settings-field-label"/>
+                                                        <TextField fx:id="settingsDateField" promptText="—" styleClass="settings-input"/>
+                                                    </VBox>
+                                                    <VBox spacing="6" HBox.hgrow="ALWAYS" prefWidth="0">
+                                                        <Label text="System Time" styleClass="settings-field-label"/>
+                                                        <TextField fx:id="settingsTimeField" promptText="—" styleClass="settings-input"/>
+                                                    </VBox>
+                                                </HBox>
+                                            </VBox>
+                                        </VBox>
+                                    </VBox>
+
+                                    <!-- System Preferences -->
+                                    <VBox fx:id="settingsPreferencesCard" styleClass="settings-card" spacing="20">
+                                        <VBox spacing="4">
+                                            <Label text="System Preferences" styleClass="settings-card-title"/>
+                                            <Label text="Customize the core language options for POS terminals and back-office portals"
+                                                   styleClass="settings-card-subtitle" wrapText="true"/>
+                                        </VBox>
+                                        <Region styleClass="settings-divider"/>
+                                        <VBox spacing="6">
+                                            <Label text="Default Display Language" styleClass="settings-field-label"/>
+                                            <HBox fx:id="settingsLanguagePill" styleClass="settings-select" alignment="CENTER_LEFT">
+                                                <Label fx:id="settingsLanguageValueLabel" text="—" styleClass="settings-select-value"
+                                                       maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                                                <StackPane styleClass="settings-host-16">
+                                                    <SVGPath fx:id="settingsLanguageChevron" styleClass="phosphor-icon, icon-muted"/>
+                                                </StackPane>
+                                            </HBox>
+                                        </VBox>
+                                    </VBox>
+
+                                    <!-- Backup & Data Operations -->
+                                    <VBox fx:id="settingsBackupCard" styleClass="settings-card" spacing="20">
+                                        <VBox spacing="4">
+                                            <Label text="Backup &amp; Data Operations" styleClass="settings-card-title"/>
+                                            <Label text="Perform safety operations, download localized state reports, or restore point records"
+                                                   styleClass="settings-card-subtitle" wrapText="true"/>
+                                        </VBox>
+                                        <Region styleClass="settings-divider"/>
+                                        <VBox spacing="16">
+                                            <HBox alignment="CENTER_LEFT">
+                                                <VBox spacing="2" minWidth="0" prefWidth="360" maxWidth="360">
+                                                    <Label text="Automatic Backups" styleClass="settings-row-title"/>
+                                                    <Label text="Automatically back up core database to cloud storage once a day"
+                                                           styleClass="settings-row-desc" wrapText="true"/>
+                                                </VBox>
+                                                <Region HBox.hgrow="ALWAYS"/>
+                                                <ToggleButton fx:id="settingsAutoBackupToggle" styleClass="settings-switch"
+                                                              contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false">
+                                                    <graphic><Region styleClass="settings-switch-knob"/></graphic>
+                                                </ToggleButton>
+                                            </HBox>
+                                            <Region styleClass="settings-divider"/>
+                                            <HBox spacing="12">
+                                                <Button text="Backup Database" styleClass="settings-btn, settings-btn-primary"
+                                                        mnemonicParsing="false" onAction="#onSettingsBackupDatabase">
+                                                    <graphic>
+                                                        <StackPane styleClass="settings-host-16">
+                                                            <SVGPath fx:id="settingsBackupBtnIcon" styleClass="phosphor-icon"/>
+                                                        </StackPane>
+                                                    </graphic>
+                                                </Button>
+                                                <Button text="Export Data (CSV)" styleClass="settings-btn, settings-btn-secondary"
+                                                        mnemonicParsing="false" onAction="#onSettingsExportData">
+                                                    <graphic>
+                                                        <StackPane styleClass="settings-host-16">
+                                                            <SVGPath fx:id="settingsExportBtnIcon" styleClass="phosphor-icon"/>
+                                                        </StackPane>
+                                                    </graphic>
+                                                </Button>
+                                                <Button text="Restore Point" styleClass="settings-btn, settings-btn-outline"
+                                                        mnemonicParsing="false" onAction="#onSettingsRestorePoint">
+                                                    <graphic>
+                                                        <StackPane styleClass="settings-host-16">
+                                                            <SVGPath fx:id="settingsRestoreBtnIcon" styleClass="phosphor-icon"/>
+                                                        </StackPane>
+                                                    </graphic>
+                                                </Button>
+                                            </HBox>
+                                        </VBox>
+                                    </VBox>
+
+                                    <!-- Terminal & Security Protocols -->
+                                    <VBox fx:id="settingsSecurityCard" styleClass="settings-card" spacing="20">
+                                        <VBox spacing="4">
+                                            <Label text="Terminal &amp; Security Protocols" styleClass="settings-card-title"/>
+                                            <Label text="Authorize secure operational states across active hardware nodes"
+                                                   styleClass="settings-card-subtitle" wrapText="true"/>
+                                        </VBox>
+                                        <Region styleClass="settings-divider"/>
+                                        <HBox alignment="CENTER_LEFT">
+                                            <VBox spacing="2" minWidth="0" prefWidth="360" maxWidth="360">
+                                                <Label text="Require PIN for Sensitive Actions" styleClass="settings-row-title"/>
+                                                <Label text="Staff must enter authorized security PIN to override low stock alerts, void active transactions, or issue refund slips"
+                                                       styleClass="settings-row-desc" wrapText="true"/>
+                                            </VBox>
+                                            <Region HBox.hgrow="ALWAYS"/>
+                                            <ToggleButton fx:id="settingsRequirePinToggle" styleClass="settings-switch"
+                                                          contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false">
+                                                <graphic><Region styleClass="settings-switch-knob"/></graphic>
+                                            </ToggleButton>
+                                        </HBox>
+                                    </VBox>
+
+                                    <!-- Footer -->
+                                    <HBox alignment="CENTER_RIGHT" spacing="16" styleClass="settings-footer">
+                                        <Label fx:id="settingsErrorLabel" styleClass="settings-error" visible="false" managed="false"/>
+                                        <Button text="Cancel" styleClass="settings-footer-cancel" mnemonicParsing="false"
+                                                onAction="#onSettingsCancel"/>
+                                        <Button text="Save Changes" styleClass="settings-footer-save" mnemonicParsing="false"
+                                                onAction="#onSettingsSave"/>
+                                    </HBox>
+                                </VBox>
+                            </content>
+                        </ScrollPane>
+                    </HBox>
 
                     <!-- Inventory is intentionally present in the same FXML so navigation can expand later. -->
                     <VBox fx:id="inventoryView" visible="false" managed="false" styleClass="placeholder-view">

@@ -1,10 +1,15 @@
 package com.kainanresto.controllers.main;
 
+import com.kainanresto.model.AccountRole;
+import com.kainanresto.model.AccountRow;
+import com.kainanresto.model.AccountStatus;
+import com.kainanresto.model.AppSettings;
 import com.kainanresto.model.Dishes;
 import com.kainanresto.model.Icons;
 import com.kainanresto.model.OrderStats;
-import com.kainanresto.model.Transaction;
 import com.kainanresto.model.Product;
+import com.kainanresto.model.TimeSyncMode;
+import com.kainanresto.model.Transaction;
 import com.kainanresto.util.NavigationUtil;
 import com.kainanresto.util.SessionManager;
 import javafx.application.Platform;
@@ -38,6 +43,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -48,20 +54,30 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.TextAlignment;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class AdminController {
 
@@ -113,6 +129,8 @@ public class AdminController {
     @FXML private VBox inventoryView;
     @FXML private VBox menuView;
     @FXML private VBox salesOrdersView;
+    @FXML private VBox accountsView;
+    @FXML private HBox settingsView;
     private static final String NAV_ACTIVE = "nav-item-active";
 
     /* ============================== DASHBOARD: STAT CARDS ============================== */
@@ -220,6 +238,102 @@ public class AdminController {
     private FilterPill orderStatusFilter;
     private FilterPill orderPaymentFilter;
 
+    /* ============================== ACCOUNT MANAGEMENT (accounts* / account*) ============================== */
+    private static final String ACCOUNTS_ALL_ROLES    = "All Roles";
+    private static final String ACCOUNTS_ALL_STATUSES = "All Statuses";
+    private static final DateTimeFormatter ACCOUNTS_TIME_FMT =
+            DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH);
+    private static final DateTimeFormatter ACCOUNTS_DATE_FMT =
+            DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH);
+
+    private enum AccountsLastLoginFilter {
+        ANYTIME("Anytime"), TODAY("Today"), LAST_7_DAYS("Last 7 days"),
+        LAST_30_DAYS("Last 30 days"), NEVER("Never");
+
+        private final String label;
+        AccountsLastLoginFilter(String label) { this.label = label; }
+        String label() { return label; }
+    }
+
+    @FXML private HBox accountsSearchBox;
+    @FXML private SVGPath accountsSearchIcon;
+    @FXML private TextField accountsSearchField;
+    @FXML private HBox accountsRolePill;
+    @FXML private HBox accountsStatusPill;
+    @FXML private HBox accountsLastLoginPill;
+    @FXML private Label accountsRoleValueLabel;
+    @FXML private Label accountsStatusValueLabel;
+    @FXML private Label accountsLastLoginValueLabel;
+    @FXML private TableView<AccountRow> accountsTable;
+    @FXML private TableColumn<AccountRow, AccountRow> accountsColName;
+    @FXML private TableColumn<AccountRow, AccountRow> accountsColUsername;
+    @FXML private TableColumn<AccountRow, AccountRow> accountsColRole;
+    @FXML private TableColumn<AccountRow, AccountRow> accountsColStatus;
+    @FXML private TableColumn<AccountRow, AccountRow> accountsColLastLogin;
+    @FXML private TableColumn<AccountRow, AccountRow> accountsColCreated;
+    @FXML private TableColumn<AccountRow, AccountRow> accountsColActions;
+
+    private final Label accountsEmptyLabel = new Label("No accounts loaded.");
+    private final ObservableList<AccountRow> accountsMaster = FXCollections.observableArrayList();
+    private FilteredList<AccountRow> accountsFiltered;
+    private AccountRole accountsRoleFilter = null;                 // null = all roles
+    private AccountStatus accountsStatusFilter = null;             // null = all statuses
+    private AccountsLastLoginFilter accountsLastLoginFilter = AccountsLastLoginFilter.ANYTIME;
+    private Consumer<AccountRow> onEditAccount;
+    private Consumer<AccountRow> onDeleteAccount;
+
+    /* ============================== SETTINGS (settings*) ============================== */
+    private static final String SETTINGS_TAB_ACTIVE = "settings-tab-active";
+    private static final DateTimeFormatter SETTINGS_DATE_FMT = new DateTimeFormatterBuilder()
+            .parseCaseInsensitive().appendPattern("MMMM d, yyyy").toFormatter(Locale.ENGLISH);
+    private static final DateTimeFormatter SETTINGS_TIME_FMT = new DateTimeFormatterBuilder()
+            .parseCaseInsensitive().appendPattern("h:mm a").toFormatter(Locale.ENGLISH);
+
+    @FXML private ScrollPane settingsScroll;
+    @FXML private VBox settingsContent;
+    @FXML private VBox settingsGeneralCard;
+    @FXML private VBox settingsPreferencesCard;
+    @FXML private VBox settingsBackupCard;
+    @FXML private VBox settingsSecurityCard;
+
+    @FXML private Button settingsTabGeneralBtn;
+    @FXML private Button settingsTabPreferencesBtn;
+    @FXML private Button settingsTabBackupBtn;
+    @FXML private Button settingsTabSecurityBtn;
+
+    @FXML private SVGPath settingsGeneralIcon;
+    @FXML private SVGPath settingsPreferencesIcon;
+    @FXML private SVGPath settingsBackupTabIcon;
+    @FXML private SVGPath settingsSecurityIcon;
+    @FXML private SVGPath settingsLogoPlaceholderIcon;
+    @FXML private SVGPath settingsLanguageChevron;
+    @FXML private SVGPath settingsBackupBtnIcon;
+    @FXML private SVGPath settingsExportBtnIcon;
+    @FXML private SVGPath settingsRestoreBtnIcon;
+
+    @FXML private ImageView settingsLogoImage;
+    @FXML private TextField settingsNameField;
+    @FXML private TextField settingsEmailField;
+    @FXML private TextField settingsDateField;
+    @FXML private TextField settingsTimeField;
+    @FXML private ToggleGroup settingsSyncGroup;
+    @FXML private ToggleButton settingsSyncManualBtn;
+    @FXML private ToggleButton settingsSyncAutoBtn;
+    @FXML private HBox settingsLanguagePill;
+    @FXML private Label settingsLanguageValueLabel;
+    @FXML private ToggleButton settingsAutoBackupToggle;
+    @FXML private ToggleButton settingsRequirePinToggle;
+    @FXML private Label settingsErrorLabel;
+
+    private FilterPill settingsLanguageFilter;
+    private String settingsPendingLanguage;      // language received before the options list
+    private String settingsLogoUri;              // currently previewed logo (may be a newly chosen file)
+    private AppSettings settingsLoaded;          // last values from the server (Cancel reverts to these)
+    private Consumer<AppSettings> onSaveSettings;
+    private Runnable onBackupDatabase;
+    private Runnable onExportData;
+    private Runnable onRestorePoint;
+
     /* ============================== LIFECYCLE ============================== */
 
     @FXML
@@ -239,6 +353,8 @@ public class AdminController {
         setupDashboardChart();
         setupMenuPage();
         setupOrdersPage();
+        setupAccountsPage();
+        setupSettingsPage();
         initializeIcons();
         normalizePhosphorIcons();
         initializeOrderFilterChevrons();
@@ -293,6 +409,19 @@ public class AdminController {
         setIcon(ordersTotalIcon, Icons.SHOPPING_BAG);
         setIcon(ordersVoidsIcon, Icons.ROTATE_CCW);
         setIcon(ordersAvgSpendIcon, Icons.TRENDING_UP);
+
+        // Account Management: search + pill chevrons are set in setupAccountsPage()
+
+        // Settings (glyphs inferred from the flattened design)
+        setIcon(settingsGeneralIcon, Icons.HOUSE);
+        setIcon(settingsPreferencesIcon, Icons.GLOBE);
+        setIcon(settingsBackupTabIcon, Icons.DATABASE);
+        setIcon(settingsSecurityIcon, Icons.SHIELD);
+        setIcon(settingsLogoPlaceholderIcon, Icons.IMAGE);
+        setIcon(settingsLanguageChevron, Icons.CHEVRON_DOWN);
+        setIcon(settingsBackupBtnIcon, Icons.DATABASE);
+        setIcon(settingsExportBtnIcon, Icons.DOWNLOAD);
+        setIcon(settingsRestoreBtnIcon, Icons.ROTATE_CCW);
     }
 
     private void setIcon(SVGPath icon, String content) {
@@ -326,6 +455,16 @@ public class AdminController {
         fitGridIcon(ordersTotalIcon, 18.0);
         fitGridIcon(ordersVoidsIcon, 18.0);
         fitGridIcon(ordersAvgSpendIcon, 18.0);
+
+        fitGridIcon(settingsGeneralIcon, 18.0);
+        fitGridIcon(settingsPreferencesIcon, 18.0);
+        fitGridIcon(settingsBackupTabIcon, 18.0);
+        fitGridIcon(settingsSecurityIcon, 18.0);
+        fitGridIcon(settingsLogoPlaceholderIcon, 32.0);
+        fitGridIcon(settingsLanguageChevron, 16.0);
+        fitGridIcon(settingsBackupBtnIcon, 16.0);
+        fitGridIcon(settingsExportBtnIcon, 16.0);
+        fitGridIcon(settingsRestoreBtnIcon, 16.0);
     }
 
     /** The four filter-pill chevrons have no fx:id; find them by style class. */
@@ -478,6 +617,43 @@ public class AdminController {
         return orderDateFilter.getSelected();
     }
 
+    /** Account Management: table rows from the server/database. */
+    public void setAccounts(List<AccountRow> rows) {
+        accountsMaster.setAll(rows == null ? List.of() : rows);
+        applyAccountsFilter();
+    }
+
+    public void setOnEditAccount(Consumer<AccountRow> handler)   { this.onEditAccount = handler; }
+    public void setOnDeleteAccount(Consumer<AccountRow> handler) { this.onDeleteAccount = handler; }
+
+    /** Settings: fill the form from the server/database. Pass null to reset the form to placeholders. */
+    public void setSettings(AppSettings settings) {
+        settingsLoaded = settings;
+        applySettingsToForm(settings);
+    }
+
+    /** Settings: language names for the dropdown. The first entry is shown until settings arrive. */
+    public void setSettingsLanguageOptions(List<String> options) {
+        settingsLanguageFilter.setOptions(options);
+        if (settingsPendingLanguage != null) {
+            settingsLanguageFilter.setSelected(settingsPendingLanguage);
+        }
+    }
+
+    /** Settings: called with the validated form values when the user presses Save Changes. */
+    public void setOnSaveSettings(Consumer<AppSettings> handler) { this.onSaveSettings = handler; }
+    public void setOnBackupDatabase(Runnable handler)            { this.onBackupDatabase = handler; }
+    public void setOnExportData(Runnable handler)                { this.onExportData = handler; }
+    public void setOnRestorePoint(Runnable handler)              { this.onRestorePoint = handler; }
+
+    /** Settings: show a message next to the Save button (e.g. a server-side failure). Null/blank clears it. */
+    public void setSettingsError(String message) {
+        boolean has = message != null && !message.isBlank();
+        settingsErrorLabel.setText(has ? message : "");
+        settingsErrorLabel.setVisible(has);
+        settingsErrorLabel.setManaged(has);
+    }
+
     /* ============================== NAVIGATION ============================== */
 
     @FXML
@@ -502,12 +678,12 @@ public class AdminController {
 
     @FXML
     private void onNavAccountManagement() {
-        // TODO: navigate to Account Management view in the same FXML when the page is supplied.
+        showAccounts();
     }
 
     @FXML
     private void onNavSettings() {
-        // TODO: navigate to Settings view in the same FXML when the page is supplied.
+        showSettings();
     }
 
     @FXML
@@ -522,7 +698,11 @@ public class AdminController {
 
     /** Shows exactly one page in the view stack. Add every new page to this array. */
     private void showView(Node target) {
-        for (Node v : new Node[]{dashboardView, inventoryView, menuView, salesOrdersView}) {
+        for (Node v : new Node[]{dashboardView, inventoryView, menuView, salesOrdersView,
+                accountsView, settingsView}) {
+            if (v == null) {
+                continue;
+            }
             boolean on = (v == target);
             v.setVisible(on);
             v.setManaged(on);
@@ -560,6 +740,23 @@ public class AdminController {
         // TODO: request stats, filter options and orders from the server/database, then call
         //       setOrderDateOptions / setOrderTypeOptions / setOrderStatusOptions /
         //       setOrderPaymentOptions / setOrderStats / setOrders.
+    }
+
+    private void showAccounts() {
+        showView(accountsView);
+        pageTitleLabel.setText("Account Management");
+        pageSubtitleLabel.setText("Configure system access, roles, and security permissions");
+        setActiveNav(navAccountManagementBtn);
+        // TODO: request accounts from the server/database, then call setAccounts(...).
+    }
+
+    private void showSettings() {
+        showView(settingsView);
+        pageTitleLabel.setText("Settings");
+        pageSubtitleLabel.setText("Configure your restaurant preferences, system defaults, and security configurations");
+        setActiveNav(navSettingsBtn);
+        // TODO: request settings + language options from the server/database, then call
+        //       setSettingsLanguageOptions(...) and setSettings(...).
     }
 
     /** Clears nav-item-active from every sidebar button and applies it to the given one. */
@@ -874,6 +1071,561 @@ public class AdminController {
         return "chip-neutral";   // Refunded and anything unknown
     }
 
+    /* ============================== ACCOUNT MANAGEMENT ============================== */
+
+    private void setupAccountsPage() {
+        // icons
+        if (accountsSearchIcon != null) {
+            accountsSearchIcon.setContent(Icons.SEARCH);
+            fitGridIcon(accountsSearchIcon, 14.0);
+        }
+        if (accountsView != null) {
+            for (Node n : accountsView.lookupAll(".accounts-pill-chevron")) {
+                if (n instanceof SVGPath p) {
+                    p.setContent(Icons.CHEVRON_DOWN);
+                    fitGridIcon(p, 12.0);
+                }
+            }
+        }
+
+        // search box: mirror focus onto the wrapper, filter as the user types
+        accountsSearchField.focusedProperty().addListener((obs, was, is) ->
+                accountsSearchBox.pseudoClassStateChanged(FIELD_FOCUSED, is));
+        accountsSearchField.textProperty().addListener((obs, oldText, newText) -> applyAccountsFilter());
+
+        // pills (first option = default / "no filter")
+        LinkedHashMap<String, AccountRole> roleOptions = new LinkedHashMap<>();
+        roleOptions.put(ACCOUNTS_ALL_ROLES, null);
+        for (AccountRole r : AccountRole.values()) {
+            roleOptions.put(r.getDisplayName(), r);
+        }
+        wireAccountsPill(accountsRolePill, accountsRoleValueLabel, roleOptions, v -> {
+            accountsRoleFilter = v;
+            applyAccountsFilter();
+        });
+
+        LinkedHashMap<String, AccountStatus> statusOptions = new LinkedHashMap<>();
+        statusOptions.put(ACCOUNTS_ALL_STATUSES, null);
+        for (AccountStatus s : AccountStatus.values()) {
+            statusOptions.put(s.getDisplayName(), s);
+        }
+        wireAccountsPill(accountsStatusPill, accountsStatusValueLabel, statusOptions, v -> {
+            accountsStatusFilter = v;
+            applyAccountsFilter();
+        });
+
+        LinkedHashMap<String, AccountsLastLoginFilter> loginOptions = new LinkedHashMap<>();
+        for (AccountsLastLoginFilter f : AccountsLastLoginFilter.values()) {
+            loginOptions.put(f.label(), f);
+        }
+        wireAccountsPill(accountsLastLoginPill, accountsLastLoginValueLabel, loginOptions, v -> {
+            accountsLastLoginFilter = v;
+            applyAccountsFilter();
+            reloadAccounts();   // date/range filter -> backend reload
+        });
+
+        // table
+        accountsEmptyLabel.getStyleClass().add("accounts-empty-label");
+        accountsTable.setPlaceholder(accountsEmptyLabel);
+        accountsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        accountsTable.setFixedCellSize(57.0);
+        accountsFiltered = new FilteredList<>(accountsMaster, a -> true);
+        accountsTable.setItems(accountsFiltered);
+
+        bindAccountColumn(accountsColName,      () -> accountTextCell(a -> valueOrDash(a.fullName()), "accounts-name"));
+        bindAccountColumn(accountsColUsername,  () -> accountTextCell(
+                a -> (a.username() == null || a.username().isBlank()) ? "\u2014" : "@" + a.username(),
+                "accounts-username"));
+        bindAccountColumn(accountsColRole,      this::accountRoleCell);
+        bindAccountColumn(accountsColStatus,    this::accountStatusCell);
+        bindAccountColumn(accountsColLastLogin, () -> accountTextCell(
+                a -> formatAccountLastLogin(a.lastLogin()), "accounts-meta"));
+        bindAccountColumn(accountsColCreated,   () -> accountTextCell(
+                a -> a.createdDate() == null ? "\u2014" : a.createdDate().format(ACCOUNTS_DATE_FMT),
+                "accounts-meta"));
+        bindAccountColumn(accountsColActions,   this::accountActionsCell);
+
+        updateAccountsEmptyState();
+    }
+
+    private <T> void wireAccountsPill(HBox pill, Label valueLabel,
+                                      LinkedHashMap<String, T> options, Consumer<T> onPick) {
+        ContextMenu menu = new ContextMenu();
+        menu.getStyleClass().add("filter-menu");
+        options.forEach((label, value) -> {
+            MenuItem item = new MenuItem(label);
+            item.setMnemonicParsing(false);
+            item.setOnAction(e -> {
+                valueLabel.setText(label);
+                onPick.accept(value);
+            });
+            menu.getItems().add(item);
+        });
+        pill.setOnMouseClicked(e -> {
+            if (menu.isShowing()) {
+                menu.hide();
+            } else {
+                menu.show(pill, Side.BOTTOM, 0.0, 4.0);
+            }
+        });
+    }
+
+    @FXML
+    private void onAccountsClearFilters() {
+        boolean hadLoginFilter = accountsLastLoginFilter != AccountsLastLoginFilter.ANYTIME;
+
+        accountsRoleFilter = null;
+        accountsStatusFilter = null;
+        accountsLastLoginFilter = AccountsLastLoginFilter.ANYTIME;
+        accountsRoleValueLabel.setText(ACCOUNTS_ALL_ROLES);
+        accountsStatusValueLabel.setText(ACCOUNTS_ALL_STATUSES);
+        accountsLastLoginValueLabel.setText(AccountsLastLoginFilter.ANYTIME.label());
+        accountsSearchField.clear();
+
+        applyAccountsFilter();
+        if (hadLoginFilter) {
+            reloadAccounts();
+        }
+    }
+
+    private void applyAccountsFilter() {
+        if (accountsFiltered == null) {
+            return;
+        }
+        String q = accountsSearchField.getText() == null ? ""
+                : accountsSearchField.getText().trim().toLowerCase(Locale.ROOT);
+
+        accountsFiltered.setPredicate(a ->
+                (accountsRoleFilter == null || a.role() == accountsRoleFilter)
+                        && (accountsStatusFilter == null || a.status() == accountsStatusFilter)
+                        && matchesAccountsLastLogin(a)
+                        && (q.isEmpty()
+                        || containsIgnoreCase(a.fullName(), q)
+                        || containsIgnoreCase(a.username(), q)
+                        || containsIgnoreCase(a.email(), q)));
+        updateAccountsEmptyState();
+    }
+
+    private boolean matchesAccountsLastLogin(AccountRow a) {
+        LocalDateTime ll = a.lastLogin();
+        LocalDate today = LocalDate.now();
+        return switch (accountsLastLoginFilter) {
+            case ANYTIME      -> true;
+            case NEVER        -> ll == null;
+            case TODAY        -> ll != null && ll.toLocalDate().equals(today);
+            case LAST_7_DAYS  -> ll != null && !ll.isBefore(today.minusDays(6).atStartOfDay());
+            case LAST_30_DAYS -> ll != null && !ll.isBefore(today.minusDays(29).atStartOfDay());
+        };
+    }
+
+    private static boolean containsIgnoreCase(String value, String lowerQuery) {
+        return value != null && value.toLowerCase(Locale.ROOT).contains(lowerQuery);
+    }
+
+    private void updateAccountsEmptyState() {
+        accountsEmptyLabel.setText(accountsMaster.isEmpty()
+                ? "No accounts loaded."
+                : "No accounts match your filters.");
+    }
+
+    private void reloadAccounts() {
+        // TODO: ask the backend for accounts matching accountsLastLoginFilter,
+        //       then call setAccounts(...).
+    }
+
+    private void bindAccountColumn(TableColumn<AccountRow, AccountRow> col,
+                                   Supplier<TableCell<AccountRow, AccountRow>> cellSupplier) {
+        col.setSortable(false);
+        col.setReorderable(false);
+        col.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue()));
+        col.setCellFactory(tc -> cellSupplier.get());
+    }
+
+    /** Base cell for the accounts table: clears itself when empty, otherwise calls render(). */
+    private abstract static class AccountCell extends TableCell<AccountRow, AccountRow> {
+        @Override
+        protected void updateItem(AccountRow item, boolean empty) {
+            super.updateItem(item, empty);
+            setText(null);
+            setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+            if (empty || item == null) {
+                setGraphic(null);
+            } else {
+                render(item);
+            }
+        }
+
+        protected abstract void render(AccountRow row);
+    }
+
+    private TableCell<AccountRow, AccountRow> accountTextCell(Function<AccountRow, String> text, String styleClass) {
+        return new AccountCell() {
+            private final Label label = new Label();
+            { label.getStyleClass().add(styleClass); }
+
+            @Override
+            protected void render(AccountRow r) {
+                label.setText(text.apply(r));
+                setGraphic(label);
+            }
+        };
+    }
+
+    private TableCell<AccountRow, AccountRow> accountRoleCell() {
+        return new AccountCell() {
+            private final Label chip = new Label();
+
+            @Override
+            protected void render(AccountRow r) {
+                if (r.role() == null) {
+                    chip.setText("\u2014");
+                    chip.getStyleClass().setAll("accounts-meta");
+                } else {
+                    chip.setText(r.role().getDisplayName());
+                    chip.getStyleClass().setAll("accounts-role-chip",
+                            "accounts-role-" + r.role().name().toLowerCase(Locale.ROOT));
+                }
+                setGraphic(chip);
+            }
+        };
+    }
+
+    private TableCell<AccountRow, AccountRow> accountStatusCell() {
+        return new AccountCell() {
+            private final HBox chip = new HBox(6.0);
+            private final Region dot = new Region();
+            private final Label text = new Label();
+            {
+                chip.setAlignment(Pos.CENTER_LEFT);
+                dot.getStyleClass().add("chip-dot");
+                text.getStyleClass().add("chip-text");
+                chip.getChildren().addAll(dot, text);
+            }
+
+            @Override
+            protected void render(AccountRow r) {
+                AccountStatus s = r.status();
+                String cls = s == null ? "chip-neutral" : switch (s) {
+                    case ACTIVE    -> "chip-success";
+                    case INACTIVE  -> "chip-warning";
+                    case SUSPENDED -> "chip-danger";
+                };
+                chip.getStyleClass().setAll("chip", cls);
+                text.setText(s == null ? "\u2014" : s.getDisplayName());
+                setGraphic(chip);
+            }
+        };
+    }
+
+    private TableCell<AccountRow, AccountRow> accountActionsCell() {
+        return new AccountCell() {
+            private AccountRow current;
+            private final Button editBtn   = accountsIconButton(Icons.SQUARE_PEN, "icon-brand",  "Edit account");
+            private final Button deleteBtn = accountsIconButton(Icons.TRASH_2,    "icon-danger", "Delete account");
+            private final HBox box = new HBox(8.0, editBtn, deleteBtn);
+            {
+                box.setAlignment(Pos.CENTER);
+                editBtn.setOnAction(e -> {
+                    if (onEditAccount != null && current != null) {
+                        onEditAccount.accept(current);
+                    }
+                });
+                deleteBtn.setOnAction(e -> {
+                    if (onDeleteAccount != null && current != null) {
+                        onDeleteAccount.accept(current);
+                    }
+                });
+            }
+
+            @Override
+            protected void render(AccountRow r) {
+                current = r;
+                setGraphic(box);
+            }
+        };
+    }
+
+    private Button accountsIconButton(String pathData, String colorClass, String tooltip) {
+        SVGPath icon = new SVGPath();
+        icon.setContent(pathData);
+        icon.getStyleClass().addAll("phosphor-icon", colorClass);
+        fitGridIcon(icon, 14.0, 1.5);   // the design uses a 1.5px stroke here
+
+        StackPane host = new StackPane(icon);
+        host.setMinSize(14.0, 14.0);
+        host.setPrefSize(14.0, 14.0);
+        host.setMaxSize(14.0, 14.0);
+
+        Button b = new Button();
+        b.setGraphic(host);
+        b.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        b.setMnemonicParsing(false);
+        b.getStyleClass().add("accounts-icon-btn");
+        b.setTooltip(new Tooltip(tooltip));
+        return b;
+    }
+
+    private String formatAccountLastLogin(LocalDateTime ll) {
+        if (ll == null) {
+            return "Never";
+        }
+        long days = ChronoUnit.DAYS.between(ll.toLocalDate(), LocalDate.now());
+        if (days <= 0) {
+            return "Today, " + ll.format(ACCOUNTS_TIME_FMT);
+        }
+        if (days == 1) {
+            return "Yesterday, " + ll.format(ACCOUNTS_TIME_FMT);
+        }
+        if (days < 7) {
+            return days + " days ago";
+        }
+        long weeks = days / 7;
+        if (weeks < 5) {
+            return weeks == 1 ? "1 week ago" : weeks + " weeks ago";
+        }
+        return ll.toLocalDate().format(ACCOUNTS_DATE_FMT);
+    }
+
+    /* ============================== SETTINGS ============================== */
+
+    private void setupSettingsPage() {
+        // Language dropdown: options are supplied later by setSettingsLanguageOptions(...)
+        settingsLanguageFilter = new FilterPill(settingsLanguagePill, settingsLanguageValueLabel, () -> { });
+
+        // Logo preview: rounded-square clip inside the 1px border (80 - 2 = 78)
+        Rectangle clip = new Rectangle(78.0, 78.0);
+        clip.setArcWidth(18.0);
+        clip.setArcHeight(18.0);
+        settingsLogoImage.setFitWidth(78.0);
+        settingsLogoImage.setFitHeight(78.0);
+        settingsLogoImage.setClip(clip);
+
+        // Sync mode behaves like a radio pair: one is always selected.
+        settingsSyncManualBtn.setSelected(true);
+        settingsSyncGroup.selectedToggleProperty().addListener((obs, old, now) -> {
+            if (now == null && old != null) {
+                settingsSyncGroup.selectToggle(old);
+                return;
+            }
+            updateSettingsTimeFieldsEnabled();
+        });
+        updateSettingsTimeFieldsEnabled();
+
+        showSettingsLogo(null);
+        setSettingsError(null);
+    }
+
+    private void updateSettingsTimeFieldsEnabled() {
+        boolean manual = settingsSyncManualBtn.isSelected();
+        settingsDateField.setDisable(!manual);
+        settingsTimeField.setDisable(!manual);
+    }
+
+    /** Puts server values into the form. Null resets everything to its empty state. */
+    private void applySettingsToForm(AppSettings s) {
+        setSettingsError(null);
+        if (s == null) {
+            settingsNameField.clear();
+            settingsEmailField.clear();
+            settingsDateField.clear();
+            settingsTimeField.clear();
+            settingsSyncManualBtn.setSelected(true);
+            settingsAutoBackupToggle.setSelected(false);
+            settingsRequirePinToggle.setSelected(false);
+            settingsPendingLanguage = null;
+            settingsLogoUri = null;
+            showSettingsLogo(null);
+            return;
+        }
+        settingsNameField.setText(s.restaurantName() == null ? "" : s.restaurantName());
+        settingsEmailField.setText(s.contactEmail() == null ? "" : s.contactEmail());
+
+        settingsLogoUri = s.logoUri();
+        showSettingsLogo(settingsLogoUri);
+
+        if (s.timeSyncMode() == TimeSyncMode.AUTO) {
+            settingsSyncAutoBtn.setSelected(true);
+        } else {
+            settingsSyncManualBtn.setSelected(true);
+        }
+        settingsDateField.setText(s.systemDate() == null ? "" : s.systemDate().format(SETTINGS_DATE_FMT));
+        settingsTimeField.setText(s.systemTime() == null ? "" : s.systemTime().format(SETTINGS_TIME_FMT));
+
+        settingsPendingLanguage = s.language();
+        if (settingsPendingLanguage != null) {
+            settingsLanguageFilter.setSelected(settingsPendingLanguage);
+        }
+
+        settingsAutoBackupToggle.setSelected(s.autoBackupEnabled());
+        settingsRequirePinToggle.setSelected(s.requirePinForSensitiveActions());
+    }
+
+    /** Shows the logo at the given URI, or the placeholder icon when null/blank/unloadable. */
+    private void showSettingsLogo(String uri) {
+        boolean shown = false;
+        if (uri != null && !uri.isBlank()) {
+            try {
+                Image image = new Image(uri, 156.0, 156.0, true, true, true);
+                settingsLogoImage.setImage(image);
+                applyCoverCrop(settingsLogoImage, image);
+                shown = true;
+            } catch (IllegalArgumentException ex) {
+                settingsLogoImage.setImage(null);
+            }
+        } else {
+            settingsLogoImage.setImage(null);
+        }
+        settingsLogoImage.setVisible(shown);
+        settingsLogoImage.setManaged(shown);
+        settingsLogoPlaceholderIcon.setVisible(!shown);
+    }
+
+    /** Validates the form. Returns null (and shows a message) when something is invalid. */
+    private AppSettings readSettingsForm() {
+        String name = settingsNameField.getText() == null ? "" : settingsNameField.getText().trim();
+        if (name.isEmpty()) {
+            setSettingsError("Restaurant name is required.");
+            return null;
+        }
+        String email = settingsEmailField.getText() == null ? "" : settingsEmailField.getText().trim();
+        if (!email.isEmpty() && !email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+            setSettingsError("Enter a valid contact email.");
+            return null;
+        }
+
+        TimeSyncMode mode = settingsSyncAutoBtn.isSelected() ? TimeSyncMode.AUTO : TimeSyncMode.MANUAL;
+        LocalDate date = null;
+        LocalTime time = null;
+        if (mode == TimeSyncMode.MANUAL) {
+            try {
+                date = LocalDate.parse(normalizeSpaces(settingsDateField.getText()), SETTINGS_DATE_FMT);
+            } catch (DateTimeParseException ex) {
+                setSettingsError("System date must be in the form Month D, YYYY.");
+                return null;
+            }
+            try {
+                time = LocalTime.parse(normalizeSpaces(settingsTimeField.getText()), SETTINGS_TIME_FMT);
+            } catch (DateTimeParseException ex) {
+                setSettingsError("System time must be in the form H:MM AM/PM.");
+                return null;
+            }
+        }
+
+        return new AppSettings(
+                name,
+                email.isEmpty() ? null : email,
+                settingsLogoUri,
+                mode,
+                date,
+                time,
+                settingsLanguageFilter.getSelected(),
+                settingsAutoBackupToggle.isSelected(),
+                settingsRequirePinToggle.isSelected());
+    }
+
+    /** Trims and turns the narrow no-break space that newer JDKs put before AM/PM into a normal one. */
+    private static String normalizeSpaces(String s) {
+        return s == null ? "" : s.replace('\u202F', ' ').replace('\u00A0', ' ').trim();
+    }
+
+    @FXML
+    private void onSettingsSave() {
+        setSettingsError(null);
+        AppSettings values = readSettingsForm();
+        if (values == null) {
+            return;
+        }
+        if (onSaveSettings != null) {
+            onSaveSettings.accept(values);
+        }
+    }
+
+    @FXML
+    private void onSettingsCancel() {
+        applySettingsToForm(settingsLoaded);
+    }
+
+    @FXML
+    private void onSettingsChangeLogo() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Choose restaurant logo");
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.gif"));
+        File file = chooser.showOpenDialog(appRoot.getScene().getWindow());
+        if (file != null) {
+            settingsLogoUri = file.toURI().toString();
+            showSettingsLogo(settingsLogoUri);
+        }
+    }
+
+    @FXML
+    private void onSettingsBackupDatabase() {
+        if (onBackupDatabase != null) {
+            onBackupDatabase.run();
+        }
+        // TODO: backend backup call.
+    }
+
+    @FXML
+    private void onSettingsExportData() {
+        if (onExportData != null) {
+            onExportData.run();
+        }
+        // TODO: backend CSV export (choose a target file with FileChooser).
+    }
+
+    @FXML
+    private void onSettingsRestorePoint() {
+        if (onRestorePoint != null) {
+            onRestorePoint.run();
+        }
+        // TODO: restore-point picker + confirmation dialog (design not supplied yet).
+    }
+
+    @FXML
+    private void onSettingsTabGeneral() {
+        selectSettingsTab(settingsTabGeneralBtn, settingsGeneralCard);
+    }
+
+    @FXML
+    private void onSettingsTabPreferences() {
+        selectSettingsTab(settingsTabPreferencesBtn, settingsPreferencesCard);
+    }
+
+    @FXML
+    private void onSettingsTabBackup() {
+        selectSettingsTab(settingsTabBackupBtn, settingsBackupCard);
+    }
+
+    @FXML
+    private void onSettingsTabSecurity() {
+        selectSettingsTab(settingsTabSecurityBtn, settingsSecurityCard);
+    }
+
+    /** Marks the tab active and scrolls the card column so the matching card is at the top. */
+    private void selectSettingsTab(Button active, Node section) {
+        for (Button btn : new Button[]{
+                settingsTabGeneralBtn, settingsTabPreferencesBtn,
+                settingsTabBackupBtn, settingsTabSecurityBtn}) {
+            btn.getStyleClass().remove(SETTINGS_TAB_ACTIVE);
+        }
+        if (!active.getStyleClass().contains(SETTINGS_TAB_ACTIVE)) {
+            active.getStyleClass().add(SETTINGS_TAB_ACTIVE);
+        }
+        scrollSettingsTo(section);
+    }
+
+    private void scrollSettingsTo(Node section) {
+        double contentHeight = settingsContent.getBoundsInLocal().getHeight();
+        double viewportHeight = settingsScroll.getViewportBounds().getHeight();
+        double scrollable = contentHeight - viewportHeight;
+        if (scrollable <= 0.0) {
+            return;
+        }
+        double y = section.getBoundsInParent().getMinY();   // section is a direct child of settingsContent
+        settingsScroll.setVvalue(Math.max(0.0, Math.min(1.0, y / scrollable)));
+    }
+
     /* ============================== FORMATTING HELPERS ============================== */
 
     private String formatPeso(BigDecimal amount) {
@@ -1094,6 +1846,13 @@ public class AdminController {
         private void setOptions(List<String> newOptions) {
             options = newOptions == null ? List.of() : List.copyOf(newOptions);
             select(options.isEmpty() ? null : options.get(0), false);
+        }
+
+        /** Selects a value without notifying, if it is one of the current options. */
+        private void setSelected(String value) {
+            if (value != null && options.contains(value)) {
+                select(value, false);
+            }
         }
 
         private boolean isDefault() {

@@ -1,7 +1,7 @@
 package com.kainanresto.controllers.id;
 
 import com.kainanresto.dao.UserDAO;
-import com.kainanresto.model.Role;
+import com.kainanresto.model.AccountRole;
 import com.kainanresto.model.User;
 import com.kainanresto.util.AlertUtil;
 import com.kainanresto.util.NavigationUtil;
@@ -114,8 +114,8 @@ public class LoginController {
     private void navigateToDashboard(ActionEvent event, User user) {
         String fxmlPath;
 
-        if (user.getRole() == Role.ADMIN ||
-                user.getRole() == Role.MANAGER) {
+        if (user.getRole() == AccountRole.ADMIN ||
+                user.getRole() == AccountRole.MANAGER) {
             fxmlPath = "/com/kainanresto/views/main/AdminView.fxml";
         } else {
             fxmlPath = "/com/kainanresto/views/main/UserView.fxml";

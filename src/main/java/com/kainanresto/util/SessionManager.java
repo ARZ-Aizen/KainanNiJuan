@@ -1,6 +1,6 @@
 package com.kainanresto.util;
 
-import com.kainanresto.model.Role;
+import com.kainanresto.model.AccountRole;
 import com.kainanresto.model.User;
 
 public final class SessionManager {
@@ -27,8 +27,8 @@ public final class SessionManager {
     }
 
     //VERIFY NG ROLE
-    public static boolean hasRole(Role role) {
-        return currentUser != null && currentUser.getRole() == role;
+    public static boolean hasRole(AccountRole accountRole) {
+        return currentUser != null && currentUser.getRole() == accountRole;
     }
 
     //CLEAR SESSION
