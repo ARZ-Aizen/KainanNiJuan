@@ -1,7 +1,7 @@
 package com.kainanresto.controllers.id;
 
 import com.kainanresto.dao.UserDAO;
-import com.kainanresto.model.Role;
+import com.kainanresto.model.AccountRole;
 import com.kainanresto.model.User;
 import com.kainanresto.util.AlertUtil;
 import com.kainanresto.util.NavigationUtil;
@@ -120,8 +120,8 @@ public class RegisterController {
         }
 
         //MAP ROLE
-        Role role = Role.fromString(roleStr);
-        User newUser = new User(username, password, role, fullName, true);
+        AccountRole accountRole = AccountRole.fromString(roleStr);
+        User newUser = new User(username, password, accountRole, fullName, true);
 
         //USERDAO NA DITO
         UserDAO.OperationResult result = userDAO.register(newUser);

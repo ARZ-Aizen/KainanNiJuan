@@ -1,7 +1,7 @@
 package com.kainanresto.dao;
 
 import com.kainanresto.config.DatabaseConfig;
-import com.kainanresto.model.Role;
+import com.kainanresto.model.AccountRole;
 import com.kainanresto.model.User;
 import com.kainanresto.util.PasswordHasher;
 import java.sql.Connection;
@@ -142,7 +142,7 @@ public class UserDAO {
                 rs.getInt("user_id"),
                 rs.getString("username"),
                 rs.getString("password"),
-                Role.fromString(rs.getString("role")),
+                AccountRole.fromString(rs.getString("role")),
                 rs.getString("full_name"),
                 rs.getBoolean("is_active")
         );

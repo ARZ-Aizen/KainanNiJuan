@@ -4,26 +4,26 @@ public class User {
     private int userId;
     private String username;
     private String password;
-    private Role role;
+    private AccountRole accountRole;
     private String fullName;
     private boolean active;
 
     public User() {
     }
 
-    public User(String username, String password, Role role, String fullName, boolean active) {
+    public User(String username, String password, AccountRole accountRole, String fullName, boolean active) {
         this.username = username;
         this.password = password;
-        this.role = role;
+        this.accountRole = accountRole;
         this.fullName = fullName;
         this.active = active;
     }
 
-    public User(int userId, String username, String password, Role role, String fullName, boolean active) {
+    public User(int userId, String username, String password, AccountRole accountRole, String fullName, boolean active) {
         this.userId = userId;
         this.username = username;
         this.password = password;
-        this.role = role;
+        this.accountRole = accountRole;
         this.fullName = fullName;
         this.active = active;
     }
@@ -52,12 +52,12 @@ public class User {
         this.password = password;
     }
 
-    public Role getRole() {
-        return role;
+    public AccountRole getRole() {
+        return accountRole;
     }
 
-    public void setRole(Role role) {
-        this.role = role;
+    public void setRole(AccountRole accountRole) {
+        this.accountRole = accountRole;
     }
 
     public String getFullName() {
@@ -81,7 +81,7 @@ public class User {
         return "User{" +
                 "userId=" + userId +
                 ", username='" + username + '\'' +
-                ", role=" + role +
+                ", role=" + accountRole +
                 ", fullName='" + fullName + '\'' +
                 ", active=" + active +
                 '}';
