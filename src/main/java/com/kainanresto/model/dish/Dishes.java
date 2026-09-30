@@ -1,4 +1,4 @@
-package com.kainanresto.model;
+package com.kainanresto.model.dish;
 
 import java.math.BigDecimal;
 

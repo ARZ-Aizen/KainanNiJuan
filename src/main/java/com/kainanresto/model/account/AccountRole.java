@@ -1,4 +1,4 @@
-package com.kainanresto.model;
+package com.kainanresto.model.account;
 
 import java.util.Locale;
 

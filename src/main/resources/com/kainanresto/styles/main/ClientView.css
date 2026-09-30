@@ -102,54 +102,57 @@
     -fx-min-height: 30px; -fx-pref-height: 30px; -fx-max-height: 30px;
 }
 
-/* ================= HEADER ================= */
+/* ================= SEARCH BAR (shared by POS + Order Management) ================= */
 .pos-page { -fx-background-color: transparent; }
-.pos-header { -fx-padding: 48 26 0 25; }
-.pos-brand-main   { -fx-font-family: 'Roboto'; -fx-font-size: 32px; -fx-font-weight: bold; -fx-fill: #8C6343; }
-.pos-brand-accent { -fx-font-family: 'Roboto'; -fx-font-size: 32px; -fx-font-weight: bold; -fx-fill: #292929; }
-.pos-date { -fx-font-family: 'Inter'; -fx-font-size: 16px; -fx-font-weight: 400; -fx-text-fill: #454545; }
 
-.pos-search-box {
-    -fx-background-color: white;
+.om-search-box {
+    -fx-background-color: #EAE1D4;                /* cream fill, as in the accounts search bar */
     -fx-background-radius: 8;
-    -fx-border-color: #8C6343;
+    -fx-border-color: #E2D3C7;                    /* light tan outline */
     -fx-border-width: 1;
     -fx-border-radius: 8;
     -fx-padding: 7 15 7 11;                       /* 8/16/12 minus the 1px inside outline */
-    -fx-min-width: 240; -fx-pref-width: 405; -fx-max-width: 405;
-    -fx-min-height: 40; -fx-pref-height: 40; -fx-max-height: 40;
+    -fx-min-width: 320; -fx-pref-width: 320; -fx-max-width: 320;
+    -fx-min-height: 44; -fx-pref-height: 44; -fx-max-height: 44;
 }
-.pos-search-box:focused { -fx-border-color: #7A5738; }
-.pos-search-icon { -fx-stroke: #828282; }
+.om-search-box:focused { -fx-border-color: #8C6343; }
+
+.pos-search-icon { -fx-stroke: #5A4A3F; }
 .pos-search-field {
     -fx-background-color: transparent;
     -fx-background-insets: 0;
     -fx-padding: 0;
     -fx-font-family: 'Inter'; -fx-font-size: 16px;
     -fx-text-fill: #2E2520;
-    -fx-prompt-text-fill: #828282;
+    -fx-prompt-text-fill: #6E625C;
     -fx-focus-color: transparent; -fx-faint-focus-color: transparent;
 }
 
 /* ================= BODY ================= */
-.pos-body { -fx-padding: 40 20 0 39; }
-
 .pos-category-chip {
-    -fx-background-color: #B9926D;
+    -fx-background-color: white;
     -fx-background-insets: 0;
-    -fx-background-radius: 60;
-    -fx-padding: 0 56;
-    -fx-min-height: 39; -fx-pref-height: 39; -fx-max-height: 39;
-    -fx-alignment: CENTER;
-    -fx-font-family: 'Roboto'; -fx-font-size: 16px; -fx-font-weight: 400;
-    -fx-text-fill: black;
+    -fx-background-radius: 30;
+    -fx-border-color: #EAE1D4;
+    -fx-border-width: 1;
+    -fx-border-radius: 30;
+    -fx-padding: 9 19;
+    -fx-font-family: 'Inter'; -fx-font-size: 15px; -fx-font-weight: 600;
+    -fx-text-fill: #292929;
     -fx-focus-color: transparent; -fx-faint-focus-color: transparent;
     -fx-cursor: hand;
 }
-.pos-category-chip:selected { -fx-background-color: #8C6343; -fx-text-fill: white; }
+.pos-category-chip:hover { -fx-background-color: #FCF7F0; }
+.pos-category-chip:selected,
+.pos-category-chip:selected:hover {
+    -fx-background-color: #8C6343;
+    -fx-border-color: #8C6343;
+    -fx-font-weight: 700;
+    -fx-text-fill: #F9F4EC;
+}
 
 .pos-divider {
-    -fx-background-color: black;
+    -fx-background-color: #EAE1D4;
     -fx-min-height: 1; -fx-pref-height: 1; -fx-max-height: 1;
 }
 .pos-section-title {
@@ -164,7 +167,7 @@
     -fx-background-color: transparent;
 }
 .pos-scroll { -fx-padding: 0; -fx-background-insets: 0; -fx-border-color: transparent; }
-.pos-grid-host { -fx-padding: 0 0 24 53; }          /* 185 - 132 = 53 */
+.pos-grid-host { -fx-padding: 4 4 24 4; }
 .pos-empty-label { -fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-text-fill: #6E625C; }
 
 /* ================= DISH CARD ================= */
@@ -333,18 +336,7 @@
 .om-brand-main   { -fx-font-family: 'Roboto'; -fx-font-size: 32px; -fx-font-weight: bold; -fx-fill: #8C6343; }
 .om-brand-accent { -fx-font-family: 'Roboto'; -fx-font-size: 32px; -fx-font-weight: bold; -fx-fill: #292929; }
 .om-subtitle { -fx-font-family: 'Inter'; -fx-font-size: 15px; -fx-font-weight: 500; -fx-text-fill: #666666; }
-
-.om-search-box {
-    -fx-background-color: white;
-    -fx-background-radius: 8;
-    -fx-border-color: #8C6343;
-    -fx-border-width: 1;
-    -fx-border-radius: 8;
-    -fx-padding: 7 15 7 11;                       /* 8/16/12 minus the 1px inside outline */
-    -fx-min-width: 320; -fx-pref-width: 320; -fx-max-width: 320;
-    -fx-min-height: 44; -fx-pref-height: 44; -fx-max-height: 44;
-}
-.om-search-box:focused { -fx-border-color: #7A5738; }
+.om-title-flow { -fx-min-height: 40; -fx-pref-height: 40; }
 
 /* status chips */
 .om-status-chip {
@@ -532,4 +524,3 @@
     -fx-cursor: hand;
 }
 .omr-cancel-btn:hover { -fx-background-color: #FDF3F2; }
-.om-title-flow { -fx-min-height: 40; -fx-pref-height: 40; }

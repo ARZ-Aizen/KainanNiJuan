@@ -1,7 +1,7 @@
 package com.kainanresto.util;
 
-import com.kainanresto.model.AccountRole;
-import com.kainanresto.model.User;
+import com.kainanresto.model.account.AccountRole;
+import com.kainanresto.model.account.User;
 
 public final class SessionManager {
 

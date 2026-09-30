@@ -64,20 +64,24 @@
     <center>
         <StackPane fx:id="viewStack">
 
-            <!-- Order POS -->
+            <!-- Order POS (same layout skeleton as Order Management) -->
             <HBox fx:id="posView" styleClass="pos-page">
-                <VBox HBox.hgrow="ALWAYS">
-                    <HBox styleClass="pos-header" alignment="CENTER_LEFT">
-                        <VBox>
-                            <TextFlow>
-                                <Text text="KAINAN NI " styleClass="pos-brand-main"/>
-                                <Text text="JUAN" styleClass="pos-brand-accent"/>
+                <VBox spacing="24" HBox.hgrow="ALWAYS">
+                    <padding>
+                        <Insets top="32" right="32" bottom="32" left="32"/>
+                    </padding>
+
+                    <HBox alignment="CENTER_LEFT">
+                        <VBox spacing="4">
+                            <TextFlow styleClass="om-title-flow">
+                                <Text text="KAINAN NI " styleClass="om-brand-main"/>
+                                <Text text="JUAN" styleClass="om-brand-accent"/>
                             </TextFlow>
-                            <Label fx:id="currentDateLabel" styleClass="pos-date"/>
+                            <Label fx:id="currentDateLabel" styleClass="om-subtitle"/>
                         </VBox>
                         <Region HBox.hgrow="ALWAYS"/>
-                        <HBox fx:id="posSearchBox" styleClass="pos-search-box" alignment="CENTER_LEFT" spacing="12">
-                            <StackPane styleClass="icon-host-24">
+                        <HBox fx:id="posSearchBox" styleClass="om-search-box" alignment="CENTER_LEFT" spacing="12">
+                            <StackPane styleClass="om-host-20">
                                 <SVGPath fx:id="posSearchIcon" styleClass="phosphor-icon, pos-search-icon"/>
                             </StackPane>
                             <TextField fx:id="posSearchField" promptText="Search for food, dessert, etc..."
@@ -85,27 +89,26 @@
                         </HBox>
                     </HBox>
 
-                    <VBox styleClass="pos-body" spacing="16" VBox.vgrow="ALWAYS">
-                        <FlowPane fx:id="posCategoryChips" hgap="42" vgap="12"/>
-                        <Region styleClass="pos-divider">
-                            <VBox.margin><Insets top="11"/></VBox.margin>
-                        </Region>
-                        <Label text="Choose Dishes" styleClass="pos-section-title"/>
-                        <ScrollPane fx:id="posScroll" styleClass="pos-scroll" fitToWidth="true"
-                                    hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
-                            <content>
-                                <VBox styleClass="pos-grid-host" alignment="TOP_LEFT">
-                                    <Label fx:id="posGridPlaceholder" styleClass="pos-empty-label"/>
-                                    <FlowPane fx:id="posDishGrid" alignment="TOP_LEFT" hgap="14" vgap="17"/>
-                                </VBox>
-                            </content>
-                        </ScrollPane>
-                    </VBox>
+                    <FlowPane fx:id="posCategoryChips" hgap="8" vgap="8"/>
+
+                    <Region styleClass="pos-divider"/>
+
+                    <Label text="Choose Dishes" styleClass="pos-section-title"/>
+
+                    <ScrollPane fx:id="posScroll" styleClass="pos-scroll" fitToWidth="true"
+                                hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+                        <content>
+                            <VBox styleClass="pos-grid-host" alignment="TOP_LEFT">
+                                <Label fx:id="posGridPlaceholder" styleClass="pos-empty-label"/>
+                                <FlowPane fx:id="posDishGrid" alignment="TOP_LEFT" hgap="14" vgap="17"/>
+                            </VBox>
+                        </content>
+                    </ScrollPane>
                 </VBox>
 
                 <!-- Current Order (receipt), shown once the order has items -->
                 <VBox fx:id="receiptPanel" styleClass="receipt-panel" visible="false" managed="false">
-                    <HBox.margin><Insets top="20" right="16" bottom="16" left="0"/></HBox.margin>
+                    <HBox.margin><Insets top="32" right="32" bottom="32" left="0"/></HBox.margin>
                     <fx:define>
                         <ToggleGroup fx:id="receiptTypeGroup"/>
                     </fx:define>

@@ -31,7 +31,7 @@ public final class NavigationUtil {
             }
 
             String pathLower = fxmlPath.toLowerCase();
-            boolean isDashboard = pathLower.contains("adminview") || pathLower.contains("userview");
+            boolean isDashboard = pathLower.contains("adminview") || pathLower.contains("clientview");
 
             if (isDashboard) {
                 stage.setScene(new Scene(root));
@@ -71,7 +71,7 @@ public final class NavigationUtil {
     private static void configureWindowMode(Stage stage, String fxmlPath) {
         String pathLower = fxmlPath.toLowerCase();
 
-        boolean isDashboard = pathLower.contains("adminview") || pathLower.contains("userview");
+        boolean isDashboard = pathLower.contains("adminview") || pathLower.contains("clientview");
 
         if (isDashboard) {
             //FULL SCREEN PAG NASA LOOB NA

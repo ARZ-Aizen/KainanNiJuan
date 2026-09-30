@@ -1,4 +1,7 @@
-package com.kainanresto.model;
+package com.kainanresto.model.order;
+
+import com.kainanresto.model.transac.ReceiptLine;
+import com.kainanresto.model.transac.ReceiptTotals;
 
 import java.time.LocalDateTime;
 import java.util.List;

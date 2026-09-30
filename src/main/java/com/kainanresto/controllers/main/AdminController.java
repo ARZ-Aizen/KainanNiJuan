@@ -1,6 +1,15 @@
 package com.kainanresto.controllers.main;
 
-import com.kainanresto.model.*;
+import com.kainanresto.model.account.AccountRole;
+import com.kainanresto.model.account.AccountRow;
+import com.kainanresto.model.account.AccountStatus;
+import com.kainanresto.model.account.User;
+import com.kainanresto.model.dish.Dishes;
+import com.kainanresto.model.order.OrderStats;
+import com.kainanresto.model.transac.Transaction;
+import com.kainanresto.model.util.AppSettings;
+import com.kainanresto.model.util.Icons;
+import com.kainanresto.model.util.TimeSyncMode;
 import com.kainanresto.util.NavigationUtil;
 import com.kainanresto.util.SessionManager;
 import javafx.application.Platform;
@@ -2121,64 +2130,6 @@ public class AdminController {
 
     /* ============================== CELL RENDERING HELPERS ============================== */
 
-    /** Applies a text style class to every cell of a plain text column. */
-    private void applyTextStyle(TableColumn<Product, String> column, String styleClass) {
-        column.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(String value, boolean empty) {
-                super.updateItem(value, empty);
-                setText(empty ? null : value);
-                getStyleClass().remove(styleClass);
-                if (!empty) {
-                    getStyleClass().add(styleClass);
-                }
-            }
-        });
-    }
-
-    /** Renders the inventory status column as a coloured dot plus label. */
-    private static final class StatusChipCell extends TableCell<Product, String> {
-
-        private final Label dot = new Label("\u25CF");
-        private final Label text = new Label();
-        private final HBox chip = new HBox(6.0, dot, text);
-
-        private StatusChipCell() {
-            chip.setAlignment(Pos.CENTER_LEFT);
-            chip.getStyleClass().add("status-chip");
-            dot.getStyleClass().add("status-dot");
-            text.getStyleClass().add("status-text");
-        }
-
-        @Override
-        protected void updateItem(String value, boolean empty) {
-            super.updateItem(value, empty);
-            setText(null);
-            if (empty || value == null || value.isBlank()) {
-                setGraphic(null);
-                return;
-            }
-            text.setText(value);
-            chip.getStyleClass().removeAll(
-                    "status-in-stock",
-                    "status-low-stock",
-                    "status-out-of-stock"
-            );
-            chip.getStyleClass().add(styleClassFor(value));
-            setGraphic(chip);
-        }
-
-        private String styleClassFor(String value) {
-            String normalized = value.trim().toLowerCase(Locale.ENGLISH);
-            if (normalized.startsWith("out")) {
-                return "status-out-of-stock";
-            }
-            if (normalized.startsWith("low")) {
-                return "status-low-stock";
-            }
-            return "status-in-stock";
-        }
-    }
 
     /** Orders table: two-line staff cell (name over role). */
     private static final class StaffCell extends TableCell<Transaction, Transaction> {

@@ -1,13 +1,13 @@
 package com.kainanresto.controllers.main;
 
-import com.kainanresto.model.Dishes;
-import com.kainanresto.model.Icons;
-import com.kainanresto.model.OrderCard;
-import com.kainanresto.model.OrderLine;
-import com.kainanresto.model.OrderReceipt;
-import com.kainanresto.model.OrderStatus;
-import com.kainanresto.model.ReceiptLine;
-import com.kainanresto.model.ReceiptTotals;
+import com.kainanresto.model.dish.Dishes;
+import com.kainanresto.model.util.Icons;
+import com.kainanresto.model.order.OrderCard;
+import com.kainanresto.model.order.OrderLine;
+import com.kainanresto.model.order.OrderReceipt;
+import com.kainanresto.model.order.OrderStatus;
+import com.kainanresto.model.transac.ReceiptLine;
+import com.kainanresto.model.transac.ReceiptTotals;
 import com.kainanresto.util.NavigationUtil;
 import com.kainanresto.util.SessionManager;
 import javafx.animation.Animation;
@@ -146,7 +146,7 @@ public class ClientController {
     /* ============================== ORDER MANAGEMENT (om*) ============================== */
     @FXML private Label omSubtitleLabel;
     @FXML private HBox omSearchBox;
-    @FXML private SVGPath omSearchIcon;
+    @FXML private SVGPath   omSearchIcon;
     @FXML private TextField omSearchField;
     @FXML private FlowPane omStatusChips;
     @FXML private ScrollPane omScroll;
@@ -245,7 +245,7 @@ public class ClientController {
         fitGridIcon(orderNavIcon, 34.0);
         fitGridIcon(historyNavIcon, 34.0);
         fitGridIcon(logoutIcon, 30.0);
-        fitGridIcon(posSearchIcon, 24.0);
+        fitGridIcon(posSearchIcon, 20.0);
         fitGridIcon(omSearchIcon, 20.0);
     }
 

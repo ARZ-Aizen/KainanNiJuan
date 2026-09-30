@@ -1,4 +1,4 @@
-package com.kainanresto.model;
+package com.kainanresto.model.account;
 
 public class User {
     private int userId;

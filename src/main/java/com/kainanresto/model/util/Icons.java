@@ -1,4 +1,4 @@
-package com.kainanresto.model;
+package com.kainanresto.model.util;
 
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;

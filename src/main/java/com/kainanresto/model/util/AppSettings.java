@@ -1,4 +1,4 @@
-package com.kainanresto.model;
+package com.kainanresto.model.util;
 
 import java.time.LocalDate;
 import java.time.LocalTime;

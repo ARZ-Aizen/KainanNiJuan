@@ -1,10 +1,10 @@
 package com.kainanresto.dao;
 
 import com.kainanresto.config.DatabaseConfig;
-import com.kainanresto.model.AccountRole;
-import com.kainanresto.model.AccountRow;
-import com.kainanresto.model.AccountStatus;
-import com.kainanresto.model.User;
+import com.kainanresto.model.account.AccountRole;
+import com.kainanresto.model.account.AccountRow;
+import com.kainanresto.model.account.AccountStatus;
+import com.kainanresto.model.account.User;
 import com.kainanresto.util.PasswordHasher;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

@@ -19,16 +19,11 @@ module com.kainanresto {
 
     //FXML LOADER TO
     opens com.kainanresto to javafx.fxml;
-    opens com.kainanresto.controllers to javafx.fxml;
-
-    //SA DB MODEL TO
-    opens com.kainanresto.model to javafx.base;
 
     //MGA EXPORTED PACKAGES
     exports com.kainanresto;
     exports com.kainanresto.config;
     exports com.kainanresto.dao;
-    exports com.kainanresto.model;
     exports com.kainanresto.util;
     exports com.kainanresto.controllers.id;
     opens com.kainanresto.controllers.id to javafx.fxml;
@@ -36,6 +31,16 @@ module com.kainanresto {
     opens com.kainanresto.controllers.main to javafx.fxml;
     exports com.kainanresto.controllers.util;
     opens com.kainanresto.controllers.util to javafx.fxml;
+    exports com.kainanresto.model.account;
+    opens com.kainanresto.model.account to javafx.base;
+    exports com.kainanresto.model.dish;
+    opens com.kainanresto.model.dish to javafx.base;
+    exports com.kainanresto.model.order;
+    opens com.kainanresto.model.order to javafx.base;
+    exports com.kainanresto.model.util;
+    opens com.kainanresto.model.util to javafx.base;
+    exports com.kainanresto.model.transac;
+    opens com.kainanresto.model.transac to javafx.base;
 
 
 }

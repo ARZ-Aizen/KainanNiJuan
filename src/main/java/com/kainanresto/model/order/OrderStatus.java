@@ -1,4 +1,4 @@
-package com.kainanresto.model;
+package com.kainanresto.model.order;
 
 import java.util.Locale;
 
