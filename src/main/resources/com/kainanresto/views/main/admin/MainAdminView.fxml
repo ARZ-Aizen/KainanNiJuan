@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.SVGPath?>
+
+<BorderPane fx:id="appRoot" prefWidth="1920.0" prefHeight="1051.0" minWidth="1280.0" minHeight="780.0"
+            xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.kainanresto.controllers.main.admin.MainAdminController"
+            stylesheets="@../../../styles/main/AdminView.css">
+
+    <!-- SIDEBAR (Unchanged) -->
+    <left>
+        <VBox fx:id="sidebarRoot" styleClass="sidebar" viewOrder="-1">
+            <StackPane styleClass="logo-shell">
+                <ImageView fx:id="restaurantLogoImage" fitWidth="68.0" fitHeight="68.0" preserveRatio="true">
+                    <image><Image url="@../../../images/id/KainanNiJuanLogo.png" /></image>
+                </ImageView>
+            </StackPane>
+            <VBox styleClass="primary-nav" VBox.vgrow="ALWAYS" alignment="TOP_CENTER" spacing="24.0">
+                <Button fx:id="navDashboardBtn" onAction="#onNavDashboard" styleClass="nav-item, nav-item-active" mnemonicParsing="false" contentDisplay="GRAPHIC_ONLY">
+                    <tooltip><Tooltip text="Dashboard" /></tooltip>
+                    <graphic><StackPane styleClass="nav-icon-host"><SVGPath fx:id="dashboardIcon" styleClass="phosphor-icon" /></StackPane></graphic>
+                </Button>
+                <Button fx:id="navMenuBtn" onAction="#onNavMenu" styleClass="nav-item" mnemonicParsing="false" contentDisplay="GRAPHIC_ONLY">
+                    <tooltip><Tooltip text="Menu" /></tooltip>
+                    <graphic><StackPane styleClass="nav-icon-host"><SVGPath fx:id="menuIcon" styleClass="phosphor-icon" /></StackPane></graphic>
+                </Button>
+                <Button fx:id="navSalesOrdersBtn" onAction="#onNavSalesOrders" styleClass="nav-item" mnemonicParsing="false" contentDisplay="GRAPHIC_ONLY">
+                    <tooltip><Tooltip text="Sales &amp; Orders" /></tooltip>
+                    <graphic><StackPane styleClass="nav-icon-host"><SVGPath fx:id="salesOrdersIcon" styleClass="phosphor-icon" /></StackPane></graphic>
+                </Button>
+                <Button fx:id="navAccountManagementBtn" onAction="#onNavAccountManagement" styleClass="nav-item" mnemonicParsing="false" contentDisplay="GRAPHIC_ONLY">
+                    <tooltip><Tooltip text="Account Management" /></tooltip>
+                    <graphic><StackPane styleClass="nav-icon-host"><SVGPath fx:id="accountManagementIcon" styleClass="phosphor-icon" /></StackPane></graphic>
+                </Button>
+                <Button fx:id="navSettingsBtn" onAction="#onNavSettings" styleClass="nav-item" mnemonicParsing="false" contentDisplay="GRAPHIC_ONLY">
+                    <tooltip><Tooltip text="Settings" /></tooltip>
+                    <graphic><StackPane styleClass="nav-icon-host"><SVGPath fx:id="settingsIcon" styleClass="phosphor-icon" /></StackPane></graphic>
+                </Button>
+            </VBox>
+            <VBox styleClass="sidebar-bottom" alignment="CENTER" spacing="16.0">
+                <Region styleClass="sidebar-divider" />
+                <Button fx:id="logoutBtn" onAction="#onLogout" styleClass="nav-item, logout-item" mnemonicParsing="false" contentDisplay="GRAPHIC_ONLY">
+                    <tooltip><Tooltip text="Log out" /></tooltip>
+                    <graphic><StackPane styleClass="logout-icon-host"><SVGPath fx:id="logoutIcon" styleClass="phosphor-icon" /></StackPane></graphic>
+                </Button>
+            </VBox>
+        </VBox>
+    </left>
+
+    <!-- WORKSPACE -->
+    <center>
+        <BorderPane styleClass="workspace">
+            <top>
+                <HBox styleClass="topbar" alignment="CENTER_LEFT">
+                    <VBox spacing="4.0">
+                        <Label fx:id="pageTitleLabel" styleClass="page-title" />
+                        <Label fx:id="pageSubtitleLabel" styleClass="page-subtitle" />
+                    </VBox>
+                    <Region HBox.hgrow="ALWAYS" />
+                    <HBox styleClass="date-box" alignment="CENTER_LEFT" spacing="8.0">
+                        <StackPane prefWidth="16.0" prefHeight="16.0" styleClass="topbar-icon-host">
+                            <SVGPath fx:id="calendarIcon" styleClass="phosphor-icon" />
+                        </StackPane>
+                        <Label fx:id="currentDateLabel" styleClass="current-date" />
+                    </HBox>
+                </HBox>
+            </top>
+
+            <!-- THIS IS WHERE THE MAGIC HAPPENS. Sub-views load here. -->
+            <center>
+                <StackPane fx:id="contentArea" styleClass="view-stack" />
+            </center>
+        </BorderPane>
+    </center>
+</BorderPane>

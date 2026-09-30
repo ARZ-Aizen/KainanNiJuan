@@ -27,8 +27,6 @@ module com.kainanresto {
     exports com.kainanresto.util;
     exports com.kainanresto.controllers.id;
     opens com.kainanresto.controllers.id to javafx.fxml;
-    exports com.kainanresto.controllers.main;
-    opens com.kainanresto.controllers.main to javafx.fxml;
     exports com.kainanresto.controllers.util;
     opens com.kainanresto.controllers.util to javafx.fxml;
     exports com.kainanresto.model.account;
@@ -41,6 +39,26 @@ module com.kainanresto {
     opens com.kainanresto.model.util to javafx.base;
     exports com.kainanresto.model.transac;
     opens com.kainanresto.model.transac to javafx.base;
+    exports com.kainanresto.controllers.main.admin;
+    opens com.kainanresto.controllers.main.admin to javafx.fxml;
+    exports com.kainanresto.controllers.main.client;
+    opens com.kainanresto.controllers.main.client to javafx.fxml;
+
+    // ADMIN SUB-CONTROLLERS
+    exports com.kainanresto.controllers.main.admin.dashboard;
+    opens com.kainanresto.controllers.main.admin.dashboard to javafx.fxml;
+
+    exports com.kainanresto.controllers.main.admin.menu;
+    opens com.kainanresto.controllers.main.admin.menu to javafx.fxml;
+
+    exports com.kainanresto.controllers.main.admin.accounts;
+    opens com.kainanresto.controllers.main.admin.accounts to javafx.fxml;
+
+    exports com.kainanresto.controllers.main.admin.sales;
+    opens com.kainanresto.controllers.main.admin.sales to javafx.fxml;
+
+    exports com.kainanresto.controllers.main.admin.settings;
+    opens com.kainanresto.controllers.main.admin.settings to javafx.fxml;
 
 
 }

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.SVGPath?>
+
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.kainanresto.controllers.main.admin.accounts.AccountController">
+
+    <!-- ============================== ACCOUNT MANAGEMENT LIST ============================== -->
+    <VBox fx:id="accountsView" spacing="24" styleClass="accounts-page">
+        <!-- Filter card -->
+        <VBox styleClass="accounts-card, accounts-filter-card">
+            <HBox alignment="CENTER_LEFT" spacing="16">
+                <HBox fx:id="accountsSearchBox" styleClass="accounts-search-box" alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS">
+                    <StackPane styleClass="accounts-icon-14">
+                        <SVGPath fx:id="accountsSearchIcon" styleClass="phosphor-icon, icon-muted"/>
+                    </StackPane>
+                    <TextField fx:id="accountsSearchField" promptText="Search accounts by name or email..." styleClass="accounts-search-field" HBox.hgrow="ALWAYS"/>
+                </HBox>
+
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <HBox fx:id="accountsRolePill" styleClass="accounts-pill" alignment="CENTER_LEFT" spacing="8">
+                        <Label text="Role:" styleClass="accounts-pill-label"/>
+                        <Label fx:id="accountsRoleValueLabel" text="All Roles" styleClass="accounts-pill-value"/>
+                        <StackPane styleClass="accounts-icon-12"><SVGPath styleClass="phosphor-icon, icon-muted, accounts-pill-chevron"/></StackPane>
+                    </HBox>
+                    <HBox fx:id="accountsStatusPill" styleClass="accounts-pill" alignment="CENTER_LEFT" spacing="8">
+                        <Label text="Status:" styleClass="accounts-pill-label"/>
+                        <Label fx:id="accountsStatusValueLabel" text="All Statuses" styleClass="accounts-pill-value"/>
+                        <StackPane styleClass="accounts-icon-12"><SVGPath styleClass="phosphor-icon, icon-muted, accounts-pill-chevron"/></StackPane>
+                    </HBox>
+                    <HBox fx:id="accountsLastLoginPill" styleClass="accounts-pill" alignment="CENTER_LEFT" spacing="8">
+                        <Label text="Last Login:" styleClass="accounts-pill-label"/>
+                        <Label fx:id="accountsLastLoginValueLabel" text="Anytime" styleClass="accounts-pill-value"/>
+                        <StackPane styleClass="accounts-icon-12"><SVGPath styleClass="phosphor-icon, icon-muted, accounts-pill-chevron"/></StackPane>
+                    </HBox>
+                    <Button text="Clear Filters" styleClass="accounts-clear-btn" onAction="#onAccountsClearFilters"/>
+                </HBox>
+            </HBox>
+        </VBox>
+
+        <!-- Table card -->
+        <VBox styleClass="accounts-card, accounts-table-card" VBox.vgrow="ALWAYS">
+            <TableView fx:id="accountsTable" styleClass="accounts-table" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="accountsColName"      text="NAME"       prefWidth="180" styleClass="col-first" sortable="false" reorderable="false"/>
+                    <TableColumn fx:id="accountsColUsername"  text="USERNAME"   prefWidth="150" sortable="false" reorderable="false"/>
+                    <TableColumn fx:id="accountsColRole"      text="ROLE"       prefWidth="120" sortable="false" reorderable="false"/>
+                    <TableColumn fx:id="accountsColStatus"    text="STATUS"     prefWidth="110" sortable="false" reorderable="false"/>
+                    <TableColumn fx:id="accountsColLastLogin" text="LAST LOGIN" prefWidth="160" sortable="false" reorderable="false"/>
+                    <TableColumn fx:id="accountsColCreated"   text="CREATED DATE" prefWidth="140" sortable="false" reorderable="false"/>
+                    <TableColumn fx:id="accountsColActions"   text="ACTIONS"    prefWidth="100" styleClass="col-center" sortable="false" reorderable="false"/>
+                </columns>
+            </TableView>
+        </VBox>
+    </VBox>
+
+    <!-- ============================== EDIT ACCOUNT FORM ============================== -->
+    <ScrollPane fx:id="editAccountView" visible="false" managed="false" fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" styleClass="edit-account-scroll">
+        <content>
+            <StackPane alignment="CENTER" styleClass="edit-account-page">
+                <VBox alignment="CENTER" styleClass="edit-account-column">
+                    <VBox spacing="24" maxWidth="600" prefWidth="600">
+
+                        <!-- Account Information -->
+                        <VBox styleClass="edit-card" spacing="16">
+                            <VBox spacing="4">
+                                <Label text="Account Information" styleClass="edit-card-title"/>
+                                <Label text="Manage user's personal details and platform login identifiers." styleClass="edit-card-subtitle" wrapText="true"/>
+                            </VBox>
+                            <VBox spacing="8">
+                                <HBox spacing="4" alignment="CENTER_LEFT"><Label text="Full Name" styleClass="edit-field-label"/><Label text="*" styleClass="edit-required"/></HBox>
+                                <TextField fx:id="editAccountNameField" styleClass="edit-input"/>
+                            </VBox>
+                            <VBox spacing="8">
+                                <HBox spacing="4" alignment="CENTER_LEFT"><Label text="Username" styleClass="edit-field-label"/><Label text="*" styleClass="edit-required"/></HBox>
+                                <TextField fx:id="editAccountUsernameField" styleClass="edit-input"/>
+                            </VBox>
+                            <VBox spacing="8">
+                                <Label text="Password" styleClass="edit-field-label"/>
+                                <StackPane alignment="CENTER_RIGHT">
+                                    <TextField fx:id="editAccountVisiblePasswordField" promptText="Leave blank to keep current password" styleClass="edit-input, edit-input-pw" visible="false" managed="false"/>
+                                    <PasswordField fx:id="editAccountPasswordField" promptText="Leave blank to keep current password" styleClass="edit-input, edit-input-pw"/>
+                                    <Button fx:id="editAccountPasswordToggleBtn" onAction="#onToggleEditAccountPasswordVisibility" styleClass="pw-toggle-btn" mnemonicParsing="false" focusTraversable="false">
+                                        <graphic>
+                                            <StackPane styleClass="icon-host-16">
+                                                <SVGPath styleClass="phosphor-icon, icon-muted" content="M12 5C7.3 5 3.1 8.3 1.2 12c1.9 3.7 6.1 7 10.8 7s8.9-3.3 10.8-7C20.9 8.3 16.7 5 12 5z m0 10c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3z"/>
+                                            </StackPane>
+                                        </graphic>
+                                        <StackPane.margin><Insets right="4"/></StackPane.margin>
+                                    </Button>
+                                </StackPane>
+                            </VBox>
+                        </VBox>
+
+                        <!-- Access & Status -->
+                        <VBox styleClass="edit-card" spacing="16">
+                            <VBox spacing="4">
+                                <Label text="Access &amp; Status" styleClass="edit-card-title"/>
+                                <Label text="Set platform authorization role levels and login availability status." styleClass="edit-card-subtitle" wrapText="true"/>
+                            </VBox>
+                            <HBox spacing="20">
+                                <VBox spacing="8" HBox.hgrow="ALWAYS" prefWidth="0">
+                                    <HBox spacing="4" alignment="CENTER_LEFT"><Label text="Assigned Role" styleClass="edit-field-label"/><Label text="*" styleClass="edit-required"/></HBox>
+                                    <ComboBox fx:id="editAccountRoleCombo" maxWidth="Infinity" styleClass="edit-combo"/>
+                                </VBox>
+                                <VBox spacing="8" HBox.hgrow="ALWAYS" prefWidth="0">
+                                    <HBox spacing="4" alignment="CENTER_LEFT"><Label text="Account Status" styleClass="edit-field-label"/><Label text="*" styleClass="edit-required"/></HBox>
+                                    <ComboBox fx:id="editAccountStatusCombo" maxWidth="Infinity" styleClass="edit-combo"/>
+                                </VBox>
+                            </HBox>
+                        </VBox>
+
+                        <!-- System Meta Details -->
+                        <VBox styleClass="edit-card, edit-meta-card" spacing="12">
+                            <Label text="System Meta Details" styleClass="edit-meta-title"/>
+                            <HBox alignment="CENTER_LEFT"><Label text="Date Created" styleClass="edit-meta-key"/><Region HBox.hgrow="ALWAYS"/><Label fx:id="editAccountCreatedLabel" text="—" styleClass="edit-meta-value"/></HBox>
+                            <Region styleClass="edit-meta-divider"/>
+                            <HBox alignment="CENTER_LEFT"><Label text="Last Login Activity" styleClass="edit-meta-key"/><Region HBox.hgrow="ALWAYS"/><Label fx:id="editAccountLastLoginLabel" text="—" styleClass="edit-meta-value"/></HBox>
+                        </VBox>
+
+                        <!-- Footer -->
+                        <Region styleClass="edit-footer-divider"/>
+                        <HBox alignment="CENTER_RIGHT" spacing="16">
+                            <Label fx:id="editAccountErrorLabel" styleClass="settings-error" visible="false" managed="false"/>
+                            <Button text="Cancel" onAction="#onEditAccountCancel" styleClass="edit-cancel-btn" mnemonicParsing="false"/>
+                            <Button text="Save Changes" onAction="#onEditAccountSave" styleClass="edit-save-btn" mnemonicParsing="false"/>
+                        </HBox>
+
+                    </VBox>
+                </VBox>
+            </StackPane>
+        </content>
+    </ScrollPane>
+</StackPane>

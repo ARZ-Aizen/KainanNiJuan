@@ -1,5 +1,6 @@
-package com.kainanresto.controllers.main;
+package com.kainanresto.controllers.main.client;
 
+import com.kainanresto.model.account.User;
 import com.kainanresto.model.dish.Dishes;
 import com.kainanresto.model.util.Icons;
 import com.kainanresto.model.order.OrderCard;
@@ -434,6 +435,14 @@ public class ClientController {
 
     @FXML
     private void onLogout(ActionEvent event) {
+        User currentUser = SessionManager.getCurrentUser();
+
+
+        if (currentUser != null) {
+            com.kainanresto.dao.UserDAO userDAO = new com.kainanresto.dao.UserDAO();
+            userDAO.setAccountInactive(currentUser.getUserId());
+        }
+
         SessionManager.clearSession();
         NavigationUtil.switchScene(
                 event,

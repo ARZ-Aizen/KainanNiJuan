@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.SVGPath?>
+
+<VBox fx:id="salesRoot" styleClass="orders-page" spacing="24.0"
+      xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.kainanresto.controllers.main.admin.sales.SalesController">
+
+    <!-- Stat cards -->
+    <HBox spacing="20.0" fillHeight="true">
+        <VBox styleClass="stat-card, stat-card-outlined" HBox.hgrow="ALWAYS">
+            <HBox alignment="CENTER_LEFT">
+                <Label text="Today's Revenue" styleClass="stat-label" />
+                <Region HBox.hgrow="ALWAYS" />
+                <StackPane styleClass="stat-icon-shell">
+                    <SVGPath fx:id="ordersRevenueIcon" styleClass="phosphor-icon, accent-icon" />
+                </StackPane>
+            </HBox>
+            <VBox spacing="4.0">
+                <Label fx:id="ordersRevenueValueLabel" text="—" styleClass="stat-value" />
+                <Label fx:id="ordersRevenueNoteLabel" text="—" styleClass="stat-subtext" />
+            </VBox>
+        </VBox>
+
+        <VBox styleClass="stat-card, stat-card-outlined" HBox.hgrow="ALWAYS">
+            <HBox alignment="CENTER_LEFT">
+                <Label text="Total Orders" styleClass="stat-label" />
+                <Region HBox.hgrow="ALWAYS" />
+                <StackPane styleClass="stat-icon-shell">
+                    <SVGPath fx:id="ordersTotalIcon" styleClass="phosphor-icon, accent-icon" />
+                </StackPane>
+            </HBox>
+            <VBox spacing="4.0">
+                <Label fx:id="ordersTotalValueLabel" text="—" styleClass="stat-value" />
+                <Label fx:id="ordersTotalNoteLabel" text="—" styleClass="stat-subtext" />
+            </VBox>
+        </VBox>
+
+        <VBox styleClass="stat-card, stat-card-outlined" HBox.hgrow="ALWAYS">
+            <HBox alignment="CENTER_LEFT">
+                <Label text="Voids &amp; Refunds" styleClass="stat-label" />
+                <Region HBox.hgrow="ALWAYS" />
+                <StackPane styleClass="stat-icon-shell">
+                    <SVGPath fx:id="ordersVoidsIcon" styleClass="phosphor-icon, accent-icon" />
+                </StackPane>
+            </HBox>
+            <VBox spacing="4.0">
+                <Label fx:id="ordersVoidsValueLabel" text="—" styleClass="stat-value" />
+                <Label fx:id="ordersVoidsNoteLabel" text="—" styleClass="stat-subtext" />
+            </VBox>
+        </VBox>
+
+        <VBox styleClass="stat-card, stat-card-outlined" HBox.hgrow="ALWAYS">
+            <HBox alignment="CENTER_LEFT">
+                <Label text="Average Spend" styleClass="stat-label" />
+                <Region HBox.hgrow="ALWAYS" />
+                <StackPane styleClass="stat-icon-shell">
+                    <SVGPath fx:id="ordersAvgSpendIcon" styleClass="phosphor-icon, accent-icon" />
+                </StackPane>
+            </HBox>
+            <VBox spacing="4.0">
+                <Label fx:id="ordersAvgSpendValueLabel" text="—" styleClass="stat-value" />
+                <Label fx:id="ordersAvgSpendNoteLabel" text="—" styleClass="stat-subtext" />
+            </VBox>
+        </VBox>
+    </HBox>
+
+    <!-- Search + filters -->
+    <HBox styleClass="orders-toolbar-card" alignment="CENTER_LEFT" spacing="16.0">
+        <HBox fx:id="ordersSearchBox" styleClass="search-box, search-box-tinted" alignment="CENTER_LEFT" spacing="10.0">
+            <StackPane styleClass="icon-host-14">
+                <SVGPath fx:id="ordersSearchIcon" styleClass="phosphor-icon, icon-muted" />
+            </StackPane>
+            <TextField fx:id="ordersSearchField" promptText="Search Order ID or customer..." styleClass="search-input" HBox.hgrow="ALWAYS" />
+        </HBox>
+
+        <Region HBox.hgrow="ALWAYS" />
+
+        <HBox alignment="CENTER_RIGHT" spacing="10.0">
+            <HBox fx:id="orderDatePill" styleClass="filter-pill" alignment="CENTER_LEFT" spacing="8.0">
+                <Label text="Date:" styleClass="filter-pill-label" />
+                <Label fx:id="orderDateValueLabel" text="—" styleClass="filter-pill-value" />
+                <StackPane styleClass="icon-host-14"><SVGPath styleClass="phosphor-icon, icon-muted, filter-chevron" /></StackPane>
+            </HBox>
+            <HBox fx:id="orderTypePill" styleClass="filter-pill" alignment="CENTER_LEFT" spacing="8.0">
+                <Label text="Order Type:" styleClass="filter-pill-label" />
+                <Label fx:id="orderTypeValueLabel" text="—" styleClass="filter-pill-value" />
+                <StackPane styleClass="icon-host-14"><SVGPath styleClass="phosphor-icon, icon-muted, filter-chevron" /></StackPane>
+            </HBox>
+            <HBox fx:id="orderStatusPill" styleClass="filter-pill" alignment="CENTER_LEFT" spacing="8.0">
+                <Label text="Status:" styleClass="filter-pill-label" />
+                <Label fx:id="orderStatusValueLabel" text="—" styleClass="filter-pill-value" />
+                <StackPane styleClass="icon-host-14"><SVGPath styleClass="phosphor-icon, icon-muted, filter-chevron" /></StackPane>
+            </HBox>
+            <HBox fx:id="orderPaymentPill" styleClass="filter-pill" alignment="CENTER_LEFT" spacing="8.0">
+                <Label text="Payment:" styleClass="filter-pill-label" />
+                <Label fx:id="orderPaymentValueLabel" text="—" styleClass="filter-pill-value" />
+                <StackPane styleClass="icon-host-14"><SVGPath styleClass="phosphor-icon, icon-muted, filter-chevron" /></StackPane>
+            </HBox>
+            <Button fx:id="clearOrderFiltersBtn" text="Clear Filters" onAction="#onClearOrderFilters" styleClass="btn-text" mnemonicParsing="false" />
+        </HBox>
+    </HBox>
+
+    <!-- Orders table -->
+    <VBox styleClass="table-card" VBox.vgrow="ALWAYS">
+        <TableView fx:id="ordersTable" styleClass="orders-table" VBox.vgrow="ALWAYS" fixedCellSize="61.0" minHeight="240.0" focusTraversable="false">
+            <placeholder>
+                <Label fx:id="ordersTablePlaceholder" text="" styleClass="dashboard-placeholder" />
+            </placeholder>
+            <columns>
+                <TableColumn fx:id="orderIdColumn" text="ORDER ID" prefWidth="100.0" minWidth="90.0" sortable="false" reorderable="false" styleClass="col-first, col-id" />
+                <TableColumn fx:id="orderTypeColumn" text="TYPE" prefWidth="100.0" minWidth="80.0" sortable="false" reorderable="false" styleClass="col-type" />
+                <TableColumn fx:id="orderStaffColumn" text="STAFF" prefWidth="180.0" minWidth="120.0" sortable="false" reorderable="false" />
+                <TableColumn fx:id="orderCreatedColumn" text="CREATED / LAST EDIT" prefWidth="180.0" minWidth="150.0" sortable="false" reorderable="false" styleClass="col-time" />
+                <TableColumn fx:id="orderTotalColumn" text="TOTAL" prefWidth="100.0" minWidth="80.0" sortable="false" reorderable="false" styleClass="col-total" />
+                <TableColumn fx:id="orderStatusColumn" text="STATUS" prefWidth="120.0" minWidth="110.0" sortable="false" reorderable="false" />
+                <TableColumn fx:id="orderPaymentColumn" text="PAYMENT" prefWidth="120.0" minWidth="100.0" sortable="false" reorderable="false" />
+                <TableColumn fx:id="orderActionsColumn" text="ACTIONS" prefWidth="72.0" minWidth="72.0" maxWidth="72.0" resizable="false" sortable="false" reorderable="false" styleClass="col-center" />
+            </columns>
+        </TableView>
+    </VBox>
+</VBox>

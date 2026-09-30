@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.SVGPath?>
+
+<ScrollPane fx:id="dashboardView" fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
+            styleClass="dashboard-scroll" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.kainanresto.controllers.main.admin.dashboard.DashboardController">
+    <content>
+        <VBox styleClass="dashboard-content" spacing="28.0">
+            <!-- Stat Cards -->
+            <HBox spacing="20.0" styleClass="stat-cards-row" fillHeight="true">
+                <!-- Today's Sales -->
+                <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                    <HBox alignment="CENTER_LEFT"><Label text="Today's Sales" styleClass="stat-label" /><Region HBox.hgrow="ALWAYS" />
+                        <StackPane styleClass="stat-icon-shell"><SVGPath fx:id="salesStatIcon" styleClass="phosphor-icon, accent-icon" /></StackPane>
+                    </HBox>
+                    <VBox spacing="4.0"><Label fx:id="todaysSalesValueLabel" text="—" styleClass="stat-value" /><Label fx:id="todaysSalesDeltaLabel" text="—" styleClass="stat-subtext" /></VBox>
+                </VBox>
+                <!-- Transactions -->
+                <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                    <HBox alignment="CENTER_LEFT"><Label text="Transactions" styleClass="stat-label" /><Region HBox.hgrow="ALWAYS" />
+                        <StackPane styleClass="stat-icon-shell"><SVGPath fx:id="transactionsStatIcon" styleClass="phosphor-icon, accent-icon" /></StackPane>
+                    </HBox>
+                    <VBox spacing="4.0"><Label fx:id="transactionsValueLabel" text="—" styleClass="stat-value" /><Label fx:id="transactionsSubLabel" text="—" styleClass="stat-subtext" /></VBox>
+                </VBox>
+                <!-- Completed Orders -->
+                <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                    <HBox alignment="CENTER_LEFT"><Label text="Completed Orders" styleClass="stat-label" /><Region HBox.hgrow="ALWAYS" />
+                        <StackPane styleClass="stat-icon-shell"><SVGPath fx:id="completedOrdersStatIcon" styleClass="phosphor-icon,accent-icon" /></StackPane>
+                    </HBox>
+                    <VBox spacing="4.0"><Label fx:id="completedOrdersValueLabel" text="—" styleClass="stat-value" /><Label fx:id="completedOrdersSubLabel" text="—" styleClass="stat-subtext" /></VBox>
+                </VBox>
+                <!-- Menu Items -->
+                <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                    <HBox alignment="CENTER_LEFT"><Label text="Total Menu Items" styleClass="stat-label" /><Region HBox.hgrow="ALWAYS" />
+                        <StackPane styleClass="stat-icon-shell"><SVGPath fx:id="menuStatIcon" styleClass="phosphor-icon, accent-icon" /></StackPane>
+                    </HBox>
+                    <VBox spacing="4.0"><Label fx:id="totalMenuItemsValueLabel" text="—" styleClass="stat-value" /><Label fx:id="totalMenuItemsSubLabel" text="—" styleClass="stat-subtext" /></VBox>
+                </VBox>
+            </HBox>
+
+            <!-- Weekly Sales Analytics -->
+            <VBox styleClass="section-card, analytics-card" spacing="24.0" VBox.vgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT">
+                    <VBox spacing="4.0"><Label text="Weekly Sales Analytics" styleClass="section-title" /><Label text="Visualizing net revenue trends over the past 7 days" styleClass="section-subtitle" /></VBox>
+                    <Region HBox.hgrow="ALWAYS" />
+                    <HBox styleClass="range-toggle" spacing="8.0">
+                        <Button fx:id="rangeTodayBtn" text="Today" onAction="#onRangeToday" styleClass="range-btn" />
+                        <Button fx:id="rangeWeekBtn" text="This Week" onAction="#onRangeWeek" styleClass="range-btn, range-btn-active" />
+                        <Button fx:id="rangeMonthBtn" text="This Month" onAction="#onRangeMonth" styleClass="range-btn" />
+                    </HBox>
+                </HBox>
+                <HBox spacing="32.0" alignment="CENTER_LEFT">
+                    <StackPane HBox.hgrow="ALWAYS" prefHeight="28.0" styleClass="chart-wrapper">
+                        <BarChart fx:id="weeklySalesChart" prefHeight="280.0" minHeight="260.0" legendVisible="false" animated="false" horizontalGridLinesVisible="false" verticalGridLinesVisible="false" alternativeRowFillVisible="false" horizontalZeroLineVisible="false" verticalZeroLineVisible="false" barGap="0.0" categoryGap="34.0" styleClass="weekly-sales-chart">
+                            <xAxis><CategoryAxis fx:id="weeklySalesXAxis" side="BOTTOM" tickMarkVisible="false" /></xAxis>
+                            <yAxis><NumberAxis fx:id="weeklySalesYAxis" side="LEFT" forceZeroInRange="true" autoRanging="true" tickLabelsVisible="false" tickMarkVisible="false" minorTickVisible="false" /></yAxis>
+                        </BarChart>
+                    </StackPane>
+                    <VBox prefWidth="380.0" styleClass="analytics-summary-card" spacing="20.0">
+                        <VBox spacing="4.0"><Label text="Total Weekly Sales" styleClass="summary-label" /><Label fx:id="totalWeeklySalesLabel" text="—" styleClass="summary-value" /></VBox>
+                        <Region styleClass="summary-divider" />
+                        <VBox spacing="4.0"><Label text="Weekly Orders Count" styleClass="summary-label" /><Label fx:id="weeklyOrdersCountLabel" text="—" styleClass="summary-value" /></VBox>
+                        <Region styleClass="summary-divider" />
+                        <VBox spacing="4.0"><Label text="Avg Order Value" styleClass="summary-label" /><Label fx:id="avgOrderValueLabel" text="—" styleClass="summary-value" /></VBox>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <!-- Best Sellers + Inventory Alerts -->
+            <HBox spacing="24.0" alignment="TOP_LEFT">
+                <VBox HBox.hgrow="ALWAYS" styleClass="section-card, lower-card" spacing="16.0">
+                    <HBox alignment="CENTER_LEFT"><Label text="Best-Selling Menu Items" styleClass="lower-title" /><Region HBox.hgrow="ALWAYS" /><Label text="Volume Ranked" styleClass="volume-badge" /></HBox>
+                    <VBox fx:id="bestSellingItemsContainer" styleClass="best-seller-list" spacing="0.0"><Label text="No dashboard data loaded." styleClass="dashboard-placeholder" /></VBox>
+                </VBox>
+                <VBox HBox.hgrow="ALWAYS" styleClass="section-card, lower-card" spacing="16.0">
+                    <Label text="Inventory Alerts" styleClass="lower-title" />
+                    <VBox fx:id="lowStockAlertsContainer" spacing="8.0"><HBox spacing="8.0" alignment="CENTER_LEFT"><Region styleClass="alert-dot, alert-warning" /><Label text="Low Stock" styleClass="alert-heading, warning-text" /></HBox><Label text="No low-stock data loaded." styleClass="dashboard-placeholder" /></VBox>
+                    <VBox fx:id="outOfStockAlertsContainer" spacing="8.0"><HBox spacing="8.0" alignment="CENTER_LEFT"><Region styleClass="alert-dot, alert-critical" /><Label text="Out of Stock" styleClass="alert-heading, critical-text" /></HBox><Label text="No out-of-stock data loaded." styleClass="dashboard-placeholder" /></VBox>
+                </VBox>
+            </HBox>
+        </VBox>
+    </content>
+</ScrollPane>

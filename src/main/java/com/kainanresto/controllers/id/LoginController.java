@@ -136,9 +136,9 @@
     
             if (user.getRole() == AccountRole.ADMIN ||
                     user.getRole() == AccountRole.MANAGER) {
-                fxmlPath = "/com/kainanresto/views/main/AdminView.fxml";
+                fxmlPath = "/com/kainanresto/views/main/admin/MainAdminView.fxml";
             } else {
-                fxmlPath = "/com/kainanresto/views/main/ClientView.fxml";
+                fxmlPath = "/com/kainanresto/views/main/client/ClientView.fxml";
             }
     
             String title = "Kainan Ni Juan POS - " + user.getFullName() + " (" + user.getRole() + ")";

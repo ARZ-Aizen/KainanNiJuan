@@ -9,8 +9,8 @@
 
 <?import javafx.scene.image.Image?>
 <BorderPane fx:id="appRoot" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.kainanresto.controllers.main.ClientController"
-            stylesheets="@../../styles/main/ClientView.css"
+            fx:controller="com.kainanresto.controllers.main.client.ClientController"
+            stylesheets="@../../../styles/main/ClientView.css"
             styleClass="pos-root" prefWidth="1440" prefHeight="920">
 
     <!-- ============ SIDEBAR ============ -->
@@ -19,7 +19,7 @@
             <StackPane styleClass="logo-shell">
                 <ImageView fx:id="restaurantLogoImage" fitWidth="68" fitHeight="68">
                     <image>
-                        <Image url="@../../images/id/KainanNiJuanLogo.png" />
+                        <Image url="@../../../images/id/KainanNiJuanLogo.png" />
                     </image>
                 </ImageView>
             </StackPane>

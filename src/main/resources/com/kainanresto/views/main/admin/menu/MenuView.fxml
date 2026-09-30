@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.SVGPath?>
+
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.kainanresto.controllers.main.admin.menu.MenuController">
+
+    <!-- ============================== MENU MANAGEMENT GRID ============================== -->
+    <VBox fx:id="menuGridView" styleClass="menu-page" spacing="24.0">
+        <!-- Toolbar: search, add button, category chips -->
+        <VBox styleClass="menu-toolbar-card" spacing="14.0">
+            <HBox alignment="CENTER_LEFT" spacing="16.0">
+                <HBox fx:id="menuSearchBox" styleClass="search-box" alignment="CENTER_LEFT" spacing="10.0">
+                    <StackPane styleClass="icon-host-14">
+                        <SVGPath fx:id="menuSearchIcon" styleClass="phosphor-icon, icon-muted" />
+                    </StackPane>
+                    <TextField fx:id="menuSearchField" promptText="Search dishes..." styleClass="search-input" HBox.hgrow="ALWAYS" />
+                </HBox>
+                <Region HBox.hgrow="ALWAYS" />
+                <Button fx:id="addDishBtn" text="Add New Dish" onAction="#onAddDish" styleClass="btn-primary" mnemonicParsing="false" contentDisplay="LEFT" graphicTextGap="8.0">
+                    <graphic>
+                        <StackPane styleClass="icon-host-16">
+                            <SVGPath fx:id="addDishIcon" styleClass="phosphor-icon, icon-on-primary" />
+                        </StackPane>
+                    </graphic>
+                </Button>
+            </HBox>
+            <Region styleClass="toolbar-divider" />
+            <FlowPane fx:id="menuCategoryChips" hgap="10.0" vgap="10.0" styleClass="category-chips" />
+        </VBox>
+
+        <!-- Dish grid -->
+        <ScrollPane fx:id="menuGridScroll" fitToWidth="true" fitToHeight="false" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" VBox.vgrow="ALWAYS" styleClass="menu-grid-scroll">
+            <content>
+                <StackPane styleClass="menu-grid-holder">
+                    <FlowPane fx:id="dishGrid" hgap="24.0" vgap="24.0" alignment="TOP_LEFT" styleClass="dish-grid" />
+                    <Label fx:id="dishGridPlaceholder" text="No dishes loaded." styleClass="dashboard-placeholder" StackPane.alignment="TOP_LEFT" />
+                </StackPane>
+            </content>
+        </ScrollPane>
+    </VBox>
+
+    <!-- ============================== ADD MENU ITEM FORM ============================== -->
+    <VBox fx:id="addDishView" visible="false" managed="false" styleClass="add-dish-root">
+        <ScrollPane fitToWidth="true" fitToHeight="false" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" VBox.vgrow="ALWAYS" styleClass="edit-account-scroll">
+            <content>
+                <VBox styleClass="add-dish-page" spacing="24">
+                    <fx:define><ToggleGroup fx:id="addDishStatusGroup"/></fx:define>
+
+                    <HBox spacing="24" fillHeight="true" alignment="TOP_LEFT">
+                        <!-- LEFT: Menu Item Information -->
+                        <VBox styleClass="add-card" spacing="20" HBox.hgrow="ALWAYS" prefWidth="0">
+                            <Label text="Menu Item Information" styleClass="add-card-title"/>
+                            <Region styleClass="add-divider"/>
+
+                            <HBox spacing="32" alignment="TOP_LEFT">
+                                <VBox spacing="8">
+                                    <Label text="Menu Item Picture" styleClass="add-label"/>
+                                    <StackPane fx:id="addDishPhotoBox" styleClass="add-upload-box" onMouseClicked="#onAddDishChoosePhoto">
+                                        <VBox alignment="CENTER" spacing="8">
+                                            <StackPane styleClass="add-host-32">
+                                                <SVGPath fx:id="addDishUploadIcon" styleClass="phosphor-icon, icon-brand"/>
+                                            </StackPane>
+                                            <Label text="Upload Photo" styleClass="add-upload-text"/>
+                                        </VBox>
+                                    </StackPane>
+                                </VBox>
+                                <VBox spacing="8" alignment="TOP_LEFT">
+                                    <Label text="Live Catalog Preview" styleClass="add-label"/>
+                                    <StackPane styleClass="add-preview-shell">
+                                        <ImageView fx:id="addDishPreviewImage" fitWidth="150.0" fitHeight="150.0" preserveRatio="true"/>
+                                    </StackPane>
+                                </VBox>
+                            </HBox>
+
+                            <VBox spacing="8">
+                                <HBox spacing="4" alignment="CENTER_LEFT"><Label text="Menu Item Name" styleClass="add-label"/><Label text="*" styleClass="add-required"/></HBox>
+                                <TextField fx:id="addDishNameField" promptText="e.g. Crispy Pork Sisig" styleClass="add-input"/>
+                            </VBox>
+
+                            <HBox spacing="20">
+                                <VBox spacing="8" HBox.hgrow="ALWAYS" prefWidth="0">
+                                    <HBox spacing="4" alignment="CENTER_LEFT"><Label text="Category" styleClass="add-label"/><Label text="*" styleClass="add-required"/></HBox>
+                                    <ComboBox fx:id="addDishCategoryCombo" maxWidth="Infinity" promptText="Select category" styleClass="add-combo"/>
+                                </VBox>
+                                <VBox spacing="8" HBox.hgrow="ALWAYS" prefWidth="0">
+                                    <HBox spacing="4" alignment="CENTER_LEFT"><Label text="Selling Price (PHP)" styleClass="add-label"/><Label text="*" styleClass="add-required"/></HBox>
+                                    <HBox styleClass="add-price-box" alignment="CENTER_LEFT">
+                                        <Label text="₱" styleClass="add-price-prefix"/>
+                                        <TextField fx:id="addDishPriceField" promptText="0.00" styleClass="add-price-field" HBox.hgrow="ALWAYS"/>
+                                    </HBox>
+                                </VBox>
+                            </HBox>
+
+                            <VBox spacing="8">
+                                <Label text="Description" styleClass="add-label"/>
+                                <TextArea fx:id="addDishDescriptionField" prefRowCount="4" wrapText="true" promptText="Short description shown to staff and customers" styleClass="add-input-area"/>
+                            </VBox>
+
+                            <HBox spacing="20" alignment="TOP_LEFT">
+                                <VBox spacing="8" minWidth="200" prefWidth="200" maxWidth="200">
+                                    <HBox spacing="4" alignment="CENTER_LEFT"><Label text="Quantity" styleClass="add-label"/><Label text="*" styleClass="add-required"/></HBox>
+                                    <HBox styleClass="add-stepper" alignment="CENTER_LEFT">
+                                        <Button text="−" onAction="#onAddDishQtyMinus" styleClass="add-stepper-btn, add-stepper-btn-left" mnemonicParsing="false" focusTraversable="false"/>
+                                        <TextField fx:id="addDishQuantityField" text="0" styleClass="add-stepper-field" HBox.hgrow="ALWAYS"/>
+                                        <Button text="+" onAction="#onAddDishQtyPlus" styleClass="add-stepper-btn, add-stepper-btn-right" mnemonicParsing="false" focusTraversable="false"/>
+                                    </HBox>
+                                </VBox>
+                                <VBox spacing="8" HBox.hgrow="ALWAYS" prefWidth="0">
+                                    <HBox spacing="4" alignment="CENTER_LEFT"><Label text="Status" styleClass="add-label"/><Label text="*" styleClass="add-required"/></HBox>
+                                    <HBox spacing="12">
+                                        <ToggleButton fx:id="addDishAvailableBtn" text="Available" toggleGroup="$addDishStatusGroup" selected="true" styleClass="add-status-btn" mnemonicParsing="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                                        <ToggleButton fx:id="addDishUnavailableBtn" text="Unavailable" toggleGroup="$addDishStatusGroup" styleClass="add-status-btn" mnemonicParsing="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                                    </HBox>
+                                </VBox>
+                            </HBox>
+                        </VBox>
+
+                        <!-- RIGHT: Category Creator -->
+                        <VBox styleClass="add-card, add-card-outlined" spacing="20" minWidth="420" prefWidth="480" maxWidth="480">
+                            <VBox spacing="6"><Label text="Dish Category Creator" styleClass="add-card-title"/><Label text="Create the categories used to group dishes on your menu. New categories appear in the Category dropdown right away." styleClass="add-card-subtitle" wrapText="true"/></VBox>
+                            <Region styleClass="add-divider"/>
+                            <VBox spacing="8">
+                                <Label text="New Category Name" styleClass="add-label"/>
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <TextField fx:id="addCategoryNameField" promptText="e.g. Appetizers" styleClass="add-input" HBox.hgrow="ALWAYS"/>
+                                    <Button text="Add" onAction="#onAddCategory" styleClass="add-primary-btn" mnemonicParsing="false" contentDisplay="LEFT" graphicTextGap="8.0">
+                                        <graphic><StackPane styleClass="icon-host-14"><SVGPath fx:id="addCategoryAddIcon" styleClass="phosphor-icon, icon-on-primary"/></StackPane></graphic>
+                                    </Button>
+                                </HBox>
+                                <Label fx:id="addCategoryErrorLabel" styleClass="settings-error" visible="false" managed="false"/>
+                            </VBox>
+                            <Region styleClass="add-divider"/>
+                            <HBox alignment="CENTER_LEFT"><Label text="Existing Categories" styleClass="add-label"/><Region HBox.hgrow="ALWAYS"/><Label fx:id="addCategoryCountLabel" text="0 categories" styleClass="add-count-badge"/></HBox>
+                            <VBox fx:id="addCategoryList" spacing="8"/>
+                            <Label fx:id="addCategoryEmptyLabel" text="No categories yet. Add your first one above." styleClass="add-empty"/>
+                        </VBox>
+                    </HBox>
+                </VBox>
+            </content>
+        </ScrollPane>
+
+        <VBox styleClass="add-footer-wrap">
+            <Region styleClass="add-footer-line"/>
+            <HBox styleClass="add-footer" alignment="CENTER_RIGHT" spacing="16">
+                <Label fx:id="addDishErrorLabel" styleClass="settings-error" visible="false" managed="false"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Cancel" onAction="#onAddDishCancel" styleClass="add-cancel-btn" mnemonicParsing="false"/>
+                <Button text="Save Menu Item" onAction="#onAddDishSave" styleClass="add-save-btn" mnemonicParsing="false"/>
+            </HBox>
+        </VBox>
+    </VBox>
+</StackPane>
