@@ -176,7 +176,6 @@ public class AdminController {
     public record NewDishForm(String name, String category, BigDecimal price, String description,
                               boolean available, String imageUri, int quantity) {}
 
-    @FXML private ScrollPane addDishView;
     @FXML private TextField addDishNameField;
     @FXML private ComboBox<String> addDishCategoryCombo;
     @FXML private TextField addDishPriceField;
@@ -188,6 +187,7 @@ public class AdminController {
     @FXML private ImageView addDishPreviewImage;
     @FXML private Label addDishErrorLabel;
     @FXML private SVGPath addDishUploadIcon;
+    @FXML private VBox addDishView;
 
     @FXML private TextField addCategoryNameField;
     @FXML private Label addCategoryErrorLabel;
@@ -929,7 +929,7 @@ public class AdminController {
     public void setOnDeleteCategory(Consumer<String> handler) { this.onDeleteCategory = handler; }
 
     private void setupAddDishPage() {
-        addDishPreviewImage.setClip(new Circle(38, 38, 38));
+        addDishPreviewImage.setClip(new Circle(75, 75, 75));
         addDishPriceField.setTextFormatter(decimalFormatter(2));
         addDishQuantityField.setTextFormatter(integerFormatter(5));
 
@@ -980,7 +980,7 @@ public class AdminController {
         File file = chooser.showOpenDialog(appRoot.getScene().getWindow());
         if (file != null) {
             addDishImageUri = file.toURI().toString();
-            Image image = new Image(addDishImageUri, 152.0, 152.0, true, true, true);
+            Image image = new Image(addDishImageUri, 300.0, 300.0, true, true, true);
             addDishPreviewImage.setImage(image);
             applyCoverCrop(addDishPreviewImage, image);
         }
