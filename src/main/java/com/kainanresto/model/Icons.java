@@ -87,6 +87,13 @@ public class Icons {
                     + "M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21";
     public static final String DOWNLOAD =
             "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3";
+    public static final String RECEIPT_TEXT =
+            "M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"
+                    + "M14 8H8M16 12H8M13 16H8";
+    public static final String CLOCK =
+            "M22 12a10 10 0 1 1-20 0a10 10 0 1 1 20 0z"
+                    + "M12 6v6l4 2";
+    public static final String MINUS = "M5 12h14";
 
 
     // Use this to create an icon in code

@@ -61,7 +61,6 @@ import javafx.scene.layout.Priority;
 
 
 public class AdminController {
-
     /* ============================== SIDEBAR ============================== */
     @FXML private VBox sidebarRoot;
     @FXML private ImageView restaurantLogoImage;

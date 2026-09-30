@@ -1309,10 +1309,13 @@
 }
 .accounts-icon-btn:hover { -fx-background-color: #F2EAE0; }
 
-.accounts-empty-label { -fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-text-fill: #6E625C; }
+.accounts-empty-label {
+    -fx-font-family: "Inter";
+    -fx-font-size: 13px;
+    -fx-text-fill: #6E625C;
+}
 
-
-//* ================= EDIT ACCOUNT ================= */
+/* ================= EDIT ACCOUNT ================= */
  .edit-account-scroll,
  .edit-account-scroll > .viewport {
      -fx-background: transparent;

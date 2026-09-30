@@ -138,7 +138,7 @@ public class LoginController {
                 user.getRole() == AccountRole.MANAGER) {
             fxmlPath = "/com/kainanresto/views/main/AdminView.fxml";
         } else {
-            fxmlPath = "/com/kainanresto/views/main/UserView.fxml";
+            fxmlPath = "/com/kainanresto/views/main/ClientView.fxml";
         }
 
         String title = "Kainan Ni Juan POS - " + user.getFullName() + " (" + user.getRole() + ")";

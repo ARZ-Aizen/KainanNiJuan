@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.text.*?>
+
+<?import javafx.scene.image.Image?>
+<BorderPane fx:id="appRoot" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.kainanresto.controllers.main.ClientController"
+            stylesheets="@../../styles/main/ClientView.css"
+            styleClass="pos-root" prefWidth="1440" prefHeight="920">
+
+    <!-- ============ SIDEBAR ============ -->
+    <left>
+        <VBox fx:id="sidebarRoot" styleClass="sidebar" viewOrder="-1">
+            <StackPane styleClass="logo-shell">
+                <ImageView fx:id="restaurantLogoImage" fitWidth="68" fitHeight="68">
+                    <image>
+                        <Image url="@../../images/id/KainanNiJuanLogo.png" />
+                    </image>
+                </ImageView>
+            </StackPane>
+
+            <VBox styleClass="primary-nav, client-nav" spacing="24" VBox.vgrow="ALWAYS">
+                <Button fx:id="navOrderBtn" styleClass="nav-item, nav-item-active" mnemonicParsing="false"
+                        contentDisplay="GRAPHIC_ONLY" onAction="#onNavOrder">
+                    <graphic>
+                        <StackPane styleClass="nav-icon-host">
+                            <SVGPath fx:id="orderNavIcon" styleClass="phosphor-icon"/>
+                        </StackPane>
+                    </graphic>
+                    <tooltip><Tooltip text="Order"/></tooltip>
+                </Button>
+                <Button fx:id="navHistoryBtn" styleClass="nav-item" mnemonicParsing="false"
+                        contentDisplay="GRAPHIC_ONLY" onAction="#onNavHistory">
+                    <graphic>
+                        <StackPane styleClass="nav-icon-host">
+                            <SVGPath fx:id="historyNavIcon" styleClass="phosphor-icon"/>
+                        </StackPane>
+                    </graphic>
+                    <tooltip><Tooltip text="Order Management"/></tooltip>
+                </Button>
+            </VBox>
+
+            <VBox styleClass="sidebar-bottom" spacing="16">
+                <Region styleClass="sidebar-divider"/>
+                <Button fx:id="logoutBtn" styleClass="nav-item, logout-item" mnemonicParsing="false"
+                        contentDisplay="GRAPHIC_ONLY" onAction="#onLogout">
+                    <graphic>
+                        <StackPane styleClass="logout-icon-host">
+                            <SVGPath fx:id="logoutIcon" styleClass="phosphor-icon"/>
+                        </StackPane>
+                    </graphic>
+                    <tooltip><Tooltip text="Log out"/></tooltip>
+                </Button>
+            </VBox>
+        </VBox>
+    </left>
+
+    <!-- ============ PAGES ============ -->
+    <center>
+        <StackPane fx:id="viewStack">
+
+            <!-- Order POS -->
+            <HBox fx:id="posView" styleClass="pos-page">
+                <VBox HBox.hgrow="ALWAYS">
+                    <HBox styleClass="pos-header" alignment="CENTER_LEFT">
+                        <VBox>
+                            <TextFlow>
+                                <Text text="KAINAN NI " styleClass="pos-brand-main"/>
+                                <Text text="JUAN" styleClass="pos-brand-accent"/>
+                            </TextFlow>
+                            <Label fx:id="currentDateLabel" styleClass="pos-date"/>
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <HBox fx:id="posSearchBox" styleClass="pos-search-box" alignment="CENTER_LEFT" spacing="12">
+                            <StackPane styleClass="icon-host-24">
+                                <SVGPath fx:id="posSearchIcon" styleClass="phosphor-icon, pos-search-icon"/>
+                            </StackPane>
+                            <TextField fx:id="posSearchField" promptText="Search for food, dessert, etc..."
+                                       styleClass="pos-search-field" HBox.hgrow="ALWAYS"/>
+                        </HBox>
+                    </HBox>
+
+                    <VBox styleClass="pos-body" spacing="16" VBox.vgrow="ALWAYS">
+                        <FlowPane fx:id="posCategoryChips" hgap="42" vgap="12"/>
+                        <Region styleClass="pos-divider">
+                            <VBox.margin><Insets top="11"/></VBox.margin>
+                        </Region>
+                        <Label text="Choose Dishes" styleClass="pos-section-title"/>
+                        <ScrollPane fx:id="posScroll" styleClass="pos-scroll" fitToWidth="true"
+                                    hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+                            <content>
+                                <VBox styleClass="pos-grid-host" alignment="TOP_LEFT">
+                                    <Label fx:id="posGridPlaceholder" styleClass="pos-empty-label"/>
+                                    <FlowPane fx:id="posDishGrid" alignment="TOP_LEFT" hgap="14" vgap="17"/>
+                                </VBox>
+                            </content>
+                        </ScrollPane>
+                    </VBox>
+                </VBox>
+
+                <!-- Current Order (receipt), shown once the order has items -->
+                <VBox fx:id="receiptPanel" styleClass="receipt-panel" visible="false" managed="false">
+                    <HBox.margin><Insets top="20" right="16" bottom="16" left="0"/></HBox.margin>
+                    <fx:define>
+                        <ToggleGroup fx:id="receiptTypeGroup"/>
+                    </fx:define>
+
+                    <VBox spacing="4">
+                        <Label text="Current Order" styleClass="receipt-title"/>
+                        <Label fx:id="receiptSubtitleLabel" styleClass="receipt-subtitle"/>
+                    </VBox>
+
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <ToggleButton text="Dine in" toggleGroup="$receiptTypeGroup" selected="true"
+                                      mnemonicParsing="false" styleClass="receipt-type-chip"/>
+                        <ToggleButton text="To Go" toggleGroup="$receiptTypeGroup"
+                                      mnemonicParsing="false" styleClass="receipt-type-chip"/>
+                        <ToggleButton text="Delivery" toggleGroup="$receiptTypeGroup"
+                                      mnemonicParsing="false" styleClass="receipt-type-chip"/>
+                    </HBox>
+
+                    <HBox styleClass="receipt-table-head" alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Item" styleClass="receipt-head-label" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                        <Label text="Qty" styleClass="receipt-head-label, receipt-col-qty"/>
+                        <Label text="Price" styleClass="receipt-head-label, receipt-col-price"/>
+                    </HBox>
+
+                    <ScrollPane styleClass="receipt-scroll" fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+                        <content>
+                            <VBox fx:id="receiptLines" styleClass="receipt-lines" spacing="14"/>
+                        </content>
+                    </ScrollPane>
+
+                    <Region styleClass="receipt-dash"/>
+
+                    <VBox spacing="8">
+                        <HBox alignment="CENTER_LEFT">
+                            <Label text="Subtotal" styleClass="receipt-sum-label"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="receiptSubtotalLabel" styleClass="receipt-sum-value"/>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT">
+                            <Label text="Discount" styleClass="receipt-sum-label"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <ComboBox fx:id="receiptDiscountBox" promptText="None" styleClass="receipt-discount"/>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT">
+                            <Label fx:id="receiptServiceLabel" styleClass="receipt-sum-label"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="receiptServiceValueLabel" styleClass="receipt-sum-value"/>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT">
+                            <Label fx:id="receiptVatLabel" styleClass="receipt-sum-label"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="receiptVatValueLabel" styleClass="receipt-sum-value"/>
+                        </HBox>
+                    </VBox>
+
+                    <Region styleClass="receipt-divider"/>
+
+                    <HBox alignment="CENTER_LEFT">
+                        <Label text="TOTAL" styleClass="receipt-total-label"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="receiptTotalLabel" styleClass="receipt-total-value"/>
+                    </HBox>
+
+                    <Button fx:id="receiptPayBtn" text="PROCEED TO PAYMENT" mnemonicParsing="false"
+                            styleClass="receipt-pay-btn" maxWidth="Infinity" onAction="#onProceedToPayment"/>
+                </VBox>
+            </HBox>
+
+            <!-- Order Management -->
+            <HBox fx:id="omView" visible="false" managed="false" styleClass="om-page">
+                <VBox spacing="24" HBox.hgrow="ALWAYS">
+                    <padding>
+                        <Insets top="32" right="32" bottom="32" left="32"/>
+                    </padding>
+
+                    <HBox alignment="CENTER_LEFT">
+                        <VBox spacing="4">
+                            <TextFlow styleClass="om-title-flow">
+                                <Text text="KAINAN NI " styleClass="om-brand-main"/>
+                                <Text text="JUAN" styleClass="om-brand-accent"/>
+                            </TextFlow>
+                            <Label fx:id="omSubtitleLabel" styleClass="om-subtitle"/>
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <HBox fx:id="omSearchBox" styleClass="om-search-box" alignment="CENTER_LEFT" spacing="12">
+                            <StackPane styleClass="om-host-20">
+                                <SVGPath fx:id="omSearchIcon" styleClass="phosphor-icon, pos-search-icon"/>
+                            </StackPane>
+                            <TextField fx:id="omSearchField" promptText="Search order..."
+                                       styleClass="pos-search-field" HBox.hgrow="ALWAYS"/>
+                        </HBox>
+                    </HBox>
+
+                    <FlowPane fx:id="omStatusChips" hgap="8" vgap="8"/>
+
+                    <ScrollPane fx:id="omScroll" styleClass="om-scroll" fitToWidth="true"
+                                hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+                        <content>
+                            <VBox styleClass="om-grid-host">
+                                <Label fx:id="omGridPlaceholder" styleClass="pos-empty-label"/>
+                                <!-- column constraints are set in the controller (3 columns, 2 when the receipt is open) -->
+                                <GridPane fx:id="omGrid" hgap="20" vgap="20"/>
+                            </VBox>
+                        </content>
+                    </ScrollPane>
+                </VBox>
+
+                <!-- Order receipt, shown when a card is selected -->
+                <VBox fx:id="omReceiptPanel" styleClass="omr-panel" visible="false" managed="false">
+                    <HBox.margin><Insets top="32" right="32" bottom="32" left="0"/></HBox.margin>
+
+                    <VBox spacing="6">
+                        <HBox alignment="CENTER_LEFT">
+                            <Label fx:id="omrOrderTitleLabel" styleClass="omr-title"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="omrStatusLabel" styleClass="omr-badge"/>
+                        </HBox>
+                        <Label fx:id="omrTypeLabel" styleClass="omr-type"/>
+                    </VBox>
+
+                    <VBox styleClass="omr-info-card" spacing="10">
+                        <HBox alignment="CENTER_LEFT">
+                            <Label text="Time Placed" styleClass="omr-info-label"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="omrTimeLabel" styleClass="omr-info-value"/>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT">
+                            <Label text="Cashier / Staff" styleClass="omr-info-label"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="omrCashierLabel" styleClass="omr-info-value"/>
+                        </HBox>
+                    </VBox>
+
+                    <HBox alignment="CENTER_LEFT">
+                        <Label text="Item" styleClass="omr-head-label" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                        <Label text="Qty" styleClass="omr-head-label, omr-col-qty"/>
+                        <Label text="Price" styleClass="omr-head-label, omr-col-price"/>
+                    </HBox>
+                    <Region styleClass="omr-divider"/>
+
+                    <ScrollPane styleClass="omr-scroll" fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+                        <content>
+                            <VBox fx:id="omrLines" styleClass="omr-lines" spacing="12"/>
+                        </content>
+                    </ScrollPane>
+
+                    <Region styleClass="omr-divider, omr-divider-thick"/>
+
+                    <VBox spacing="10">
+                        <HBox alignment="CENTER_LEFT">
+                            <Label text="Subtotal" styleClass="omr-sum-label"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="omrSubtotalLabel" styleClass="omr-sum-value"/>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT">
+                            <Label text="Discount" styleClass="omr-sum-label"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="omrDiscountLabel" styleClass="omr-discount-pill"/>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT">
+                            <Label fx:id="omrServiceLabel" styleClass="omr-sum-label"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="omrServiceValueLabel" styleClass="omr-sum-value"/>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT">
+                            <Label fx:id="omrVatLabel" styleClass="omr-sum-label"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="omrVatValueLabel" styleClass="omr-sum-value"/>
+                        </HBox>
+                    </VBox>
+
+                    <Region styleClass="omr-divider, omr-divider-thick"/>
+
+                    <HBox alignment="CENTER_LEFT">
+                        <Label text="TOTAL" styleClass="omr-total-label"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="omrTotalLabel" styleClass="omr-total-value"/>
+                    </HBox>
+
+                    <VBox spacing="12">
+                        <Button fx:id="omrCompleteBtn" text="COMPLETE ORDER" mnemonicParsing="false"
+                                styleClass="omr-complete-btn" maxWidth="Infinity" onAction="#onOmReceiptComplete"/>
+                        <Button fx:id="omrCancelBtn" text="CANCEL ORDER" mnemonicParsing="false"
+                                styleClass="omr-cancel-btn" maxWidth="Infinity" onAction="#onOmReceiptCancel"/>
+                    </VBox>
+                </VBox>
+            </HBox>
+
+        </StackPane>
+    </center>
+</BorderPane>
