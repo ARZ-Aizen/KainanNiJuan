@@ -18,3 +18,149 @@ CREATE TABLE dishes (
     available BOOLEAN NOT NULL DEFAULT TRUE,
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT
 );
+
+INSERT INTO dishes (category_id, name, price, description, image_url, quantity) VALUES
+(1, 'Adobosilog', 110.00, 'Classic pork adobo served with garlic fried rice and a fried egg[cite: 7].', NULL, 50),
+(1, 'Bangus Belly Silog', 130.00, 'Marinated milkfish belly served with garlic fried rice and a fried egg[cite: 7].', NULL, 50),
+(1, 'Beefsilog', 120.00, 'Tender beef strips served with garlic fried rice and a fried egg[cite: 7].', NULL, 50),
+(1, 'Chicken BBQ Silog', 120.00, 'Grilled sweet and savory chicken BBQ served with garlic fried rice and a fried egg[cite: 7].', NULL, 50),
+(1, 'Chicksilog', 110.00, 'Crispy fried chicken served with garlic fried rice and a fried egg[cite: 7].', NULL, 50),
+(1, 'Cornsilog', 100.00, 'Sautéed corned beef served with garlic fried rice and a fried egg[cite: 7].', NULL, 50),
+(1, 'Daing Silog', 120.00, 'Butterflied, marinated, and fried milkfish served with garlic fried rice and a fried egg[cite: 7].', NULL, 50),
+(1, 'Embutido Silog', 100.00, 'Slices of Filipino-style meatloaf served with garlic fried rice and a fried egg[cite: 7].', NULL, 50),
+(1, 'Hotsilog', 90.00, 'Juicy red hotdogs served with garlic fried rice and a fried egg[cite: 7].', NULL, 50),
+(1, 'Lechon Silog', 130.00, 'Crispy deep-fried pork belly chunks served with garlic fried rice and a fried egg[cite: 7].', NULL, 50),
+(1, 'Liemposilog', 130.00, 'Grilled or fried pork belly served with garlic fried rice and a fried egg[cite: 7].', NULL, 50),
+(1, 'Longsilog', 100.00, 'Sweet and garlicky Filipino sausages served with garlic fried rice and a fried egg[cite: 7].', NULL, 50),
+(1, 'Malingsilog', 90.00, 'Fried slices of luncheon meat served with garlic fried rice and a fried egg[cite: 7].', NULL, 50),
+(1, 'Porksilog', 110.00, 'Deep-fried pork chop served with garlic fried rice and a fried egg[cite: 7].', NULL, 50),
+(1, 'Sisigsilog', 120.00, 'Sizzling minced pork face and liver served with garlic fried rice and a fried egg[cite: 7].', NULL, 50),
+(1, 'Tapsilog', 110.00, 'Marinated beef tapa served with garlic fried rice and a fried egg[cite: 7].', NULL, 50),
+(1, 'Tocilog', 110.00, 'Sweet cured pork slices served with garlic fried rice and a fried egg[cite: 7].', NULL, 50);
+
+INSERT INTO dishes (category_id, name, price, description, image_url, quantity) VALUES
+(2, 'Avocado Shake', 80.00, 'Creamy and rich blended fresh avocado drink.', NULL, 50),
+(2, 'Banana Shake', 70.00, 'Sweet and smooth blended fresh banana drink.', NULL, 50),
+(2, 'Bottled Water', 20.00, 'Purified and chilled drinking water.', NULL, 50),
+(2, 'Buko Juice', 40.00, 'Fresh and refreshing young coconut water with tender coconut meat strips.', NULL, 50),
+(2, 'Buko Pandan', 60.00, 'Refreshing coconut and pandan-flavored sweet beverage with jelly cubes.', NULL, 50),
+(2, 'Calamansi Juice', 50.00, 'Tangy, freshly squeezed Filipino citrus drink served over ice.', NULL, 50),
+(2, 'Coke', 45.00, 'Classic Coca-Cola carbonated soft drink in a can.', NULL, 50),
+(2, 'Cucumber Lemonade', 60.00, 'Cool and revitalizing blend of fresh cucumber and sweet lemonade.', NULL, 50),
+(2, 'Four Season', 50.00, 'Sweet tropical fruit juice blend typically made of mango, pineapple, orange, and guava.', NULL, 50),
+(2, 'Guyabano Juice', 60.00, 'Sweet and mildly tart refreshing soursop fruit juice.', NULL, 50),
+(2, 'Hot Chocolate', 60.00, 'Warm, comforting, and rich chocolate drink.', NULL, 50),
+(2, 'Iced Tea', 45.00, 'Sweetened cold tea beverage, classic lemon flavor.', NULL, 50),
+(2, 'Mango Shake', 80.00, 'Sweet and frosty blended ripe Philippine mango drink.', NULL, 50),
+(2, 'Melon Juice', 50.00, 'Refreshing chilled cantaloupe juice with shredded melon bits.', NULL, 50),
+(2, 'Mountain Dew', 45.00, 'Citrus-flavored carbonated soft drink in a can.', NULL, 50),
+(2, 'Pepsi', 45.00, 'Classic Pepsi carbonated soft drink in a can.', NULL, 50),
+(2, 'Pineapple Shake', 80.00, 'Tropical, sweet and tangy blended fresh pineapple drink.', NULL, 50),
+(2, 'Royal', 45.00, 'Orange-flavored carbonated soft drink (Royal Tru-Orange) in a can.', NULL, 50),
+(2, 'Sago at Gulaman', 45.00, 'Traditional sweet local refreshment made with tapioca pearls, gelatin, and brown sugar syrup.', NULL, 50),
+(2, 'Sprite', 45.00, 'Crisp lemon-lime flavored carbonated soft drink in a can.', NULL, 50),
+(2, 'Watermelon Shake', 75.00, 'Hydrating and perfectly sweet blended fresh watermelon drink.', NULL, 50);
+
+INSERT INTO dishes (category_id, name, price, description, image_url) VALUES
+(3, 'Banana Cue', 20.00, 'Deep-fried saba bananas coated in a crisp layer of caramelized brown sugar, traditionally served on a bamboo skewer.', NULL),
+(3, 'Bibingka', 50.00, 'A warm, spongy baked rice cake cooked in banana leaves, classically topped with salted egg, cheese, and grated coconut.', NULL),
+(3, 'Buko Pandan', 65.00, 'A chilled, creamy dessert combining young coconut strips, pandan-flavored gelatin cubes, and sweetened all-purpose cream.', NULL),
+(3, 'Buko Pie', 250.00, 'A traditional baked pastry featuring a flaky crust filled with layers of tender, sweet young coconut meat.', NULL),
+(3, 'Cassava Cake', 150.00, 'A rich, moist cake made from grated cassava and coconut milk, baked with a sweet, golden custard topping.', NULL),
+(3, 'Fruit Salad', 80.00, 'A festive, sweet mix of canned fruit cocktail, cream, and condensed milk, served chilled or partially frozen.', NULL),
+(3, 'Ginataang Bilo Bilo', 45.00, 'A warm, sweet coconut milk stew loaded with chewy glutinous rice balls, jackfruit, tapioca pearls, and sweet potatoes.', NULL),
+(3, 'Halo Halo', 80.00, 'The ultimate shaved ice dessert layered with sweetened beans, jellies, fruits, leche flan, and ube, generously drizzled with evaporated milk.', NULL),
+(3, 'Kamote Cue', 20.00, 'Thick slices of sweet potato deep-fried with a coating of caramelized brown sugar, served on a skewer.', NULL),
+(3, 'Kutsinta', 50.00, 'Chewy, sticky steamed brown rice cakes enhanced with lye water, usually served with freshly grated coconut.', NULL),
+(3, 'Leche Flan', 120.00, 'A dense, velvety caramel custard made with egg yolks and condensed milk, topped with a clear caramel syrup.', NULL),
+(3, 'Mais Conyelo', 50.00, 'A refreshing glass of layered sweet corn kernels, shaved ice, sugar, and milk.', NULL),
+(3, 'Maja Blanca', 60.00, 'A smooth coconut pudding infused with sweet corn kernels and often topped with toasted coconut curds (latik) or grated cheese.', NULL),
+(3, 'Puto', 60.00, 'Soft, fluffy bite-sized steamed rice cakes, frequently topped with a slice of cheese or salted egg.', NULL),
+(3, 'Saging Con Yelo', 50.00, 'Sweetened plantains (saba) steeped in syrup, served cold over shaved ice and milk.', NULL),
+(3, 'Sapin Sapin', 80.00, 'A striking, multi-layered glutinous rice and coconut dessert where each colored layer offers a slightly distinct flavor like ube and jackfruit.', NULL),
+(3, 'Turon with Ice Cream', 75.00, 'Crispy, caramelized banana spring rolls served warm alongside a generous scoop of cold ice cream.', NULL),
+(3, 'Ube Halaya', 150.00, 'A thick, rich, and creamy jam crafted from slow-cooked purple yam, butter, and condensed milk.', NULL),
+(3, 'Ube Ice Cream', 40.00, 'A uniquely Filipino ice cream flavor featuring the vibrant color and earthy, sweet taste of purple yam.', NULL),
+(3, 'Ube Macapuno Salad', 120.00, 'A delightful, chilled dessert blending earthy ube flavor with sweet, gelatinous macapuno (coconut sport) strings and rich cream.', NULL);
+
+INSERT INTO dishes (category_id, name, price, description, image_url, quantity) VALUES
+(4, 'Afritada', 180.00, 'Savory meat stewed in tomato sauce with potatoes, carrots, and bell peppers.', NULL, 50),
+(4, 'Beef Mechado', 220.00, 'Tender beef chunks simmered slowly in a rich tomato sauce with potatoes and subtle citrus notes.', NULL, 50),
+(4, 'Beef Steak', 200.00, 'Also known as Bistek Tagalog; thin slices of beef braised in soy sauce, calamansi, and topped with onion rings.', NULL, 50),
+(4, 'Bicol Express', 180.00, 'Spicy pork stew simmered in creamy coconut milk, shrimp paste, and plenty of chili peppers.', NULL, 50),
+(4, 'Binagoongang Talong', 120.00, 'Fried or sautéed eggplants cooked in a rich, savory, and slightly sweet shrimp paste (bagoong).', NULL, 50),
+(4, 'Caldereta', 250.00, 'Hearty and rich meat stew cooked in tomato sauce and liver spread, mixed with potatoes, carrots, and olives.', NULL, 50),
+(4, 'Chicken Adobo', 160.00, 'The classic Filipino dish of chicken simmered in soy sauce, vinegar, garlic, bay leaves, and black peppercorns.', NULL, 50),
+(4, 'Chicken Inasal', 170.00, 'Bacolod-style grilled chicken marinated in calamansi, pepper, coconut vinegar, and annatto.', NULL, 50),
+(4, 'Chicken Tinola', 160.00, 'Comforting chicken soup flavored with ginger and onions, served with green papaya wedges and chili leaves.', NULL, 50),
+(4, 'Dinuguan', 170.00, 'Rich and savory pork blood stew cooked with vinegar, garlic, and long green chili peppers.', NULL, 50),
+(4, 'Ginataang Manok', 170.00, 'Chicken pieces stewed slowly in creamy coconut milk with ginger and green papaya.', NULL, 50),
+(4, 'Kare Kare', 280.00, 'Rich oxtail and tripe stew in a thick, savory peanut sauce with vegetables, always served with shrimp paste on the side.', NULL, 50),
+(4, 'Lechong Kawali', 220.00, 'Deep-fried pork belly chopped into pieces, perfectly crispy on the outside and tender on the inside.', NULL, 50),
+(4, 'Menudo', 160.00, 'Diced pork and liver stewed in tomato sauce with small cubes of potatoes, carrots, and raisins.', NULL, 50),
+(4, 'Pakbet', 140.00, 'Also known as Pinakbet; a healthy mix of indigenous vegetables like bitter melon, eggplant, and squash sautéed in shrimp paste.', NULL, 50),
+(4, 'Pork Adobo', 170.00, 'Tender chunks of pork belly braised slowly in a savory-sour mix of soy sauce, vinegar, and crushed garlic.', NULL, 50),
+(4, 'Pork Sinigang', 190.00, 'A beloved sour soup using pork cuts, simmered in a tamarind broth with kangkong, radish, and tomatoes.', NULL, 50),
+(4, 'Sinigang na Bangus', 200.00, 'Fresh milkfish cuts in a perfectly tart tamarind-based broth with mixed native vegetables.', NULL, 50),
+(4, 'Sinigang na Hipon', 220.00, 'Plump shrimps cooked in a signature sour tamarind soup with string beans, radish, and leafy greens.', NULL, 50);
+
+INSERT INTO dishes (category_id, name, price, description, image_url, quantity) VALUES
+(5, 'Calamares', 120.00, 'Crispy deep-fried squid rings, often served with a spiced vinegar or mayonnaise dip.', NULL, 50),
+(5, 'Cheese Stick', 60.00, 'Deep-fried spring rolls stuffed with cheddar cheese, served with a mayo-ketchup dip.', NULL, 50),
+(5, 'Chicharon Bulaklak', 150.00, 'Deep-fried ruffled pork fat, aggressively seasoned and served extra crispy with spiced vinegar.', NULL, 50),
+(5, 'Chicken BBQ', 120.00, 'Filipino-style grilled chicken marinated in a sweet and savory blend of soy sauce, calamansi, and banana ketchup.', NULL, 50),
+(5, 'Chicken Skin', 90.00, 'Dangerously addictive deep-fried crispy chicken skin, best paired with spiced vinegar.', NULL, 50),
+(5, 'Dynamite Lumpia', 80.00, 'Deep-fried green chili peppers stuffed with ground pork and cheese, wrapped in a spring roll wrapper.', NULL, 50),
+(5, 'Fishball', 30.00, 'Classic Filipino street food made from pulverized fish, deep-fried and served with sweet and spicy brown sauce.', NULL, 50),
+(5, 'French Fries', 60.00, 'Crispy, golden deep-fried potato strips.', NULL, 50),
+(5, 'Fried Shrimp Balls', 90.00, 'Crispy, savory balls made from minced shrimp and aromatics, deep-fried until golden.', NULL, 50),
+(5, 'Fried Shrimp', 150.00, 'Deep-fried battered or breaded whole shrimps, crispy on the outside and tender inside.', NULL, 50),
+(5, 'Kamote Fries', 50.00, 'Sweet potato strips deep-fried until crispy, a sweeter and healthier alternative to regular fries.', NULL, 50),
+(5, 'Kwek Kwek', 40.00, 'Hard-boiled quail eggs coated in a vibrant orange batter and deep-fried, served with spiced vinegar.', NULL, 50),
+(5, 'Lumpiang Sariwa', 70.00, 'Fresh spring rolls filled with savory vegetables and meat, wrapped in a soft crepe and topped with peanut sauce.', NULL, 50),
+(5, 'Lumpiang Shanghai', 80.00, 'Bite-sized deep-fried spring rolls filled with a savory mixture of ground pork, carrots, and onions.', NULL, 50),
+(5, 'Pork BBQ', 40.00, 'Skewered pork slices marinated in a sweet-savory blend and grilled to perfection.', NULL, 50),
+(5, 'Siomai', 45.00, 'Steamed or fried pork and shrimp dumplings, traditionally served with soy sauce, calamansi, and chili garlic.', NULL, 50),
+(5, 'Tokwat Baboy', 90.00, 'A savory mix of boiled pork ears/belly and deep-fried tofu cubes, bathed in a soy sauce and vinegar dressing.', NULL, 50),
+(5, 'Turon', 25.00, 'Deep-fried banana (saba) and jackfruit wrapped in a spring roll wrapper, coated in caramelized brown sugar.', NULL, 50),
+(5, 'Ukoy', 50.00, 'Crispy deep-fried fritters made from a batter of small shrimp, bean sprouts, and sweet potato julienne.', NULL, 50);
+
+-- 1. Disable foreign key constraints temporarily
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- 2. Safely truncate and insert the new categories
+TRUNCATE TABLE categories;
+
+INSERT INTO categories (id, name) VALUES
+(1, 'Main Course'),
+(2, 'Silog Meals'),
+(3, 'Appetizers'),
+(4, 'Deserts'),
+(5, 'Drinks');
+
+-- 3. Re-enable foreign key constraints
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- 4. Safely remap the old category_ids in your dishes table to the new ones
+-- Using temporary 100-level IDs first to prevent overwriting collisions
+UPDATE dishes
+SET category_id = CASE
+    WHEN category_id = 4 THEN 101 -- Old Main Course becomes Temp Main Course
+    WHEN category_id = 1 THEN 102 -- Old Silog (from your last insert) becomes Temp Silog
+    WHEN category_id = 6 THEN 102 -- Old Silog (from original table) becomes Temp Silog
+    WHEN category_id = 5 THEN 103 -- Old Appetizers becomes Temp Appetizers
+    WHEN category_id = 3 THEN 104 -- Old Deserts becomes Temp Deserts
+    WHEN category_id = 2 THEN 105 -- Old Drinks becomes Temp Drinks
+    ELSE category_id
+END;
+
+-- 5. Finalize the correct new IDs
+UPDATE dishes
+SET category_id = CASE
+    WHEN category_id = 101 THEN 1 -- Main Course
+    WHEN category_id = 102 THEN 2 -- Silog Meals
+    WHEN category_id = 103 THEN 3 -- Appetizers
+    WHEN category_id = 104 THEN 4 -- Deserts
+    WHEN category_id = 105 THEN 5 -- Drinks
+    ELSE category_id
+END;
