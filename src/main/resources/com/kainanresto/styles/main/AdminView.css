@@ -1700,3 +1700,53 @@
 }
 .settings-footer-save:hover { -fx-background-color: #7A5738; }
 .settings-error { -fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: #E74C3C; }
+
+/* ============================== SECONDARY / EDIT BUTTON ============================== */
+.btn-secondary {
+    -fx-background-color: #8C6343;
+    -fx-background-insets: 0;
+    -fx-background-radius: 10;
+    -fx-border-width: 0;
+    -fx-min-width: 160;
+    -fx-padding: 13.5 28; /* Adjusted padding to match the Cancel button height without borders */
+    -fx-font-family: 'Inter';
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: #7A5738;
+}
+
+.btn-secondary:pressed {
+    -fx-background-color: #6B4C31;
+}
+
+/* ============================== DELETE BUTTON ============================== */
+.add-delete-btn {
+    -fx-background-color: #E74C3C;
+    -fx-background-insets: 0;
+    -fx-background-radius: 10;
+    -fx-border-width: 0;
+    -fx-min-width: 120;
+    -fx-padding: 13.5 28;
+    -fx-font-family: 'Inter';
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.add-delete-btn:hover {
+    -fx-background-color: #D63031;
+}
+
+.add-delete-btn:pressed {
+    -fx-background-color: #C0392B;
+}

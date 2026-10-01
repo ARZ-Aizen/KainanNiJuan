@@ -163,4 +163,18 @@ public class ProductDAO {
             return false;
         }
     }
+
+    public boolean deleteDish(long id) {
+        String query = "DELETE FROM dishes WHERE id = ?";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setLong(1, id);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 }

@@ -105,9 +105,11 @@
                                 <VBox spacing="8" minWidth="200" prefWidth="200" maxWidth="200">
                                     <HBox spacing="4" alignment="CENTER_LEFT"><Label text="Quantity" styleClass="add-label"/><Label text="*" styleClass="add-required"/></HBox>
                                     <HBox styleClass="add-stepper" alignment="CENTER_LEFT">
-                                        <Button text="−" onAction="#onAddDishQtyMinus" styleClass="add-stepper-btn, add-stepper-btn-left" mnemonicParsing="false" focusTraversable="false"/>
+                                        <!-- Added fx:id="qtyMinusBtn" -->
+                                        <Button fx:id="qtyMinusBtn" text="−" onAction="#onAddDishQtyMinus" styleClass="add-stepper-btn, add-stepper-btn-left" mnemonicParsing="false" focusTraversable="false"/>
                                         <TextField fx:id="addDishQuantityField" text="0" styleClass="add-stepper-field" HBox.hgrow="ALWAYS"/>
-                                        <Button text="+" onAction="#onAddDishQtyPlus" styleClass="add-stepper-btn, add-stepper-btn-right" mnemonicParsing="false" focusTraversable="false"/>
+                                        <!-- Added fx:id="qtyPlusBtn" -->
+                                        <Button fx:id="qtyPlusBtn" text="+" onAction="#onAddDishQtyPlus" styleClass="add-stepper-btn, add-stepper-btn-right" mnemonicParsing="false" focusTraversable="false"/>
                                     </HBox>
                                 </VBox>
                                 <VBox spacing="8" HBox.hgrow="ALWAYS" prefWidth="0">
@@ -147,10 +149,13 @@
         <VBox styleClass="add-footer-wrap">
             <Region styleClass="add-footer-line"/>
             <HBox styleClass="add-footer" alignment="CENTER_RIGHT" spacing="16">
-                <Label fx:id="addDishErrorLabel" styleClass="settings-error" visible="false" managed="false"/>
+                <!-- Spacer pushes everything to the right -->
                 <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="addDishErrorLabel" styleClass="settings-error" visible="false" managed="false"/>
+
+                <!-- Buttons grouped on the right -->
+                <Button fx:id="deleteDishBtn" text="Delete Dish" onAction="#onDeleteDish" styleClass="add-delete-btn" mnemonicParsing="false" visible="false" managed="false"/>
                 <Button text="Cancel" onAction="#onAddDishCancel" styleClass="add-cancel-btn" mnemonicParsing="false"/>
-                <!-- Added fx:id="saveDishBtn" here to change text dynamically -->
                 <Button fx:id="saveDishBtn" text="Save Menu Item" onAction="#onAddDishSave" styleClass="add-save-btn" mnemonicParsing="false"/>
             </HBox>
         </VBox>

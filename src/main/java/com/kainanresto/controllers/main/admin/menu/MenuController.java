@@ -45,7 +45,7 @@ public class MenuController {
 
     /* ============================== ADD DISH FORM ============================== */
     @FXML private Label addDishFormTitle;
-    @FXML private Button saveDishBtn;
+    @FXML private Button saveDishBtn, deleteDishBtn, qtyMinusBtn, qtyPlusBtn;
     @FXML private TextField addDishNameField, addDishPriceField, addDishQuantityField, addCategoryNameField;
     @FXML private TextArea addDishDescriptionField;
     @FXML private ComboBox<String> addDishCategoryCombo;
@@ -70,8 +70,8 @@ public class MenuController {
     private boolean rebuildingChips = false;
     private String addDishImageUri;
 
-    // Tracks the dish currently being edited. If null, we are adding a new dish.
     private Dishes currentEditingDish = null;
+    private boolean isViewMode = false; // Tracks if form is locked
 
     @FXML
     public void initialize() {
@@ -111,6 +111,7 @@ public class MenuController {
     @FXML
     private void onAddDish() {
         resetAddDishForm();
+        setFormEditable(true);
         menuGridView.setVisible(false);
         menuGridView.setManaged(false);
         addDishView.setVisible(true);
@@ -224,17 +225,24 @@ public class MenuController {
 
         Label name = new Label(dish.name());
         name.getStyleClass().add("dish-name");
-        name.setWrapText(false); // Force truncation (ellipsis)
+        name.setWrapText(false);
         name.setTextAlignment(TextAlignment.CENTER);
-        name.setTooltip(new Tooltip(dish.name())); // Show full name on hover
+        name.setTooltip(new Tooltip(dish.name()));
 
         Label price = new Label(dish.price() == null ? "—" : String.format(Locale.ENGLISH, "₱ %,.2f", dish.price()));
         price.getStyleClass().add("dish-price");
 
-        Label badge = new Label(dish.available() ? "Available" : "Unavailable");
-        badge.getStyleClass().addAll("dish-badge", dish.available() ? "dish-badge-available" : "dish-badge-unavailable");
+        Label qtyLabel = new Label("Qty: " + dish.quantity());
+        qtyLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #6E625C;");
 
-        VBox card = new VBox(name, price, badge);
+        boolean isAvailable = dish.quantity() > 0;
+        Label statusBadge = new Label(isAvailable ? "Available" : "Unavailable");
+        statusBadge.getStyleClass().addAll("dish-badge", isAvailable ? "dish-badge-available" : "dish-badge-unavailable");
+
+        VBox badgeBox = new VBox(6, qtyLabel, statusBadge);
+        badgeBox.setAlignment(Pos.CENTER);
+
+        VBox card = new VBox(name, price, badgeBox);
         card.getStyleClass().add("dish-card");
 
         StackPane wrapper = new StackPane(card, imageShell);
@@ -243,8 +251,7 @@ public class MenuController {
         StackPane.setAlignment(imageShell, Pos.TOP_CENTER);
         wrapper.getStyleClass().add("dish-card-wrapper");
 
-        // Trigger Edit Mode when clicking the card
-        wrapper.setOnMouseClicked(e -> openEditDishForm(dish));
+        wrapper.setOnMouseClicked(e -> openViewDishForm(dish));
 
         return wrapper;
     }
@@ -256,6 +263,17 @@ public class MenuController {
         addDishPriceField.setTextFormatter(new TextFormatter<>(c -> c.getControlNewText().matches("\\d*(\\.\\d{0,2})?") ? c : null));
         addDishQuantityField.setTextFormatter(new TextFormatter<>(c -> c.getControlNewText().matches("\\d{0,5}") ? c : null));
 
+        addDishPriceField.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+            if (!isFocused && !addDishPriceField.getText().isEmpty()) {
+                try {
+                    // Remove existing commas before parsing
+                    String cleanText = addDishPriceField.getText().replace(",", "");
+                    BigDecimal price = new BigDecimal(cleanText);
+                    addDishPriceField.setText(String.format(Locale.ENGLISH, "%,.2f", price));
+                } catch (NumberFormatException ignored) {}
+            }
+        });
+
         addDishStatusGroup.selectedToggleProperty().addListener((obs, old, now) -> {
             if (now == null && old != null) addDishStatusGroup.selectToggle(old);
         });
@@ -266,8 +284,22 @@ public class MenuController {
 
     private void resetAddDishForm() {
         currentEditingDish = null;
+        isViewMode = false;
+
         if (addDishFormTitle != null) addDishFormTitle.setText("Add Menu Item");
-        if (saveDishBtn != null) saveDishBtn.setText("Save Menu Item");
+
+        if (saveDishBtn != null) {
+            saveDishBtn.setText("Save Menu Item");
+            saveDishBtn.getStyleClass().remove("btn-secondary");
+            if (!saveDishBtn.getStyleClass().contains("add-save-btn")) {
+                saveDishBtn.getStyleClass().add("add-save-btn");
+            }
+        }
+
+        if (deleteDishBtn != null) {
+            deleteDishBtn.setVisible(false);
+            deleteDishBtn.setManaged(false);
+        }
 
         addDishNameField.clear();
         addDishCategoryCombo.getSelectionModel().clearSelection();
@@ -282,27 +314,56 @@ public class MenuController {
         setAddCategoryError(null);
     }
 
-    private void openEditDishForm(Dishes dish) {
+    private void setFormEditable(boolean editable) {
+        addDishNameField.setDisable(!editable);
+        addDishCategoryCombo.setDisable(!editable);
+        addDishPriceField.setDisable(!editable);
+        addDishQuantityField.setDisable(!editable);
+        addDishDescriptionField.setDisable(!editable);
+        addDishAvailableBtn.setDisable(!editable);
+        addDishUnavailableBtn.setDisable(!editable);
+
+        if (qtyMinusBtn != null) qtyMinusBtn.setDisable(!editable);
+        if (qtyPlusBtn != null) qtyPlusBtn.setDisable(!editable);
+        if (addDishPreviewImage.getParent() != null) {
+            addDishPreviewImage.getParent().setDisable(!editable);
+        }
+    }
+
+    private void openViewDishForm(Dishes dish) {
         resetAddDishForm();
         currentEditingDish = dish;
+        isViewMode = true; // Lock the form
 
-        if (addDishFormTitle != null) addDishFormTitle.setText("Edit Menu Item");
-        if (saveDishBtn != null) saveDishBtn.setText("Update Menu Item");
+        if (addDishFormTitle != null) addDishFormTitle.setText("View Menu Item");
 
-        // Populate fields with existing data
+        if (saveDishBtn != null) {
+            saveDishBtn.setText("Edit Menu Item");
+            saveDishBtn.getStyleClass().remove("add-save-btn");
+            if (!saveDishBtn.getStyleClass().contains("btn-secondary")) {
+                saveDishBtn.getStyleClass().add("btn-secondary");
+            }
+        }
+
+        if (deleteDishBtn != null) {
+            deleteDishBtn.setVisible(true);
+            deleteDishBtn.setManaged(true);
+        }
+
+        setFormEditable(false);
+
         addDishNameField.setText(dish.name());
         addDishCategoryCombo.setValue(dish.category());
         if (dish.price() != null) {
             addDishPriceField.setText(dish.price().toPlainString());
         }
 
-        // Failsafe in case your Dishes model doesn't store descriptions or quantities yet
         try {
             addDishDescriptionField.setText(dish.description() != null ? dish.description() : "");
             addDishQuantityField.setText(String.valueOf(dish.quantity()));
         } catch (Exception ignored) {}
 
-        if (dish.available()) {
+        if (dish.quantity() > 0) {
             addDishStatusGroup.selectToggle(addDishAvailableBtn);
         } else {
             addDishStatusGroup.selectToggle(addDishUnavailableBtn);
@@ -317,7 +378,6 @@ public class MenuController {
             } catch (Exception ignored) {}
         }
 
-        // Switch to the form view
         menuGridView.setVisible(false);
         menuGridView.setManaged(false);
         addDishView.setVisible(true);
@@ -325,6 +385,7 @@ public class MenuController {
     }
 
     @FXML private void onAddDishChoosePhoto() {
+        if (isViewMode) return; // Disallow in view mode
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Choose menu item photo");
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.gif"));
@@ -343,6 +404,25 @@ public class MenuController {
 
     @FXML
     private void onAddDishSave() {
+
+        // Handle Edit Button Click
+        if (isViewMode) {
+            isViewMode = false;
+            setFormEditable(true);
+            if (addDishFormTitle != null) addDishFormTitle.setText("Edit Menu Item");
+            if (saveDishBtn != null) {
+                saveDishBtn.setText("Update Menu Item");
+                saveDishBtn.getStyleClass().remove("btn-secondary");
+                saveDishBtn.getStyleClass().add("add-save-btn");
+            }
+            if (deleteDishBtn != null) {
+                deleteDishBtn.setVisible(false);
+                deleteDishBtn.setManaged(false);
+            }
+            return;
+        }
+
+        // Handle Save/Update Logic
         setAddDishError(null);
 
         String name = addDishNameField.getText() == null ? "" : addDishNameField.getText().trim();
@@ -363,28 +443,42 @@ public class MenuController {
             return;
         }
 
+        boolean finalAvailable = currentQuantity() > 0;
+
         String desc = addDishDescriptionField.getText() == null ? "" : addDishDescriptionField.getText().trim();
         NewDishForm form = new NewDishForm(name, category, price, desc.isEmpty() ? null : desc,
-                addDishAvailableBtn.isSelected(), addDishImageUri, currentQuantity());
+                finalAvailable, addDishImageUri, currentQuantity());
 
-        // BRANCH LOGIC: Check if we are updating or adding
         if (currentEditingDish == null) {
-            // DIRECT DATABASE CALL: ADD
             if (productDAO.addDish(form)) {
                 AlertUtil.showInfo("Success", form.name() + " was added to the menu.");
-                loadMenuManagementData(); // Refresh UI
-                showMenuGrid();           // Go back to table
+                loadMenuManagementData();
+                showMenuGrid();
             } else {
                 setAddDishError("Failed to save the menu item to the database.");
             }
         } else {
-
             if (productDAO.updateDish(currentEditingDish, form)) {
                 AlertUtil.showInfo("Success", form.name() + " was updated.");
-                loadMenuManagementData(); // Refresh UI
-                showMenuGrid();           // Go back to table
+                loadMenuManagementData();
+                showMenuGrid();
             } else {
                 setAddDishError("Failed to update the menu item in the database.");
+            }
+        }
+    }
+
+    @FXML
+    private void onDeleteDish() {
+        if (currentEditingDish == null) return;
+
+        if (AlertUtil.showYesNoConfirmation("Delete Dish", "Are you sure you want to delete \"" + currentEditingDish.name() + "\"?", "This action cannot be undone.")) {
+            if (productDAO.deleteDish(currentEditingDish.id())) {
+                AlertUtil.showInfo("Deleted", currentEditingDish.name() + " has been removed from the menu.");
+                loadMenuManagementData();
+                showMenuGrid();
+            } else {
+                setAddDishError("Failed to delete the menu item from the database.");
             }
         }
     }
@@ -405,10 +499,9 @@ public class MenuController {
             return;
         }
 
-        // DIRECT DATABASE CALL
         if (productDAO.addCategory(name)) {
             addCategoryNameField.clear();
-            loadMenuManagementData(); // Refresh chips and dropdown
+            loadMenuManagementData();
             addDishCategoryCombo.setValue(name);
         } else {
             setAddCategoryError("Database error creating category.");
@@ -421,7 +514,6 @@ public class MenuController {
             return;
         }
         if (AlertUtil.showYesNoConfirmation("Delete Category", "Delete \"" + name + "\"?", "This cannot be undone.")) {
-            // DIRECT DATABASE CALL
             if (productDAO.deleteCategory(name)) {
                 loadMenuManagementData();
             } else {
