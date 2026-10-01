@@ -479,6 +479,7 @@
 }
 .om-btn-outline:hover { -fx-background-color: #FCF7F0; }
 
+
 /* ================= ORDER MANAGEMENT RECEIPT (omr) ================= */
 .omr-panel {
     -fx-min-width: 420; -fx-pref-width: 420; -fx-max-width: 420;
@@ -551,7 +552,7 @@
     -fx-padding: 16 0;
     -fx-alignment: CENTER;
     -fx-font-family: 'Inter'; -fx-font-size: 16px; -fx-font-weight: 700;
-    -fx-text-fill: black;
+    -fx-text-fill: white;
     -fx-focus-color: transparent; -fx-faint-focus-color: transparent;
     -fx-cursor: hand;
 }
