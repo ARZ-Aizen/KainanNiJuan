@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.text.*?>
+
+<HBox styleClass="pos-page" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.kainanresto.controllers.main.client.pos.ClientPosController">
+
+    <!-- Left Column (Dishes) -->
+    <VBox spacing="24" HBox.hgrow="ALWAYS">
+        <padding>
+            <Insets top="32" right="32" bottom="32" left="32"/>
+        </padding>
+
+        <HBox alignment="CENTER_LEFT">
+            <VBox spacing="4">
+                <TextFlow styleClass="om-title-flow">
+                    <Text text="KAINAN NI " styleClass="om-brand-main"/>
+                    <Text text="JUAN" styleClass="om-brand-accent"/>
+                </TextFlow>
+                <Label fx:id="currentDateLabel" styleClass="om-subtitle"/>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS"/>
+            <HBox fx:id="posSearchBox" styleClass="om-search-box" alignment="CENTER_LEFT" spacing="12">
+                <StackPane styleClass="om-host-20">
+                    <SVGPath fx:id="posSearchIcon" styleClass="phosphor-icon, pos-search-icon"/>
+                </StackPane>
+                <TextField fx:id="posSearchField" promptText="Search for food, dessert, etc..."
+                           styleClass="pos-search-field" HBox.hgrow="ALWAYS"/>
+            </HBox>
+        </HBox>
+
+        <FlowPane fx:id="posCategoryChips" hgap="8" vgap="8"/>
+        <Region styleClass="pos-divider"/>
+        <Label text="Choose Dishes" styleClass="pos-section-title"/>
+
+        <ScrollPane fx:id="posScroll" styleClass="pos-scroll" fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+            <content>
+                <VBox styleClass="pos-grid-host" alignment="TOP_LEFT">
+                    <Label fx:id="posGridPlaceholder" styleClass="pos-empty-label"/>
+                    <FlowPane fx:id="posDishGrid" alignment="TOP_LEFT" hgap="14" vgap="17"/>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </VBox>
+
+    <!-- Right Column (Receipt) -->
+    <VBox fx:id="receiptPanel" styleClass="receipt-panel" visible="false" managed="false">
+        <HBox.margin><Insets top="32" right="32" bottom="32" left="0"/></HBox.margin>
+        <fx:define>
+            <ToggleGroup fx:id="receiptTypeGroup"/>
+        </fx:define>
+
+        <VBox spacing="4">
+            <Label text="Current Order" styleClass="receipt-title"/>
+            <Label fx:id="receiptSubtitleLabel" styleClass="receipt-subtitle"/>
+        </VBox>
+
+        <HBox spacing="8" alignment="CENTER_LEFT">
+            <ToggleButton text="Dine in" toggleGroup="$receiptTypeGroup" selected="true"
+                          mnemonicParsing="false" styleClass="receipt-type-chip"/>
+            <ToggleButton text="To Go" toggleGroup="$receiptTypeGroup"
+                          mnemonicParsing="false" styleClass="receipt-type-chip"/>
+            <ToggleButton text="Delivery" toggleGroup="$receiptTypeGroup"
+                          mnemonicParsing="false" styleClass="receipt-type-chip"/>
+        </HBox>
+
+        <HBox styleClass="receipt-table-head" alignment="CENTER_LEFT" spacing="10">
+            <Label text="Item" styleClass="receipt-head-label" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+            <Label text="Qty" styleClass="receipt-head-label, receipt-col-qty"/>
+            <Label text="Price" styleClass="receipt-head-label, receipt-col-price"/>
+        </HBox>
+
+        <ScrollPane styleClass="receipt-scroll" fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+            <content>
+                <VBox fx:id="receiptLines" styleClass="receipt-lines" spacing="14"/>
+            </content>
+        </ScrollPane>
+
+        <Region styleClass="receipt-dash"/>
+
+        <VBox spacing="8">
+            <HBox alignment="CENTER_LEFT">
+                <Label text="Subtotal" styleClass="receipt-sum-label"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="receiptSubtotalLabel" styleClass="receipt-sum-value"/>
+            </HBox>
+            <HBox alignment="CENTER_LEFT">
+                <Label text="Discount" styleClass="receipt-sum-label"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <ComboBox fx:id="receiptDiscountBox" promptText="None" styleClass="receipt-discount"/>
+            </HBox>
+            <HBox alignment="CENTER_LEFT">
+                <Label fx:id="receiptServiceLabel" styleClass="receipt-sum-label"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="receiptServiceValueLabel" styleClass="receipt-sum-value"/>
+            </HBox>
+            <HBox alignment="CENTER_LEFT">
+                <Label fx:id="receiptVatLabel" styleClass="receipt-sum-label"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="receiptVatValueLabel" styleClass="receipt-sum-value"/>
+            </HBox>
+        </VBox>
+
+        <Region styleClass="receipt-divider"/>
+
+        <HBox alignment="CENTER_LEFT">
+            <Label text="TOTAL" styleClass="receipt-total-label"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="receiptTotalLabel" styleClass="receipt-total-value"/>
+        </HBox>
+
+        <Button fx:id="receiptPayBtn" text="PROCEED TO PAYMENT" mnemonicParsing="false"
+                styleClass="receipt-pay-btn" maxWidth="Infinity" onAction="#onProceedToPayment"/>
+    </VBox>
+</HBox>

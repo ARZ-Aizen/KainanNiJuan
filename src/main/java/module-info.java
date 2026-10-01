@@ -16,7 +16,6 @@ module com.kainanresto {
     requires javafx.base;
     requires javafx.graphics;
 
-
     //FXML LOADER TO
     opens com.kainanresto to javafx.fxml;
 
@@ -41,8 +40,17 @@ module com.kainanresto {
     opens com.kainanresto.model.transac to javafx.base;
     exports com.kainanresto.controllers.main.admin;
     opens com.kainanresto.controllers.main.admin to javafx.fxml;
+
+    // MAIN CLIENT CONTROLLER
     exports com.kainanresto.controllers.main.client;
     opens com.kainanresto.controllers.main.client to javafx.fxml;
+
+    // CLIENT SUB-CONTROLLERS
+    exports com.kainanresto.controllers.main.client.pos;
+    opens com.kainanresto.controllers.main.client.pos to javafx.fxml;
+
+    exports com.kainanresto.controllers.main.client.om;
+    opens com.kainanresto.controllers.main.client.om to javafx.fxml;
 
     // ADMIN SUB-CONTROLLERS
     exports com.kainanresto.controllers.main.admin.dashboard;
@@ -59,6 +67,4 @@ module com.kainanresto {
 
     exports com.kainanresto.controllers.main.admin.settings;
     opens com.kainanresto.controllers.main.admin.settings to javafx.fxml;
-
-
 }
