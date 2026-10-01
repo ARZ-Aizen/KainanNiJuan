@@ -72,8 +72,9 @@ public class ProductDAO {
 
     public List<Dishes> getAllDishes() {
         List<Dishes> dishesList = new ArrayList<>();
+        // FIX: Added d.description to the SELECT statement
         String query = """
-            SELECT d.id, d.name, c.name AS category_name, d.price, d.image_url, d.available, d.quantity
+            SELECT d.id, d.name, c.name AS category_name, d.price, d.image_url, d.available, d.description, d.quantity
             FROM dishes d
             JOIN categories c ON d.category_id = c.id
             ORDER BY d.name ASC
@@ -87,13 +88,16 @@ public class ProductDAO {
                 // Determine actual availability based on the toggle AND the remaining quantity
                 boolean isAvailable = rs.getBoolean("available") && rs.getInt("quantity") > 0;
 
+                // FIX: Added description and quantity to match the updated record
                 Dishes dish = new Dishes(
                         rs.getLong("id"),
                         rs.getString("name"),
                         rs.getString("category_name"),
                         rs.getBigDecimal("price"),
                         rs.getString("image_url"),
-                        isAvailable
+                        isAvailable,
+                        rs.getString("description"),
+                        rs.getInt("quantity")
                 );
                 dishesList.add(dish);
             }
@@ -130,4 +134,33 @@ public class ProductDAO {
         }
     }
 
+    // FIX: Added the missing updateDish method called by your controller
+    public boolean updateDish(Dishes currentDish, NewDishForm form) {
+        String query = """
+            UPDATE dishes 
+            SET category_id = ?, name = ?, price = ?, description = ?, image_url = ?, quantity = ?, available = ?
+            WHERE id = ?
+        """;
+
+        try (Connection conn = DatabaseConfig.getConnection()) {
+            int categoryId = getCategoryIdByName(form.category(), conn);
+            if (categoryId == -1) return false;
+
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, categoryId);
+                stmt.setString(2, form.name());
+                stmt.setBigDecimal(3, form.price());
+                stmt.setString(4, form.description());
+                stmt.setString(5, form.imageUri());
+                stmt.setInt(6, form.quantity());
+                stmt.setBoolean(7, form.available());
+                stmt.setLong(8, currentDish.id()); // Target the existing row by ID
+
+                return stmt.executeUpdate() > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

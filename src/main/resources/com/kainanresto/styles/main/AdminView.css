@@ -647,16 +647,25 @@
 .dish-grid { -fx-padding: 0 12px 12px 12px; }   /* room for the image shadow */
 
 /* Dish card */
-.dish-card-wrapper { -fx-cursor: hand; -fx-min-width: 184.47px; -fx-pref-width: 184.47px; -fx-max-width: 184.47px; }
+.dish-card-wrapper {
+    -fx-cursor: hand;
+    -fx-min-width: 184.47px; -fx-pref-width: 184.47px; -fx-max-width: 184.47px;
+}
 
 .dish-card {
     -fx-min-width: 184.47px; -fx-pref-width: 184.47px; -fx-max-width: 184.47px;
     -fx-min-height: 190.34px;
-    -fx-padding: 80.33px 8px 16px 8px;   /* 72.33 = half the image, +8 gap */
-    -fx-spacing: 4px;
+    -fx-padding: 80.33px 16px 16px 16px;   /* Added more side padding */
+    -fx-spacing: 6px;
     -fx-alignment: TOP_CENTER;
-    -fx-background-color: #D5B392;
+
+    -fx-background-color: white;
     -fx-background-radius: 60px;
+
+    -fx-border-color: #EAE1D4;
+    -fx-border-width: 1px;
+    -fx-border-radius: 60px;
+    -fx-effect: dropshadow(gaussian, rgba(140,99,67,0.08), 12, 0, 0, 4);
 }
 
 /* shell carries the shadow; the ImageView inside is circle-clipped */
@@ -669,12 +678,24 @@
 }
 
 .dish-name {
-    -fx-text-fill: black; -fx-font-size: 18px; -fx-font-weight: 600;
-    -fx-line-spacing: 5px;                       /* ≈ line-height 27px */
-    -fx-max-width: 141.18px; -fx-max-height: 54px; /* 2 lines, then ellipsis */
-    -fx-wrap-text: true; -fx-text-alignment: center; -fx-alignment: CENTER;
+    /* FIX: Use the brand dark brown/black color */
+    -fx-text-fill: #2E2520;
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+
+    /* FIX: Force truncation (ellipsis) */
+    -fx-max-width: 145px;
+    -fx-wrap-text: false;
+    -fx-text-overrun: ellipsis;
+    -fx-alignment: CENTER;
 }
-.dish-price { -fx-text-fill: black; -fx-font-size: 16px; -fx-font-weight: 700; }
+
+.dish-price {
+    /* FIX: Make the price stand out using your primary brown instead of solid black */
+    -fx-text-fill: #8C6343;
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+}
 
 .dish-badge {
     -fx-min-width: 78px;

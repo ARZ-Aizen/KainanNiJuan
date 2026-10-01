@@ -44,6 +44,8 @@ public class MenuController {
     @FXML private SVGPath menuSearchIcon, addDishIcon;
 
     /* ============================== ADD DISH FORM ============================== */
+    @FXML private Label addDishFormTitle;
+    @FXML private Button saveDishBtn;
     @FXML private TextField addDishNameField, addDishPriceField, addDishQuantityField, addCategoryNameField;
     @FXML private TextArea addDishDescriptionField;
     @FXML private ComboBox<String> addDishCategoryCombo;
@@ -67,6 +69,9 @@ public class MenuController {
     private String selectedCategory = null;
     private boolean rebuildingChips = false;
     private String addDishImageUri;
+
+    // Tracks the dish currently being edited. If null, we are adding a new dish.
+    private Dishes currentEditingDish = null;
 
     @FXML
     public void initialize() {
@@ -219,8 +224,9 @@ public class MenuController {
 
         Label name = new Label(dish.name());
         name.getStyleClass().add("dish-name");
-        name.setWrapText(true);
+        name.setWrapText(false); // Force truncation (ellipsis)
         name.setTextAlignment(TextAlignment.CENTER);
+        name.setTooltip(new Tooltip(dish.name())); // Show full name on hover
 
         Label price = new Label(dish.price() == null ? "—" : String.format(Locale.ENGLISH, "₱ %,.2f", dish.price()));
         price.getStyleClass().add("dish-price");
@@ -236,11 +242,14 @@ public class MenuController {
         StackPane.setAlignment(card, Pos.BOTTOM_CENTER);
         StackPane.setAlignment(imageShell, Pos.TOP_CENTER);
         wrapper.getStyleClass().add("dish-card-wrapper");
-        wrapper.setOnMouseClicked(e -> { /* Edit Dish Logic */ });
+
+        // Trigger Edit Mode when clicking the card
+        wrapper.setOnMouseClicked(e -> openEditDishForm(dish));
+
         return wrapper;
     }
 
-    /* ============================== ADD DISH FORM LOGIC ============================== */
+    /* ============================== ADD/EDIT DISH FORM LOGIC ============================== */
 
     private void setupAddDishPage() {
         addDishPreviewImage.setClip(new Circle(75, 75, 75));
@@ -256,6 +265,10 @@ public class MenuController {
     }
 
     private void resetAddDishForm() {
+        currentEditingDish = null;
+        if (addDishFormTitle != null) addDishFormTitle.setText("Add Menu Item");
+        if (saveDishBtn != null) saveDishBtn.setText("Save Menu Item");
+
         addDishNameField.clear();
         addDishCategoryCombo.getSelectionModel().clearSelection();
         addDishPriceField.clear();
@@ -267,6 +280,48 @@ public class MenuController {
         addCategoryNameField.clear();
         setAddDishError(null);
         setAddCategoryError(null);
+    }
+
+    private void openEditDishForm(Dishes dish) {
+        resetAddDishForm();
+        currentEditingDish = dish;
+
+        if (addDishFormTitle != null) addDishFormTitle.setText("Edit Menu Item");
+        if (saveDishBtn != null) saveDishBtn.setText("Update Menu Item");
+
+        // Populate fields with existing data
+        addDishNameField.setText(dish.name());
+        addDishCategoryCombo.setValue(dish.category());
+        if (dish.price() != null) {
+            addDishPriceField.setText(dish.price().toPlainString());
+        }
+
+        // Failsafe in case your Dishes model doesn't store descriptions or quantities yet
+        try {
+            addDishDescriptionField.setText(dish.description() != null ? dish.description() : "");
+            addDishQuantityField.setText(String.valueOf(dish.quantity()));
+        } catch (Exception ignored) {}
+
+        if (dish.available()) {
+            addDishStatusGroup.selectToggle(addDishAvailableBtn);
+        } else {
+            addDishStatusGroup.selectToggle(addDishUnavailableBtn);
+        }
+
+        if (dish.imageUrl() != null && !dish.imageUrl().isBlank()) {
+            addDishImageUri = dish.imageUrl();
+            try {
+                Image image = new Image(addDishImageUri, 300.0, 300.0, true, true, true);
+                addDishPreviewImage.setImage(image);
+                applyCoverCrop(addDishPreviewImage, image);
+            } catch (Exception ignored) {}
+        }
+
+        // Switch to the form view
+        menuGridView.setVisible(false);
+        menuGridView.setManaged(false);
+        addDishView.setVisible(true);
+        addDishView.setManaged(true);
     }
 
     @FXML private void onAddDishChoosePhoto() {
@@ -312,13 +367,25 @@ public class MenuController {
         NewDishForm form = new NewDishForm(name, category, price, desc.isEmpty() ? null : desc,
                 addDishAvailableBtn.isSelected(), addDishImageUri, currentQuantity());
 
-        // DIRECT DATABASE CALL
-        if (productDAO.addDish(form)) {
-            AlertUtil.showInfo("Success", form.name() + " was added to the menu.");
-            loadMenuManagementData(); // Refresh UI
-            showMenuGrid();           // Go back to table
+        // BRANCH LOGIC: Check if we are updating or adding
+        if (currentEditingDish == null) {
+            // DIRECT DATABASE CALL: ADD
+            if (productDAO.addDish(form)) {
+                AlertUtil.showInfo("Success", form.name() + " was added to the menu.");
+                loadMenuManagementData(); // Refresh UI
+                showMenuGrid();           // Go back to table
+            } else {
+                setAddDishError("Failed to save the menu item to the database.");
+            }
         } else {
-            setAddDishError("Failed to save the menu item to the database.");
+
+            if (productDAO.updateDish(currentEditingDish, form)) {
+                AlertUtil.showInfo("Success", form.name() + " was updated.");
+                loadMenuManagementData(); // Refresh UI
+                showMenuGrid();           // Go back to table
+            } else {
+                setAddDishError("Failed to update the menu item in the database.");
+            }
         }
     }
 

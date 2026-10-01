@@ -43,7 +43,7 @@
         </ScrollPane>
     </VBox>
 
-    <!-- ============================== ADD MENU ITEM FORM ============================== -->
+    <!-- ============================== ADD/EDIT MENU ITEM FORM ============================== -->
     <VBox fx:id="addDishView" visible="false" managed="false" styleClass="add-dish-root">
         <ScrollPane fitToWidth="true" fitToHeight="false" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" VBox.vgrow="ALWAYS" styleClass="edit-account-scroll">
             <content>
@@ -53,7 +53,8 @@
                     <HBox spacing="24" fillHeight="true" alignment="TOP_LEFT">
                         <!-- LEFT: Menu Item Information -->
                         <VBox styleClass="add-card" spacing="20" HBox.hgrow="ALWAYS" prefWidth="0">
-                            <Label text="Menu Item Information" styleClass="add-card-title"/>
+                            <!-- Added fx:id="addDishFormTitle" here to change text dynamically -->
+                            <Label fx:id="addDishFormTitle" text="Add Menu Item" styleClass="add-card-title"/>
                             <Region styleClass="add-divider"/>
 
                             <HBox spacing="32" alignment="TOP_LEFT">
@@ -149,7 +150,8 @@
                 <Label fx:id="addDishErrorLabel" styleClass="settings-error" visible="false" managed="false"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <Button text="Cancel" onAction="#onAddDishCancel" styleClass="add-cancel-btn" mnemonicParsing="false"/>
-                <Button text="Save Menu Item" onAction="#onAddDishSave" styleClass="add-save-btn" mnemonicParsing="false"/>
+                <!-- Added fx:id="saveDishBtn" here to change text dynamically -->
+                <Button fx:id="saveDishBtn" text="Save Menu Item" onAction="#onAddDishSave" styleClass="add-save-btn" mnemonicParsing="false"/>
             </HBox>
         </VBox>
     </VBox>

@@ -12,5 +12,7 @@ public record Dishes(
         String category,
         BigDecimal price,
         String imageUrl,
-        boolean available
+        boolean available,
+        String description,
+        int quantity
 ) {}
