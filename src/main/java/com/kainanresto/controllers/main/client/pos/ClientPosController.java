@@ -11,6 +11,7 @@ import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -18,9 +19,11 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.SVGPath;
+import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -38,11 +41,12 @@ public class ClientPosController {
     @FXML private FlowPane posDishGrid;
 
     @FXML private VBox receiptPanel;
-    @FXML private ToggleGroup receiptTypeGroup;
-    @FXML private Label receiptSubtitleLabel;
     @FXML private VBox receiptLines;
     @FXML private Label receiptSubtotalLabel;
     @FXML private ComboBox<String> receiptDiscountBox;
+    @FXML private Label receiptDiscountValueLabel;
+    @FXML private HBox discountCardsRow;
+    @FXML private Label discountCardsLabel;
     @FXML private Label receiptServiceLabel;
     @FXML private Label receiptServiceValueLabel;
     @FXML private Label receiptVatLabel;
@@ -53,9 +57,6 @@ public class ClientPosController {
     private static final PseudoClass FIELD_FOCUSED = PseudoClass.getPseudoClass("field-focused");
     private static final double DISH_IMAGE_SIZE = 144.66;
     private static final double CARD_WIDTH = 184.47;
-    private static final double CARD_HEIGHT = 190.34;
-    private static final double IMAGE_OVERHANG = 60.69;
-    private static final double NAME_HEIGHT = 54.0;
     private static final double RECEIPT_THUMB = 54.0;
 
     private final ToggleGroup categoryToggleGroup = new ToggleGroup();
@@ -64,13 +65,15 @@ public class ClientPosController {
     private String selectedCategory = null;
     private boolean rebuildingChips = false;
     private boolean rebuildingDiscount = false;
-    private String receiptTypeDetail = null;
 
     private Consumer<Dishes> onAddToOrder;
     private BiConsumer<ReceiptLine, Integer> onReceiptQuantityChange;
-    private Consumer<String> onReceiptOrderTypeChange;
     private Consumer<String> onReceiptDiscountChange;
+    private Consumer<Integer> onReceiptDiscountCardsChange;
     private Runnable proceedToPaymentHandler;
+
+    private Map<String, Integer> discountedUnits = Map.of();
+    private BigDecimal discountRate = BigDecimal.ZERO;
 
     @FXML
     public void initialize() {
@@ -92,27 +95,18 @@ public class ClientPosController {
             applyPosFilter();
         });
 
-        receiptTypeGroup.selectedToggleProperty().addListener((obs, old, now) -> {
-            if (now == null && old != null) {
-                receiptTypeGroup.selectToggle(old);
-                return;
-            }
-            updateReceiptSubtitle();
-            if (now != null && onReceiptOrderTypeChange != null) {
-                onReceiptOrderTypeChange.accept(((ToggleButton) now).getText());
-            }
-        });
-
         receiptDiscountBox.valueProperty().addListener((obs, old, now) -> {
             if (!rebuildingDiscount && now != null && onReceiptDiscountChange != null) {
                 onReceiptDiscountChange.accept(now);
             }
         });
 
-        updateReceiptSubtitle();
         setCategories(null);
         setReceipt(null, null);
+        setDiscountSummary(false, 1, null);
     }
+
+    /* ============================== PUBLIC API ============================== */
 
     public void setCategories(List<String> categories) {
         suppliedCategories = categories == null ? new ArrayList<>() : new ArrayList<>(categories);
@@ -125,24 +119,49 @@ public class ClientPosController {
         else applyPosFilter();
     }
 
-    public void setOnAddToOrder(Consumer<Dishes> handler) { this.onAddToOrder = handler; }
+    public void setDiscountOptions(List<String> options) {
+        rebuildingDiscount = true;
+        receiptDiscountBox.getItems().setAll(options == null ? List.<String>of() : options);
+        if (receiptDiscountBox.getItems().isEmpty()) receiptDiscountBox.getSelectionModel().clearSelection();
+        else receiptDiscountBox.getSelectionModel().selectFirst();
+        rebuildingDiscount = false;
+    }
 
     public void setReceipt(List<ReceiptLine> lines, ReceiptTotals totals) {
+        setReceipt(lines, totals, Map.of(), BigDecimal.ZERO);
+    }
+
+    public void setReceipt(List<ReceiptLine> lines, ReceiptTotals totals,
+                           Map<String, Integer> discountedUnits, BigDecimal discountRate) {
+        this.discountedUnits = discountedUnits == null ? Map.of() : discountedUnits;
+        this.discountRate = discountRate == null ? BigDecimal.ZERO : discountRate;
+
         List<Node> rows = new ArrayList<>();
         if (lines != null) {
             for (ReceiptLine line : lines) {
                 if (line != null) rows.add(createReceiptRow(line));
             }
         }
+
+        if (rows.isEmpty()) {
+            Label empty = new Label("No items in the order yet.\nTap a dish to add it.");
+            empty.getStyleClass().add("receipt-empty-label");
+            empty.setTextAlignment(TextAlignment.CENTER);
+            empty.setWrapText(true);
+            empty.setMaxWidth(Double.MAX_VALUE);
+            empty.setAlignment(Pos.CENTER);
+            rows.add(empty);
+        }
         receiptLines.getChildren().setAll(rows);
 
         if (totals == null) {
-            receiptSubtotalLabel.setText("\u2014");
+            BigDecimal zero = BigDecimal.ZERO;
+            receiptSubtotalLabel.setText(ClientUIHelper.formatPeso(zero));
             receiptServiceLabel.setText("Service charge");
-            receiptServiceValueLabel.setText("\u2014");
+            receiptServiceValueLabel.setText(ClientUIHelper.formatPeso(zero));
             receiptVatLabel.setText("VAT");
-            receiptVatValueLabel.setText("\u2014");
-            receiptTotalLabel.setText("\u2014");
+            receiptVatValueLabel.setText(ClientUIHelper.formatPeso(zero));
+            receiptTotalLabel.setText(ClientUIHelper.formatPeso(zero));
         } else {
             receiptSubtotalLabel.setText(ClientUIHelper.formatPeso(totals.subtotal()));
             receiptServiceLabel.setText("Service charge" + rateSuffix(totals.serviceChargeRate()));
@@ -152,28 +171,25 @@ public class ClientPosController {
             receiptTotalLabel.setText(ClientUIHelper.formatPeso(totals.total()));
         }
 
-        boolean show = !rows.isEmpty();
-        receiptPanel.setVisible(show);
-        receiptPanel.setManaged(show);
+        receiptPayBtn.setDisable(lines == null || lines.isEmpty());
     }
 
-    public void setReceiptOrderTypeDetail(String detail) {
-        this.receiptTypeDetail = detail;
-        updateReceiptSubtitle();
+    /** Shows/hides the "discount cards" row and the discount amount next to the combo. */
+    public void setDiscountSummary(boolean active, int cards, BigDecimal discountAmount) {
+        discountCardsRow.setVisible(active);
+        discountCardsRow.setManaged(active);
+        discountCardsLabel.setText(String.valueOf(cards));
+        boolean hasAmount = active && discountAmount != null && discountAmount.signum() > 0;
+        receiptDiscountValueLabel.setText(hasAmount ? "-" + ClientUIHelper.formatPeso(discountAmount) : "");
     }
 
-    public void setDiscountOptions(List<String> options) {
-        rebuildingDiscount = true;
-        receiptDiscountBox.getItems().setAll(options == null ? List.<String>of() : options);
-        if (receiptDiscountBox.getItems().isEmpty()) receiptDiscountBox.getSelectionModel().clearSelection();
-        else receiptDiscountBox.getSelectionModel().selectFirst();
-        rebuildingDiscount = false;
-    }
-
+    public void setOnAddToOrder(Consumer<Dishes> handler) { this.onAddToOrder = handler; }
     public void setOnReceiptQuantityChange(BiConsumer<ReceiptLine, Integer> handler) { this.onReceiptQuantityChange = handler; }
-    public void setOnReceiptOrderTypeChange(Consumer<String> handler) { this.onReceiptOrderTypeChange = handler; }
     public void setOnReceiptDiscountChange(Consumer<String> handler) { this.onReceiptDiscountChange = handler; }
+    public void setOnReceiptDiscountCardsChange(Consumer<Integer> handler) { this.onReceiptDiscountCardsChange = handler; }
     public void setOnProceedToPayment(Runnable handler) { this.proceedToPaymentHandler = handler; }
+
+    /* ============================== CATEGORY / FILTER ============================== */
 
     private void rebuildCategoryChips() {
         List<String> names = new ArrayList<>();
@@ -234,7 +250,12 @@ public class ClientPosController {
         posGridPlaceholder.setManaged(empty);
     }
 
+    /* ============================== DISH CARD (matches admin menu card) ============================== */
+
     private Node createDishCard(Dishes dish) {
+        boolean inStock = dish.quantity() > 0;
+
+        // Image
         StackPane imageShell = new StackPane();
         imageShell.getStyleClass().add("pos-dish-image-shell");
         ClientUIHelper.fixSize(imageShell, DISH_IMAGE_SIZE, DISH_IMAGE_SIZE);
@@ -247,67 +268,60 @@ public class ClientPosController {
                 imageView.setFitHeight(DISH_IMAGE_SIZE);
                 imageView.setPreserveRatio(true);
                 ClientUIHelper.applyCoverCrop(imageView, image);
+                double r = DISH_IMAGE_SIZE / 2.0;
+                imageView.setClip(new Circle(r, r, r));
                 imageShell.getChildren().add(imageView);
             } catch (IllegalArgumentException ignored) {}
         }
 
+        // Texts
         Label name = new Label(dish.name() == null ? "\u2014" : dish.name());
         name.getStyleClass().add("pos-dish-name");
-        name.setWrapText(true);
+        name.setWrapText(false);
         name.setTextAlignment(TextAlignment.CENTER);
-        name.setAlignment(Pos.TOP_CENTER);
-        name.setMaxWidth(Double.MAX_VALUE);
-        name.setMinHeight(NAME_HEIGHT);
-        name.setPrefHeight(NAME_HEIGHT);
-        name.setMaxHeight(NAME_HEIGHT);
+        name.setTooltip(new Tooltip(name.getText()));
 
         Label price = new Label(ClientUIHelper.formatPeso(dish.price()));
         price.getStyleClass().add("pos-dish-price");
 
-        Button addBtn = createAddButton(dish);
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        HBox priceRow = new HBox(price, spacer, addBtn);
-        priceRow.setAlignment(Pos.CENTER_LEFT);
+        Label qtyLabel = new Label("Qty: " + dish.quantity());
+        qtyLabel.getStyleClass().add("pos-dish-qty");
 
-        VBox card = new VBox(name, priceRow);
+        Label statusBadge = new Label(inStock ? "Available" : "Unavailable");
+        statusBadge.getStyleClass().addAll("pos-dish-badge",
+                inStock ? "pos-dish-badge-available" : "pos-dish-badge-unavailable");
+
+        VBox badgeBox = new VBox(6, qtyLabel, statusBadge);
+        badgeBox.setAlignment(Pos.CENTER);
+
+        // Card
+        VBox card = new VBox(name, price, badgeBox);
         card.getStyleClass().add("pos-dish-card");
-        ClientUIHelper.fixSize(card, CARD_WIDTH, CARD_HEIGHT);
+        card.setMinWidth(CARD_WIDTH);
+        card.setPrefWidth(CARD_WIDTH);
+        card.setMaxWidth(CARD_WIDTH);
 
+        double overhang = DISH_IMAGE_SIZE / 2.0;
         StackPane wrapper = new StackPane(card, imageShell);
-        StackPane.setMargin(card, new Insets(IMAGE_OVERHANG, 0, 0, 0));
+        StackPane.setMargin(card, new Insets(overhang, 0, 0, 0));
         StackPane.setAlignment(card, Pos.BOTTOM_CENTER);
         StackPane.setAlignment(imageShell, Pos.TOP_CENTER);
-        ClientUIHelper.fixSize(wrapper, CARD_WIDTH, CARD_HEIGHT + IMAGE_OVERHANG);
+        wrapper.setMinWidth(CARD_WIDTH);
+        wrapper.setPrefWidth(CARD_WIDTH);
+        wrapper.setMaxWidth(CARD_WIDTH);
+        wrapper.setAlignment(Pos.TOP_CENTER);
+
+        // Click to add; out-of-stock dishes are dimmed and ignore clicks
+        if (inStock) {
+            wrapper.setCursor(Cursor.HAND);
+            wrapper.setOnMouseClicked(e -> { if (onAddToOrder != null) onAddToOrder.accept(dish); });
+        } else {
+            wrapper.setOpacity(0.55);
+        }
         return wrapper;
     }
 
-    private Button createAddButton(Dishes dish) {
-        SVGPath plus = new SVGPath();
-        plus.setContent(Icons.PLUS);
-        plus.getStyleClass().add("phosphor-icon");
-        ClientUIHelper.fitGridIcon(plus, 8.0, 1.5);
-
-        StackPane host = new StackPane(plus);
-        host.getStyleClass().add("pos-host-8");
-
-        Button b = new Button();
-        b.setGraphic(host);
-        b.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-        b.setMnemonicParsing(false);
-        b.getStyleClass().add("pos-add-btn");
-        b.setTooltip(new Tooltip("Add to order"));
-        b.setDisable(!dish.available());
-        b.setOnAction(e -> { if (onAddToOrder != null) onAddToOrder.accept(dish); });
-        return b;
-    }
-
-    private void updateReceiptSubtitle() {
-        Toggle selected = receiptTypeGroup.getSelectedToggle();
-        String type = selected == null ? "\u2014" : ((ToggleButton) selected).getText();
-        boolean hasDetail = receiptTypeDetail != null && !receiptTypeDetail.isBlank();
-        receiptSubtitleLabel.setText(hasDetail ? type + " \u2022 " + receiptTypeDetail.trim() : type);
-    }
+    /* ============================== RECEIPT ROWS ============================== */
 
     private Node createReceiptRow(ReceiptLine line) {
         StackPane thumb = new StackPane();
@@ -326,16 +340,53 @@ public class ClientPosController {
             } catch (IllegalArgumentException ignored) {}
         }
 
+        // ---- discount info for this line ----
+        int discQty = Math.min(discountedUnits.getOrDefault(line.name(), 0), line.quantity());
+        boolean discounted = discQty > 0 && discountRate.signum() > 0;
+        BigDecimal off = discounted
+                ? line.unitPrice().multiply(discountRate).multiply(BigDecimal.valueOf(discQty)).setScale(2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+        BigDecimal discountedTotal = line.lineTotal().subtract(off);
+        boolean wholeLine = discQty == line.quantity();
+
+        // ---- name + unit price ----
         Label name = new Label(ClientUIHelper.valueOrDash(line.name()));
         name.getStyleClass().add("receipt-line-name");
         name.setWrapText(true);
-        Label unit = new Label(ClientUIHelper.formatPeso(line.unitPrice()));
-        unit.getStyleClass().add("receipt-line-unit");
-        VBox info = new VBox(2.0, name, unit);
+
+        VBox info = new VBox(2.0, name);
         info.setAlignment(Pos.CENTER_LEFT);
         info.setMinWidth(0);
         HBox.setHgrow(info, Priority.ALWAYS);
 
+        if (discounted && wholeLine) {
+            // every unit discounted: old unit price struck through, then the new one
+            BigDecimal unitOff = line.unitPrice().multiply(discountRate).setScale(2, RoundingMode.HALF_UP);
+            Text oldUnit = new Text(ClientUIHelper.formatPeso(line.unitPrice()));
+            oldUnit.setStrikethrough(true);
+            oldUnit.getStyleClass().add("receipt-old-text");
+            Label newUnit = new Label(ClientUIHelper.formatPeso(line.unitPrice().subtract(unitOff)));
+            newUnit.getStyleClass().add("receipt-new-unit");
+            HBox unitRow = new HBox(6.0, oldUnit, newUnit);
+            unitRow.setAlignment(Pos.CENTER_LEFT);
+            info.getChildren().add(unitRow);
+        } else {
+            Label unit = new Label(ClientUIHelper.formatPeso(line.unitPrice()));
+            unit.getStyleClass().add("receipt-line-unit");
+            info.getChildren().add(unit);
+        }
+
+        if (discounted) {
+            String pct = discountRate.multiply(new BigDecimal("100")).stripTrailingZeros().toPlainString();
+            String text = wholeLine
+                    ? pct + "% off"
+                    : pct + "% off on " + discQty + " of " + line.quantity();
+            Label badge = new Label(text);
+            badge.getStyleClass().add("receipt-discount-badge");
+            info.getChildren().add(badge);
+        }
+
+        // ---- qty stepper ----
         Button minus = createStepButton(Icons.MINUS, "Decrease quantity", () -> requestQuantity(line, line.quantity() - 1));
         Label qty = new Label(String.valueOf(line.quantity()));
         qty.getStyleClass().add("receipt-qty");
@@ -344,10 +395,24 @@ public class ClientPosController {
         stepper.setAlignment(Pos.CENTER);
         stepper.getStyleClass().add("receipt-col-qty");
 
-        Label price = new Label(ClientUIHelper.formatPeso(line.lineTotal()));
-        price.getStyleClass().addAll("receipt-line-price", "receipt-col-price");
+        // ---- line price (original struck through above the discounted total) ----
+        VBox priceBox = new VBox(2.0);
+        priceBox.getStyleClass().add("receipt-col-price");
+        priceBox.setAlignment(Pos.CENTER_RIGHT);
+        if (discounted) {
+            Text oldTotal = new Text(ClientUIHelper.formatPeso(line.lineTotal()));
+            oldTotal.setStrikethrough(true);
+            oldTotal.getStyleClass().add("receipt-old-text");
+            Label newTotal = new Label(ClientUIHelper.formatPeso(discountedTotal));
+            newTotal.getStyleClass().add("receipt-new-price");
+            priceBox.getChildren().addAll(oldTotal, newTotal);
+        } else {
+            Label price = new Label(ClientUIHelper.formatPeso(line.lineTotal()));
+            price.getStyleClass().add("receipt-line-price");
+            priceBox.getChildren().add(price);
+        }
 
-        HBox row = new HBox(10.0, thumb, info, stepper, price);
+        HBox row = new HBox(10.0, thumb, info, stepper, priceBox);
         row.setAlignment(Pos.CENTER_LEFT);
         return row;
     }
@@ -356,9 +421,9 @@ public class ClientPosController {
         SVGPath icon = new SVGPath();
         icon.setContent(iconContent);
         icon.getStyleClass().add("phosphor-icon");
-        ClientUIHelper.fitGridIcon(icon, 8.0, 1.5);
+        ClientUIHelper.fitGridIcon(icon, 10.0, 1.5);
         StackPane host = new StackPane(icon);
-        host.getStyleClass().add("pos-host-8");
+        host.getStyleClass().add("pos-host-10");
 
         Button b = new Button();
         b.setGraphic(host);
@@ -374,9 +439,21 @@ public class ClientPosController {
         if (onReceiptQuantityChange != null) onReceiptQuantityChange.accept(line, newQuantity);
     }
 
+    /* ============================== FXML HANDLERS ============================== */
+
     @FXML
     private void onProceedToPayment() {
         if (proceedToPaymentHandler != null) proceedToPaymentHandler.run();
+    }
+
+    @FXML
+    private void onDiscountCardsMinus() {
+        if (onReceiptDiscountCardsChange != null) onReceiptDiscountCardsChange.accept(-1);
+    }
+
+    @FXML
+    private void onDiscountCardsPlus() {
+        if (onReceiptDiscountCardsChange != null) onReceiptDiscountCardsChange.accept(1);
     }
 
     private static String rateSuffix(BigDecimal rate) {

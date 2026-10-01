@@ -48,25 +48,13 @@
     </VBox>
 
     <!-- Right Column (Receipt) -->
-    <VBox fx:id="receiptPanel" styleClass="receipt-panel" visible="false" managed="false">
+    <VBox fx:id="receiptPanel" styleClass="receipt-panel">
         <HBox.margin><Insets top="32" right="32" bottom="32" left="0"/></HBox.margin>
-        <fx:define>
-            <ToggleGroup fx:id="receiptTypeGroup"/>
-        </fx:define>
 
         <VBox spacing="4">
             <Label text="Current Order" styleClass="receipt-title"/>
-            <Label fx:id="receiptSubtitleLabel" styleClass="receipt-subtitle"/>
+            <Label text="Dine in" styleClass="receipt-subtitle"/>
         </VBox>
-
-        <HBox spacing="8" alignment="CENTER_LEFT">
-            <ToggleButton text="Dine in" toggleGroup="$receiptTypeGroup" selected="true"
-                          mnemonicParsing="false" styleClass="receipt-type-chip"/>
-            <ToggleButton text="To Go" toggleGroup="$receiptTypeGroup"
-                          mnemonicParsing="false" styleClass="receipt-type-chip"/>
-            <ToggleButton text="Delivery" toggleGroup="$receiptTypeGroup"
-                          mnemonicParsing="false" styleClass="receipt-type-chip"/>
-        </HBox>
 
         <HBox styleClass="receipt-table-head" alignment="CENTER_LEFT" spacing="10">
             <Label text="Item" styleClass="receipt-head-label" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
@@ -82,17 +70,28 @@
 
         <Region styleClass="receipt-dash"/>
 
-        <VBox spacing="8">
+        <VBox spacing="10">
             <HBox alignment="CENTER_LEFT">
                 <Label text="Subtotal" styleClass="receipt-sum-label"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <Label fx:id="receiptSubtotalLabel" styleClass="receipt-sum-value"/>
             </HBox>
-            <HBox alignment="CENTER_LEFT">
+
+            <HBox alignment="CENTER_LEFT" spacing="10">
                 <Label text="Discount" styleClass="receipt-sum-label"/>
                 <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="receiptDiscountValueLabel" styleClass="receipt-sum-value"/>
                 <ComboBox fx:id="receiptDiscountBox" promptText="None" styleClass="receipt-discount"/>
             </HBox>
+
+            <HBox fx:id="discountCardsRow" alignment="CENTER_LEFT" spacing="8" visible="false" managed="false">
+                <Label text="Discount cards (1 card = 1 dish)" styleClass="receipt-sum-label"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="−" onAction="#onDiscountCardsMinus" styleClass="receipt-step-btn" mnemonicParsing="false"/>
+                <Label fx:id="discountCardsLabel" text="1" styleClass="receipt-qty"/>
+                <Button text="+" onAction="#onDiscountCardsPlus" styleClass="receipt-step-btn" mnemonicParsing="false"/>
+            </HBox>
+
             <HBox alignment="CENTER_LEFT">
                 <Label fx:id="receiptServiceLabel" styleClass="receipt-sum-label"/>
                 <Region HBox.hgrow="ALWAYS"/>

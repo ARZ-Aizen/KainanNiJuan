@@ -5,6 +5,7 @@ import com.kainanresto.model.order.*;
 import com.kainanresto.model.transac.ReceiptLine;
 import com.kainanresto.model.transac.ReceiptTotals;
 import com.kainanresto.model.util.Icons;
+import com.kainanresto.util.AlertUtil;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -25,8 +26,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -67,11 +70,15 @@ public class ClientOrderManagementController {
 
     private final ToggleGroup omStatusGroup = new ToggleGroup();
     private final ObservableList<OrderCard> omOrders = FXCollections.observableArrayList();
+    /** Full receipt detail per order number (lines, totals, cashier, discount). */
+    private final Map<String, OrderReceipt> omReceipts = new HashMap<>();
     private OrderStatus omSelectedStatus = null;
     private String omSelectedOrderNo = null;
     private OrderReceipt omReceiptDetails = null;
     private Timeline refreshTimeline;
 
+    // Optional hooks, e.g. to persist the status change in the database.
+    // The status is always updated on screen, whether or not a hook is set.
     private Consumer<OrderCard> onCompleteOrder;
     private Consumer<OrderCard> onCancelOrder;
     private Consumer<OrderCard> onOrderDetails;
@@ -119,6 +126,8 @@ public class ClientOrderManagementController {
         applyOmFilter();
     }
 
+    /* ============================== PUBLIC API ============================== */
+
     public void setOrders(List<OrderCard> orders) {
         omOrders.setAll(orders == null ? List.<OrderCard>of() : orders);
         updateOmChipCounts();
@@ -126,8 +135,40 @@ public class ClientOrderManagementController {
         applyOmFilter();
     }
 
+    /**
+     * Called by the POS right after a successful payment.
+     * Adds the order at the top of the list and keeps its full receipt for the right-hand panel.
+     */
+    public void addOrder(OrderReceipt receipt) {
+        if (receipt == null) return;
+
+        List<OrderLine> lines = new ArrayList<>();
+        if (receipt.lines() != null) {
+            for (ReceiptLine l : receipt.lines()) {
+                if (l != null) lines.add(new OrderLine(l.name(), l.quantity()));
+            }
+        }
+        OrderCard card = new OrderCard(
+                receipt.orderNumber(),
+                receipt.orderType(),
+                receipt.orderTypeDetail(),
+                receipt.status(),
+                receipt.createdAt(),
+                lines,
+                receipt.totals() == null ? null : receipt.totals().total());
+
+        omReceipts.put(receipt.orderNumber(), receipt);
+        omOrders.add(0, card);   // newest first
+
+        updateOmChipCounts();
+        updateOmReceiptPanel();
+        applyOmFilter();
+    }
+
     public void setOrderReceipt(OrderReceipt receipt) {
-        if (receipt == null || !Objects.equals(receipt.orderNumber(), omSelectedOrderNo)) return;
+        if (receipt == null) return;
+        omReceipts.put(receipt.orderNumber(), receipt);
+        if (!Objects.equals(receipt.orderNumber(), omSelectedOrderNo)) return;
         omReceiptDetails = receipt;
         updateOmReceiptPanel();
     }
@@ -136,6 +177,50 @@ public class ClientOrderManagementController {
     public void setOnCompleteOrder(Consumer<OrderCard> handler) { this.onCompleteOrder = handler; }
     public void setOnCancelOrder(Consumer<OrderCard> handler) { this.onCancelOrder = handler; }
     public void setOnOrderDetails(Consumer<OrderCard> handler) { this.onOrderDetails = handler; }
+
+    /* ============================== STATUS CHANGES ============================== */
+
+    private void completeOrder(OrderCard order) {
+        if (order == null || order.status() != OrderStatus.PREPARING) return;
+        if (onCompleteOrder != null) onCompleteOrder.accept(order);   // e.g. save to the database
+        updateOrderStatus(order.orderNumber(), OrderStatus.COMPLETED);
+    }
+
+    private void cancelOrder(OrderCard order) {
+        if (order == null || order.status() != OrderStatus.PREPARING) return;
+        boolean yes = AlertUtil.showYesNoConfirmation(
+                "Cancel Order",
+                "Cancel order #" + order.orderNumber() + "?",
+                "This action cannot be undone.");
+        if (!yes) return;
+        if (onCancelOrder != null) onCancelOrder.accept(order);       // e.g. save to the database / restore stock
+        updateOrderStatus(order.orderNumber(), OrderStatus.CANCELLED);
+    }
+
+    /** Replaces the card (and stored receipt) with a copy carrying the new status, then refreshes the screen. */
+    public void updateOrderStatus(String orderNumber, OrderStatus newStatus) {
+        for (int i = 0; i < omOrders.size(); i++) {
+            OrderCard o = omOrders.get(i);
+            if (!Objects.equals(o.orderNumber(), orderNumber)) continue;
+
+            omOrders.set(i, new OrderCard(o.orderNumber(), o.orderType(), o.orderTypeDetail(),
+                    newStatus, o.createdAt(), o.lines(), o.total()));
+
+            OrderReceipt r = omReceipts.get(orderNumber);
+            if (r != null) {
+                omReceipts.put(orderNumber, new OrderReceipt(r.orderNumber(), r.orderType(), r.orderTypeDetail(),
+                        newStatus, r.createdAt(), r.cashierName(), r.lines(), r.discountName(), r.totals()));
+            }
+            break;
+        }
+        if (Objects.equals(orderNumber, omSelectedOrderNo)) omReceiptDetails = omReceipts.get(orderNumber);
+
+        updateOmChipCounts();
+        updateOmReceiptPanel();
+        applyOmFilter();
+    }
+
+    /* ============================== STATUS CHIPS ============================== */
 
     private ToggleButton createOmChip(String label, OrderStatus status) {
         ToggleButton chip = new ToggleButton(label);
@@ -155,6 +240,8 @@ public class ClientOrderManagementController {
             chip.setText(chip.getProperties().get("label") + " (" + count + ")");
         }
     }
+
+    /* ============================== GRID ============================== */
 
     private void applyOmColumns(int columns) {
         omGrid.getColumnConstraints().clear();
@@ -244,9 +331,7 @@ public class ClientOrderManagementController {
 
         HBox actions = new HBox(8.0);
         if (order.status() == OrderStatus.PREPARING) {
-            Button complete = createOmButton("Complete Order", "om-btn-primary", () -> {
-                if (onCompleteOrder != null) onCompleteOrder.accept(order);
-            });
+            Button complete = createOmButton("Complete Order", "om-btn-primary", () -> completeOrder(order));
             complete.setMaxWidth(Double.MAX_VALUE);
             HBox.setHgrow(complete, Priority.ALWAYS);
             actions.getChildren().add(complete);
@@ -276,9 +361,9 @@ public class ClientOrderManagementController {
 
     private void selectOrder(String orderNumber) {
         boolean wasOpen = omReceiptPanel.isVisible();
-        String previous = omSelectedOrderNo;
         omSelectedOrderNo = Objects.equals(omSelectedOrderNo, orderNumber) ? null : orderNumber;
-        if (!Objects.equals(previous, omSelectedOrderNo)) omReceiptDetails = null;
+        // Use the stored receipt (lines, totals, cashier, discount) for the selected order
+        omReceiptDetails = omSelectedOrderNo == null ? null : omReceipts.get(omSelectedOrderNo);
         updateOmReceiptPanel();
 
         if (wasOpen != omReceiptPanel.isVisible()) applyOmFilter();
@@ -299,6 +384,8 @@ public class ClientOrderManagementController {
         for (OrderCard o : omOrders) if (Objects.equals(o.orderNumber(), orderNumber)) return o;
         return null;
     }
+
+    /* ============================== RECEIPT PANEL ============================== */
 
     private void updateOmReceiptPanel() {
         OrderCard order = findOmOrder(omSelectedOrderNo);
@@ -372,14 +459,14 @@ public class ClientOrderManagementController {
     }
 
     @FXML private void onOmReceiptComplete() {
-        OrderCard order = findOmOrder(omSelectedOrderNo);
-        if (order != null && onCompleteOrder != null) onCompleteOrder.accept(order);
+        completeOrder(findOmOrder(omSelectedOrderNo));
     }
 
     @FXML private void onOmReceiptCancel() {
-        OrderCard order = findOmOrder(omSelectedOrderNo);
-        if (order != null && onCancelOrder != null) onCancelOrder.accept(order);
+        cancelOrder(findOmOrder(omSelectedOrderNo));
     }
+
+    /* ============================== HELPERS ============================== */
 
     private static String badgeClass(OrderStatus status) {
         if (status == null) return "om-badge-neutral";
