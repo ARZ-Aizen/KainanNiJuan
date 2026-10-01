@@ -1,8 +1,10 @@
 package com.kainanresto.controllers.main.admin.sales;
 
+import com.kainanresto.dao.OrderDAO;
 import com.kainanresto.model.order.OrderStats;
 import com.kainanresto.model.transac.Transaction;
 import com.kainanresto.model.util.Icons;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
@@ -54,6 +56,7 @@ public class SalesController {
     private static final DateTimeFormatter ORDER_TIME_FORMAT = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
     private static final DateTimeFormatter ORDER_DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy, h:mm a", Locale.ENGLISH);
 
+    private final OrderDAO orderDAO = new OrderDAO();
     private final ObservableList<Transaction> orderItems = FXCollections.observableArrayList();
     private FilteredList<Transaction> filteredOrders;
     private FilterPill orderDateFilter, orderTypeFilter, orderStatusFilter, orderPaymentFilter;
@@ -89,10 +92,38 @@ public class SalesController {
         }
     }
 
+    /* ============================== DATA LOADING ============================== */
+
     private void loadSalesData() {
-        // TODO: Wire to your future OrderDAO here
-        setOrderStats(null);
-        setOrders(new ArrayList<>());
+        LocalDateTime[] range = dateRange(orderDateFilter == null ? null : orderDateFilter.selected);
+        Thread t = new Thread(() -> {
+            List<Transaction> tx = orderDAO.getTransactions(range[0], range[1]);
+            OrderStats stats = orderDAO.getOrderStats();
+            Platform.runLater(() -> {
+                setOrderStats(stats);
+                setOrders(tx);
+            });
+        });
+        t.setDaemon(true);
+        t.start();
+    }
+
+    /** Call this when the admin opens the Sales tab so it shows fresh data. */
+    public void refresh() { loadSalesData(); }
+
+    private static LocalDateTime[] dateRange(String option) {
+        LocalDate today = LocalDate.now();
+        LocalDate start = today, end = today.plusDays(1);
+        if (option != null) {
+            switch (option) {
+                case "Yesterday"   -> { start = today.minusDays(1); end = today; }
+                case "Last 7 Days" -> start = today.minusDays(6);
+                case "This Month"  -> start = today.withDayOfMonth(1);
+                case "All Time"    -> start = LocalDate.of(2000, 1, 1);
+                default -> { }
+            }
+        }
+        return new LocalDateTime[]{start.atStartOfDay(), end.atStartOfDay()};
     }
 
     /* ============================== SETUP & FILTERS ============================== */
@@ -102,6 +133,12 @@ public class SalesController {
         orderTypeFilter    = new FilterPill(orderTypePill, orderTypeValueLabel, this::applyOrderFilters);
         orderStatusFilter  = new FilterPill(orderStatusPill, orderStatusValueLabel, this::applyOrderFilters);
         orderPaymentFilter = new FilterPill(orderPaymentPill, orderPaymentValueLabel, this::applyOrderFilters);
+
+        // The first option in each list is the "no filter" default
+        orderDateFilter.setOptions(List.of("Today", "Yesterday", "Last 7 Days", "This Month", "All Time"));
+        orderTypeFilter.setOptions(List.of("All Types", "Dine in", "Takeout", "Delivery"));
+        orderStatusFilter.setOptions(List.of("All States", "Preparing", "Completed", "Cancelled"));
+        orderPaymentFilter.setOptions(List.of("All", "Paid", "Unpaid", "Refunded"));
 
         setupOrdersTable();
 
@@ -142,16 +179,18 @@ public class SalesController {
                         && orderStatusFilter.accepts(order.status())
                         && orderPaymentFilter.accepts(order.paymentStatus()));
 
-        ordersTablePlaceholder.setText(orderItems.isEmpty() ? "No orders loaded." : "No orders match your filters.");
+        ordersTablePlaceholder.setText(orderItems.isEmpty() ? "No orders found." : "No orders match your filters.");
     }
 
     private static boolean matchesOrderText(Transaction order, String query) {
         if (query.isEmpty()) return true;
         return (order.orderId() != null && order.orderId().toLowerCase(Locale.ENGLISH).contains(query))
-                || (order.customerName() != null && order.customerName().toLowerCase(Locale.ENGLISH).contains(query));
+                || (order.customerName() != null && order.customerName().toLowerCase(Locale.ENGLISH).contains(query))
+                || (order.staffName() != null && order.staffName().toLowerCase(Locale.ENGLISH).contains(query));
     }
 
-    private void onOrderDateChanged() { applyOrderFilters(); }
+    /** The date range is applied in the database query, so reload. */
+    private void onOrderDateChanged() { loadSalesData(); }
 
     @FXML
     private void onClearOrderFilters() {
@@ -163,7 +202,7 @@ public class SalesController {
     }
 
     private void onOrderActions(Transaction order, Node anchor) {
-        // TODO: open the row-actions menu
+        // TODO: open the row-actions menu (view details / print receipt)
     }
 
     /* ============================== DATA SETTERS ============================== */

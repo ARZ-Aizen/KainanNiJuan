@@ -72,7 +72,7 @@ public final class DatabaseConfig {
         }
     }
 
-    /* PANG TEST NG CONNECTION
+    //PANG TEST NG CONNECTION
     public static void main(String[] args) {
         System.out.println("Testing MariaDB connection via HikariCP...");
         try (Connection conn = getConnection()) {
@@ -84,5 +84,5 @@ public final class DatabaseConfig {
         } finally {
             closePool();
         }
-    } */
+    } //*/
 }

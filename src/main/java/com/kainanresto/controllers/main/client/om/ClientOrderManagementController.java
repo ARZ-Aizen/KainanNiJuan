@@ -135,6 +135,22 @@ public class ClientOrderManagementController {
         applyOmFilter();
     }
 
+    /** Loads saved orders from the database (expects newest first), keeping their full receipts. */
+    public void setReceipts(List<OrderReceipt> receipts) {
+        omReceipts.clear();
+        List<OrderCard> cards = new ArrayList<>();
+        if (receipts != null) {
+            for (OrderReceipt r : receipts) {
+                if (r == null) continue;
+                omReceipts.put(r.orderNumber(), r);
+                cards.add(toCard(r));
+            }
+        }
+        // keep the open panel's detail in sync if the selected order is still there
+        if (omSelectedOrderNo != null) omReceiptDetails = omReceipts.get(omSelectedOrderNo);
+        setOrders(cards);
+    }
+
     /**
      * Called by the POS right after a successful payment.
      * Adds the order at the top of the list and keeps its full receipt for the right-hand panel.
@@ -142,21 +158,7 @@ public class ClientOrderManagementController {
     public void addOrder(OrderReceipt receipt) {
         if (receipt == null) return;
 
-        List<OrderLine> lines = new ArrayList<>();
-        if (receipt.lines() != null) {
-            for (ReceiptLine l : receipt.lines()) {
-                if (l != null) lines.add(new OrderLine(l.name(), l.quantity()));
-            }
-        }
-        OrderCard card = new OrderCard(
-                receipt.orderNumber(),
-                receipt.orderType(),
-                receipt.orderTypeDetail(),
-                receipt.status(),
-                receipt.createdAt(),
-                lines,
-                receipt.totals() == null ? null : receipt.totals().total());
-
+        OrderCard card = toCard(receipt);
         omReceipts.put(receipt.orderNumber(), receipt);
         omOrders.add(0, card);   // newest first
 
@@ -177,6 +179,23 @@ public class ClientOrderManagementController {
     public void setOnCompleteOrder(Consumer<OrderCard> handler) { this.onCompleteOrder = handler; }
     public void setOnCancelOrder(Consumer<OrderCard> handler) { this.onCancelOrder = handler; }
     public void setOnOrderDetails(Consumer<OrderCard> handler) { this.onOrderDetails = handler; }
+
+    private static OrderCard toCard(OrderReceipt receipt) {
+        List<OrderLine> lines = new ArrayList<>();
+        if (receipt.lines() != null) {
+            for (ReceiptLine l : receipt.lines()) {
+                if (l != null) lines.add(new OrderLine(l.name(), l.quantity()));
+            }
+        }
+        return new OrderCard(
+                receipt.orderNumber(),
+                receipt.orderType(),
+                receipt.orderTypeDetail(),
+                receipt.status(),
+                receipt.createdAt(),
+                lines,
+                receipt.totals() == null ? null : receipt.totals().total());
+    }
 
     /* ============================== STATUS CHANGES ============================== */
 

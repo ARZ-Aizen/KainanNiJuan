@@ -164,3 +164,42 @@ SET category_id = CASE
     WHEN category_id = 105 THEN 5 -- Drinks
     ELSE category_id
 END;
+
+USE kainan_pos;
+
+CREATE TABLE orders (
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_number        VARCHAR(30)   NOT NULL UNIQUE,
+    order_type          VARCHAR(30)   NOT NULL,
+    order_type_detail   VARCHAR(60)   NULL,
+    status              VARCHAR(20)   NOT NULL DEFAULT 'PREPARING',   -- PREPARING / COMPLETED / CANCELLED
+    payment_status      VARCHAR(20)   NOT NULL DEFAULT 'Paid',        -- Paid / Unpaid / Refunded
+    created_at          DATETIME      NOT NULL,
+    updated_at          DATETIME      NULL,
+    cashier_id          INT           NULL,
+    cashier_name        VARCHAR(100)  NULL,   -- snapshot, so history survives account edits
+    cashier_role        VARCHAR(50)   NULL,
+    discount_name       VARCHAR(60)   NULL,
+    subtotal            DECIMAL(10,2) NOT NULL,
+    discount_amount     DECIMAL(10,2) NOT NULL DEFAULT 0,
+    service_charge_rate DECIMAL(5,2)  NOT NULL,
+    service_charge      DECIMAL(10,2) NOT NULL,
+    vat_rate            DECIMAL(5,2)  NOT NULL,
+    vat                 DECIMAL(10,2) NOT NULL,
+    total               DECIMAL(10,2) NOT NULL,
+    cash_tendered       DECIMAL(10,2) NOT NULL,
+    change_amount       DECIMAL(10,2) NOT NULL,
+    INDEX idx_orders_created (created_at),
+    FOREIGN KEY (cashier_id) REFERENCES users(user_id) ON DELETE SET NULL
+);
+
+CREATE TABLE order_items (
+    id         BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_id   BIGINT       NOT NULL,
+    dish_id    BIGINT       NOT NULL,
+    dish_name  VARCHAR(150) NOT NULL,   -- snapshot, so history survives menu edits
+    image_url  VARCHAR(500) NULL,
+    unit_price DECIMAL(10,2) NOT NULL,
+    quantity   INT          NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
