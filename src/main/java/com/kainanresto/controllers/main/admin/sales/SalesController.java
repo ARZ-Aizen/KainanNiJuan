@@ -295,17 +295,24 @@ public class SalesController {
         private final Region dot = new Region();
         private final Label text = new Label();
         private final HBox chip = new HBox(6.0);
+        private final HBox holder = new HBox(chip);   // keeps the chip at its natural size
         private final Function<String, String> styleResolver;
         private String appliedStyle;
 
         private ChipCell(boolean withDot, Function<String, String> styleResolver) {
             this.styleResolver = styleResolver;
+
             chip.setAlignment(Pos.CENTER_LEFT);
             chip.getStyleClass().add("chip");
+            chip.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+            chip.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+
             dot.getStyleClass().add("chip-dot");
             text.getStyleClass().add("chip-text");
             if (withDot) chip.getChildren().add(dot);
             chip.getChildren().add(text);
+
+            holder.setAlignment(Pos.CENTER_LEFT);
             setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         }
 
@@ -317,9 +324,10 @@ public class SalesController {
             if (appliedStyle != null) chip.getStyleClass().remove(appliedStyle);
             appliedStyle = styleResolver.apply(value);
             chip.getStyleClass().add(appliedStyle);
-            setGraphic(chip);
+            setGraphic(holder);
         }
     }
+
 
     private final class ActionsCell extends TableCell<Transaction, Transaction> {
         private final Button button = new Button();

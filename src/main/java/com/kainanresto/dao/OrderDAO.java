@@ -15,13 +15,38 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.TextStyle;
 import java.util.*;
+import java.security.SecureRandom;
 
 public class OrderDAO {
 
     /* ====================== SAVE (order + items + stock, one transaction) ====================== */
 
-    public boolean saveOrder(OrderReceipt r, PaymentResult pay, String cashierId, String cashierRole) {
-        String insertOrder = """
+    private static final String ORDER_CODE_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+    /** Short random order number (e.g. "7F3K9Q"), checked against the DB so it is unique. */
+    public String generateOrderNumber() {
+        String check = "SELECT 1 FROM orders WHERE order_number = ?";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(check)) {
+            for (int attempt = 0; attempt < 20; attempt++) {
+                StringBuilder sb = new StringBuilder(6);
+                for (int i = 0; i < 6; i++) sb.append(ORDER_CODE_CHARS.charAt(RANDOM.nextInt(ORDER_CODE_CHARS.length())));
+                String code = sb.toString();
+                ps.setString(1, code);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) return code;   // not taken
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        // Fallback if the DB check fails: still short, still practically unique
+        return Long.toString(System.currentTimeMillis() % 2_176_782_336L, 36).toUpperCase();
+    }
+
+
+    public boolean saveOrder(OrderReceipt r, PaymentResult pay, Integer cashierId, String cashierRole) {        String insertOrder = """
             INSERT INTO orders (order_number, order_type, order_type_detail, status, payment_status, created_at,
                 cashier_id, cashier_name, cashier_role, discount_name, subtotal, discount_amount,
                 service_charge_rate, service_charge, vat_rate, vat, total, cash_tendered, change_amount)
@@ -45,7 +70,7 @@ public class OrderDAO {
                     ps.setString(i++, r.status().name());
                     ps.setString(i++, "Paid");
                     ps.setTimestamp(i++, Timestamp.valueOf(r.createdAt()));
-                    ps.setString(i++, cashierId);
+                    if (cashierId == null) ps.setNull(i++, Types.INTEGER); else ps.setInt(i++, cashierId);
                     ps.setString(i++, r.cashierName());
                     ps.setString(i++, cashierRole);
                     ps.setString(i++, r.discountName());
@@ -144,15 +169,24 @@ public class OrderDAO {
 
     public List<OrderReceipt> loadReceipts(LocalDateTime since) {
         Map<Long, List<ReceiptLine>> linesByOrder = new HashMap<>();
+
+        // Updated: include items from today's orders OR any order currently PREPARING
         String linesSql = """
-            SELECT oi.order_id, oi.dish_id, oi.dish_name, oi.image_url, oi.unit_price, oi.quantity
-            FROM order_items oi JOIN orders o ON o.id = oi.order_id WHERE o.created_at >= ?
-        """;
+        SELECT oi.order_id, oi.dish_id, oi.dish_name, oi.image_url, oi.unit_price, oi.quantity
+        FROM order_items oi 
+        JOIN orders o ON o.id = oi.order_id 
+        WHERE o.created_at >= ? OR o.status = 'PREPARING'
+    """;
+
+        // Updated: include today's orders OR any order currently PREPARING
         String ordersSql = """
-            SELECT id, order_number, order_type, order_type_detail, status, created_at, cashier_name, discount_name,
-                   subtotal, service_charge_rate, service_charge, vat_rate, vat, total
-            FROM orders WHERE created_at >= ? ORDER BY created_at DESC
-        """;
+        SELECT id, order_number, order_type, order_type_detail, status, created_at, cashier_name, discount_name,
+               subtotal, service_charge_rate, service_charge, vat_rate, vat, total
+        FROM orders 
+        WHERE created_at >= ? OR status = 'PREPARING' 
+        ORDER BY created_at DESC
+    """;
+
         List<OrderReceipt> result = new ArrayList<>();
 
         try (Connection conn = DatabaseConfig.getConnection()) {

@@ -256,7 +256,8 @@ public class ClientController {
 
         // 3. Save order + items and deduct stock (one DB transaction)
         User user = SessionManager.getCurrentUser();
-        String cashierId = user == null ? null : String.valueOf(user.getUserId());        if (!orderDAO.saveOrder(receipt, payment.get(), cashierId, currentCashierRole())) {
+            Integer cashierId = user == null ? null : user.getUserId();
+        if (!orderDAO.saveOrder(receipt, payment.get(), cashierId, currentCashierRole())) {
             AlertUtil.showError("Order not saved",
                     "Could not save the order. A dish may have run out of stock. The payment was NOT recorded.");
             loadPosData();   // refresh stock so the cashier sees what's left
@@ -282,8 +283,7 @@ public class ClientController {
     }
 
     private String nextOrderNumber() {
-        // Unique column in the DB; two orders in the same second would collide.
-        return "ORD-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMdd-HHmmss"));
+        return orderDAO.generateOrderNumber();
     }
 
     private String currentCashierName() {

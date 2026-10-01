@@ -1,47 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.geometry.Insets?>
+
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.shape.*?>
 <?import javafx.scene.text.*?>
 
-<HBox styleClass="pos-page" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.kainanresto.controllers.main.client.pos.ClientPosController">
+<HBox styleClass="pos-page" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kainanresto.controllers.main.client.pos.ClientPosController">
 
     <!-- Left Column (Dishes) -->
     <VBox spacing="24" HBox.hgrow="ALWAYS">
         <padding>
-            <Insets top="32" right="32" bottom="32" left="32"/>
+            <Insets bottom="32" left="32" right="32" top="32" />
         </padding>
 
         <HBox alignment="CENTER_LEFT">
             <VBox spacing="4">
                 <TextFlow styleClass="om-title-flow">
-                    <Text text="KAINAN NI " styleClass="om-brand-main"/>
-                    <Text text="JUAN" styleClass="om-brand-accent"/>
+                    <Text styleClass="om-brand-main" text="KAINAN NI " />
+                    <Text styleClass="om-brand-accent" text="JUAN" />
                 </TextFlow>
-                <Label fx:id="currentDateLabel" styleClass="om-subtitle"/>
+                <Label fx:id="currentDateLabel" styleClass="om-subtitle" />
             </VBox>
-            <Region HBox.hgrow="ALWAYS"/>
-            <HBox fx:id="posSearchBox" styleClass="om-search-box" alignment="CENTER_LEFT" spacing="12">
+            <Region HBox.hgrow="ALWAYS" />
+            <HBox fx:id="posSearchBox" alignment="CENTER_LEFT" spacing="12" styleClass="om-search-box">
                 <StackPane styleClass="om-host-20">
-                    <SVGPath fx:id="posSearchIcon" styleClass="phosphor-icon, pos-search-icon"/>
+                    <SVGPath fx:id="posSearchIcon" styleClass="phosphor-icon, pos-search-icon" />
                 </StackPane>
-                <TextField fx:id="posSearchField" promptText="Search for food, dessert, etc..."
-                           styleClass="pos-search-field" HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="posSearchField" promptText="Search for food, dessert, etc..." styleClass="pos-search-field" HBox.hgrow="ALWAYS" />
             </HBox>
         </HBox>
 
-        <FlowPane fx:id="posCategoryChips" hgap="8" vgap="8"/>
-        <Region styleClass="pos-divider"/>
-        <Label text="Choose Dishes" styleClass="pos-section-title"/>
+        <FlowPane fx:id="posCategoryChips" hgap="8" vgap="8" />
+        <Region styleClass="pos-divider" />
+        <Label styleClass="pos-section-title" text="Choose Dishes" />
 
-        <ScrollPane fx:id="posScroll" styleClass="pos-scroll" fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+        <ScrollPane fx:id="posScroll" fitToWidth="true" hbarPolicy="NEVER" styleClass="pos-scroll" VBox.vgrow="ALWAYS">
             <content>
-                <VBox styleClass="pos-grid-host" alignment="TOP_LEFT">
-                    <Label fx:id="posGridPlaceholder" styleClass="pos-empty-label"/>
-                    <FlowPane fx:id="posDishGrid" alignment="TOP_LEFT" hgap="14" vgap="17"/>
+                <VBox alignment="TOP_LEFT" styleClass="pos-grid-host">
+                    <Label fx:id="posGridPlaceholder" styleClass="pos-empty-label" />
+                    <FlowPane fx:id="posDishGrid" alignment="TOP_LEFT" hgap="14" vgap="17" />
                 </VBox>
             </content>
         </ScrollPane>
@@ -49,70 +47,69 @@
 
     <!-- Right Column (Receipt) -->
     <VBox fx:id="receiptPanel" styleClass="receipt-panel">
-        <HBox.margin><Insets top="32" right="32" bottom="32" left="0"/></HBox.margin>
+        <HBox.margin><Insets bottom="32" left="0" right="32" top="32" /></HBox.margin>
 
         <VBox spacing="4">
-            <Label text="Current Order" styleClass="receipt-title"/>
-            <Label text="Dine in" styleClass="receipt-subtitle"/>
+            <Label styleClass="receipt-title" text="Current Order" />
+            <Label styleClass="receipt-subtitle" text="Dine in" />
         </VBox>
 
-        <HBox styleClass="receipt-table-head" alignment="CENTER_LEFT" spacing="10">
-            <Label text="Item" styleClass="receipt-head-label" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
-            <Label text="Qty" styleClass="receipt-head-label, receipt-col-qty"/>
-            <Label text="Price" styleClass="receipt-head-label, receipt-col-price"/>
+        <HBox alignment="CENTER_LEFT" spacing="10" styleClass="receipt-table-head">
+            <Label maxWidth="Infinity" styleClass="receipt-head-label" text="Item" HBox.hgrow="ALWAYS" />
+            <Label styleClass="receipt-head-label, receipt-col-qty" text="Qty" />
+            <Label styleClass="receipt-head-label, receipt-col-price" text="Price" />
         </HBox>
 
-        <ScrollPane styleClass="receipt-scroll" fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="receipt-scroll" VBox.vgrow="ALWAYS">
             <content>
-                <VBox fx:id="receiptLines" styleClass="receipt-lines" spacing="14"/>
+                <VBox fx:id="receiptLines" spacing="14" styleClass="receipt-lines" />
             </content>
         </ScrollPane>
 
-        <Region styleClass="receipt-dash"/>
+        <Region styleClass="receipt-dash" />
 
         <VBox spacing="10">
             <HBox alignment="CENTER_LEFT">
-                <Label text="Subtotal" styleClass="receipt-sum-label"/>
-                <Region HBox.hgrow="ALWAYS"/>
-                <Label fx:id="receiptSubtotalLabel" styleClass="receipt-sum-value"/>
+                <Label styleClass="receipt-sum-label" text="Subtotal" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Label fx:id="receiptSubtotalLabel" styleClass="receipt-sum-value" />
             </HBox>
 
             <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="Discount" styleClass="receipt-sum-label"/>
-                <Region HBox.hgrow="ALWAYS"/>
-                <Label fx:id="receiptDiscountValueLabel" styleClass="receipt-sum-value"/>
-                <ComboBox fx:id="receiptDiscountBox" promptText="None" styleClass="receipt-discount"/>
+                <Label styleClass="receipt-sum-label" text="Discount" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Label fx:id="receiptDiscountValueLabel" styleClass="receipt-sum-value" />
+                <ComboBox fx:id="receiptDiscountBox" promptText="None" styleClass="receipt-discount" />
             </HBox>
 
-            <HBox fx:id="discountCardsRow" alignment="CENTER_LEFT" spacing="8" visible="false" managed="false">
-                <Label text="Discount cards (1 card = 1 dish)" styleClass="receipt-sum-label"/>
-                <Region HBox.hgrow="ALWAYS"/>
-                <Button text="−" onAction="#onDiscountCardsMinus" styleClass="receipt-step-btn" mnemonicParsing="false"/>
-                <Label fx:id="discountCardsLabel" text="1" styleClass="receipt-qty"/>
-                <Button text="+" onAction="#onDiscountCardsPlus" styleClass="receipt-step-btn" mnemonicParsing="false"/>
+            <HBox fx:id="discountCardsRow" alignment="CENTER_LEFT" managed="false" spacing="8" visible="false">
+                <Label styleClass="receipt-sum-label" text="Discount cards (1 card = 1 dish)" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Button mnemonicParsing="false" onAction="#onDiscountCardsMinus" styleClass="receipt-step-btn" text="−" />
+                <Label fx:id="discountCardsLabel" styleClass="receipt-qty" text="1" />
+                <Button mnemonicParsing="false" onAction="#onDiscountCardsPlus" styleClass="receipt-step-btn" text="+" />
             </HBox>
 
             <HBox alignment="CENTER_LEFT">
-                <Label fx:id="receiptServiceLabel" styleClass="receipt-sum-label"/>
-                <Region HBox.hgrow="ALWAYS"/>
-                <Label fx:id="receiptServiceValueLabel" styleClass="receipt-sum-value"/>
+                <Label fx:id="receiptServiceLabel" styleClass="receipt-sum-label" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Label fx:id="receiptServiceValueLabel" styleClass="receipt-sum-value" />
             </HBox>
             <HBox alignment="CENTER_LEFT">
-                <Label fx:id="receiptVatLabel" styleClass="receipt-sum-label"/>
-                <Region HBox.hgrow="ALWAYS"/>
-                <Label fx:id="receiptVatValueLabel" styleClass="receipt-sum-value"/>
+                <Label fx:id="receiptVatLabel" styleClass="receipt-sum-label" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Label fx:id="receiptVatValueLabel" styleClass="receipt-sum-value" />
             </HBox>
         </VBox>
 
-        <Region styleClass="receipt-divider"/>
+        <Region styleClass="receipt-divider" />
 
         <HBox alignment="CENTER_LEFT">
-            <Label text="TOTAL" styleClass="receipt-total-label"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Label fx:id="receiptTotalLabel" styleClass="receipt-total-value"/>
+            <Label styleClass="receipt-total-label" text="TOTAL" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="receiptTotalLabel" styleClass="receipt-total-value" />
         </HBox>
 
-        <Button fx:id="receiptPayBtn" text="PROCEED TO PAYMENT" mnemonicParsing="false"
-                styleClass="receipt-pay-btn" maxWidth="Infinity" onAction="#onProceedToPayment"/>
+        <Button fx:id="receiptPayBtn" maxWidth="Infinity" mnemonicParsing="false" onAction="#onProceedToPayment" styleClass="receipt-pay-btn" text="PROCEED TO PAYMENT" textFill="WHITE" />
     </VBox>
 </HBox>

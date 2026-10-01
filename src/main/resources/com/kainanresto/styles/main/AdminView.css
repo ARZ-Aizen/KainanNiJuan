@@ -1750,3 +1750,19 @@
 .add-delete-btn:pressed {
     -fx-background-color: #C0392B;
 }
+
+//*HOME *//
+
+.delta-up   { -fx-text-fill: #2E7D32; }
+.delta-down { -fx-text-fill: #DE2C19; }
+
+.best-seller-row { -fx-padding: 10 8; -fx-border-color: transparent transparent #EAE1D4 transparent; }
+.best-seller-rank { -fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #8C6343; -fx-min-width: 20; }
+.best-seller-name { -fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #292929; }
+.best-seller-qty  { -fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #8C6343; }
+
+.alert-item-row  { -fx-padding: 4 0 4 16; }
+.alert-item-name { -fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-text-fill: #292929; }
+.alert-item-detail { -fx-font-family: 'Inter'; -fx-font-size: 12px; -fx-font-weight: 700; }
+.alert-detail-warning  { -fx-text-fill: #E07A5F; }
+.alert-detail-critical { -fx-text-fill: #E74C3C; }

@@ -153,6 +153,8 @@
     -fx-text-fill: #F9F4EC;
 }
 
+.chip      { -fx-padding: 4px 10px; -fx-background-radius: 999px; }
+
 .pos-divider {
     -fx-background-color: #EAE1D4;
     -fx-min-height: 1; -fx-pref-height: 1; -fx-max-height: 1;
@@ -440,6 +442,7 @@
 .om-order-time  { -fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 400; -fx-text-fill: #828282; }
 .om-order-count { -fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #8C6343; }
 .om-line-name   { -fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-font-weight: 400; -fx-text-fill: #292929; }
+.om-line-more { -fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #8C6343; }
 .om-line-qty    { -fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #666666; }
 .om-total-label { -fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-font-weight: 400; -fx-text-fill: #666666; }
 .om-total-value { -fx-font-family: 'Inter'; -fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #8C6343; }
@@ -465,7 +468,7 @@
     -fx-focus-color: transparent; -fx-faint-focus-color: transparent;
     -fx-cursor: hand;
 }
-.om-btn-primary { -fx-background-color: #8C6343; -fx-padding: 10 12; -fx-font-weight: 700; -fx-text-fill: black; }
+.om-btn-primary { -fx-background-color: #8C6343; -fx-padding: 10 12; -fx-font-weight: 700; -fx-text-fill: white; }
 .om-btn-primary:hover { -fx-background-color: #7A5738; }
 .om-btn-outline {
     -fx-background-color: transparent;
