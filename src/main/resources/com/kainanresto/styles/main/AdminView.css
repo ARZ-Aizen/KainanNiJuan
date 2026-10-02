@@ -98,6 +98,89 @@
     -fx-min-height: 30px; -fx-pref-height: 30px; -fx-max-height: 30px;
 }
 
+/* ============================== SIDEBAR: EXPAND FEATURE ============================== */
+
+/* Hint that the compact sidebar background is clickable */
+.sidebar { -fx-cursor: hand; }
+
+/* Logo placeholder (shown when no logo is loaded from the DB) */
+.logo-placeholder {
+    -fx-text-fill: #8C6343;
+    -fx-font-family: 'Inter';
+    -fx-font-size: 28px;
+    -fx-font-weight: 700;
+}
+
+/* 80% black overlay over everything to the right of the expanded sidebar */
+.sidebar-scrim {
+    -fx-background-color: rgba(0,0,0,0.8);
+}
+
+/* Expanded sidebar: 256 content + 24 padding each side = 304 */
+.sidebar-expanded {
+    -fx-min-width: 304px;  -fx-pref-width: 304px;  -fx-max-width: 304px;
+    -fx-padding: 24px;
+    -fx-spacing: 32px;
+    -fx-background-color: #8C6343;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 16, 0, 4, 0);
+    -fx-cursor: hand;
+}
+
+.exp-brand-name {
+    -fx-max-width: 176px;                 /* 256 - 68 logo - 12 gap */
+    -fx-text-overrun: ellipsis;
+    -fx-text-fill: white;
+    -fx-font-family: 'Inter';
+    -fx-font-size: 24px;
+    -fx-font-weight: 700;
+}
+.exp-brand-sub {
+    -fx-text-fill: #E2D3C7;
+    -fx-opacity: 0.8;
+    -fx-font-family: 'Inter';
+    -fx-font-size: 16px;
+    -fx-font-weight: 400;
+}
+
+/* Nav row: padding 12/16, gap 12, radius 8 */
+.exp-nav-item {
+    -fx-padding: 12px 16px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-graphic-text-gap: 12px;
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 8px;
+    -fx-border-width: 0;
+    -fx-font-family: 'Inter';
+    -fx-font-size: 20px;
+    -fx-font-weight: 500;
+    -fx-text-fill: #E2D3C7;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.exp-nav-item:hover   { -fx-background-color: rgba(255,255,255,0.12); }
+.exp-nav-item:pressed { -fx-background-color: rgba(255,255,255,0.18); }
+
+.exp-nav-item-active,
+.exp-nav-item-active:hover,
+.exp-nav-item-active:pressed {
+    -fx-background-color: #B9926D;
+    -fx-text-fill: white;
+}
+.exp-nav-item-active .phosphor-icon { -fx-stroke: white; }
+
+.exp-icon-host {
+    -fx-alignment: CENTER;
+    -fx-min-width: 30px;  -fx-pref-width: 30px;  -fx-max-width: 30px;
+    -fx-min-height: 30px; -fx-pref-height: 30px; -fx-max-height: 30px;
+}
+
+.exp-divider {
+    -fx-min-height: 2px; -fx-pref-height: 2px; -fx-max-height: 2px;
+    -fx-background-color: #A27D60;
+}
+
 /* ============================== WORKSPACE / TOPBAR ============================== */
 .workspace {
     -fx-background-color: #F9F4EC;

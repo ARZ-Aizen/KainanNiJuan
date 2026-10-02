@@ -28,7 +28,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.SVGPath;
@@ -47,16 +46,48 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.scene.control.Label;
+import javafx.scene.control.ButtonBase;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
+import javafx.util.Duration;
+import java.util.Locale;
+
 public class ClientController {
 
-    @FXML private BorderPane appRoot;
-    @FXML private ImageView restaurantLogoImage;
+    /* ROOT / LAYERS */
+    @FXML private StackPane appRoot;
+    @FXML private VBox sidebarRoot;
+    @FXML private Region sidebarScrim;
+    @FXML private VBox expandedSidebar;
+
+    /* BRANDING (placeholders until loaded from the database) */
+    @FXML private ImageView restaurantLogoImage, expandedLogoImage;
+    @FXML private Label logoPlaceholderLabel, expandedLogoPlaceholderLabel;
+    @FXML private Label expandedRestaurantNameLabel, expandedPortalLabel;
+
+    /* COMPACT NAV */
     @FXML private Button navOrderBtn;
     @FXML private Button navHistoryBtn;
     @FXML private Button logoutBtn;
     @FXML private SVGPath orderNavIcon;
     @FXML private SVGPath historyNavIcon;
     @FXML private SVGPath logoutIcon;
+
+    /* EXPANDED NAV (separate icon instances: a Node can only have one parent) */
+    @FXML private Button expNavOrderBtn;
+    @FXML private Button expNavHistoryBtn;
+    @FXML private Button expLogoutBtn;
+    @FXML private SVGPath expOrderIcon, expHistoryIcon, expLogoutIcon;
 
     // View includes injected directly
     @FXML private HBox posView;
@@ -66,6 +97,21 @@ public class ClientController {
     @FXML private ClientOrderManagementController omViewController;
 
     private static final String NAV_ACTIVE = "nav-item-active";
+    private static final String EXP_NAV_ACTIVE = "exp-nav-item-active";
+
+    private static final String PLACEHOLDER_NAME = "Restaurant Name";
+    private static final String PORTAL_LABEL = "Cashier Portal";
+
+    private static final double COMPACT_WIDTH = 93.0;
+    private static final double EXPANDED_WIDTH = 304.0; // 256 content + 2 x 24 padding
+    private static final Duration ANIM_DURATION = Duration.millis(260);
+
+    private final Rectangle sidebarClip = new Rectangle(COMPACT_WIDTH, 0);
+    private Timeline sidebarAnimation;
+    private boolean sidebarExpanded = false;
+
+    private String brandName = PLACEHOLDER_NAME;
+    private boolean hasLogo = false;
 
     private final ProductDAO productDAO = new ProductDAO();
     private final OrderDAO orderDAO = new OrderDAO();
@@ -86,9 +132,20 @@ public class ClientController {
     @FXML
     public void initialize() {
         restaurantLogoImage.setClip(new Circle(34, 34, 34));
+        expandedLogoImage.setClip(new Circle(34, 34, 34));
 
         initializeIcons();
         normalizeIcons();
+
+        // Start collapsed: the expanded layer is clipped to the compact width and invisible
+        sidebarClip.heightProperty().bind(expandedSidebar.heightProperty());
+        expandedSidebar.setClip(sidebarClip);
+        expandedSidebar.setOpacity(0);
+        sidebarScrim.setOpacity(0);
+
+        // Placeholder branding until real data is loaded
+        expandedPortalLabel.setText(PORTAL_LABEL);
+        updateBrandingLabels();
 
         setupCartHandlers();
         wireOrderPersistence();
@@ -97,6 +154,15 @@ public class ClientController {
 
         Platform.runLater(() -> {
             if (appRoot.getScene() == null) return;
+
+            // ESC closes the expanded sidebar
+            appRoot.getScene().addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+                if (e.getCode() == KeyCode.ESCAPE && sidebarExpanded) {
+                    collapseSidebar();
+                    e.consume();
+                }
+            });
+
             Stage stage = (Stage) appRoot.getScene().getWindow();
             stage.setOnCloseRequest((WindowEvent closeEvent) -> {
                 closeEvent.consume();
@@ -330,6 +396,10 @@ public class ClientController {
         setIcon(orderNavIcon, Icons.RECEIPT_TEXT);
         setIcon(historyNavIcon, Icons.CLOCK);
         setIcon(logoutIcon, Icons.NAV_LOGOUT);
+
+        setIcon(expOrderIcon, Icons.RECEIPT_TEXT);
+        setIcon(expHistoryIcon, Icons.CLOCK);
+        setIcon(expLogoutIcon, Icons.NAV_LOGOUT);
     }
 
     private void setIcon(SVGPath icon, String content) {
@@ -340,6 +410,11 @@ public class ClientController {
         ClientUIHelper.fitGridIcon(orderNavIcon, 34.0, 2.0);
         ClientUIHelper.fitGridIcon(historyNavIcon, 34.0, 2.0);
         ClientUIHelper.fitGridIcon(logoutIcon, 30.0, 2.0);
+
+        // Expanded sidebar uses a 30px icon host per the design
+        ClientUIHelper.fitGridIcon(expOrderIcon, 30.0, 2.0);
+        ClientUIHelper.fitGridIcon(expHistoryIcon, 30.0, 2.0);
+        ClientUIHelper.fitGridIcon(expLogoutIcon, 30.0, 2.0);
     }
 
     @FXML
@@ -372,6 +447,7 @@ public class ClientController {
         showView(posView);
         setActiveNav(navOrderBtn);
         loadPosData();
+        collapseSidebar(); // no-op if already collapsed
     }
 
     /** Fetches dishes (fresh stock) and the discount options in the background. */
@@ -399,27 +475,145 @@ public class ClientController {
     private void showOrderManagement() {
         showView(omView);
         setActiveNav(navHistoryBtn);
+        collapseSidebar();
     }
 
+
     private void setActiveNav(Button active) {
-        for (Button btn : new Button[]{navOrderBtn, navHistoryBtn}) btn.getStyleClass().remove(NAV_ACTIVE);
-        if (!active.getStyleClass().contains(NAV_ACTIVE)) active.getStyleClass().add(NAV_ACTIVE);
+        Button[] compact  = {navOrderBtn, navHistoryBtn};
+        Button[] expanded = {expNavOrderBtn, expNavHistoryBtn};
+        for (int i = 0; i < compact.length; i++) {
+            compact[i].getStyleClass().remove(NAV_ACTIVE);
+            expanded[i].getStyleClass().remove(EXP_NAV_ACTIVE);
+            if (compact[i] == active) {
+                compact[i].getStyleClass().add(NAV_ACTIVE);
+                expanded[i].getStyleClass().add(EXP_NAV_ACTIVE);
+            }
+        }
     }
 
     // ================================= DELEGATED PUBLIC API =================================
 
     public void setRestaurantLogo(String uri) {
         if (uri == null || uri.isBlank()) {
-            restaurantLogoImage.setImage(null);
+            applyLogo(null);
             return;
         }
         try {
-            Image image = new Image(uri, 136.0, 136.0, true, true, true);
-            restaurantLogoImage.setImage(image);
-            ClientUIHelper.applyCoverCrop(restaurantLogoImage, image);
+            applyLogo(new Image(uri, 136.0, 136.0, true, true, true));
         } catch (IllegalArgumentException ex) {
-            restaurantLogoImage.setImage(null);
+            applyLogo(null);
         }
+    }
+
+    public void setRestaurantName(String name) {
+        brandName = (name == null || name.isBlank()) ? PLACEHOLDER_NAME : name.trim();
+        updateBrandingLabels();
+    }
+
+    /** Convenience: set both at once once the DB data arrives. */
+    public void applyBranding(String name, String logoUri) {
+        setRestaurantName(name);
+        setRestaurantLogo(logoUri);
+    }
+
+    private void applyLogo(Image image) {
+        hasLogo = image != null;
+        restaurantLogoImage.setImage(image);
+        expandedLogoImage.setImage(image);
+        if (image != null) {
+            ClientUIHelper.applyCoverCrop(restaurantLogoImage, image);
+            ClientUIHelper.applyCoverCrop(expandedLogoImage, image);
+        }
+        updateBrandingLabels();
+    }
+
+    /** Name label + the letter shown in the logo circle when there is no logo. */
+    private void updateBrandingLabels() {
+        expandedRestaurantNameLabel.setText(brandName);
+        String initial = brandName.substring(0, 1).toUpperCase(Locale.ENGLISH);
+        logoPlaceholderLabel.setText(initial);
+        expandedLogoPlaceholderLabel.setText(initial);
+        logoPlaceholderLabel.setVisible(!hasLogo);
+        expandedLogoPlaceholderLabel.setVisible(!hasLogo);
+    }
+
+    /* ================= SIDEBAR EXPAND / COLLAPSE ================= */
+
+    @FXML
+    private void onSidebarClicked(MouseEvent event) {
+        if (isInsideButton(event.getTarget(), sidebarRoot)) return; // buttons keep their normal behavior
+        expandSidebar();
+    }
+
+    @FXML
+    private void onExpandedSidebarClicked(MouseEvent event) {
+        if (isInsideButton(event.getTarget(), expandedSidebar)) return;
+        collapseSidebar();
+    }
+
+    @FXML
+    private void onScrimClicked(MouseEvent event) {
+        collapseSidebar();
+    }
+
+    /** True if the click originated on (or inside) a button, e.g. its icon or text. */
+    private boolean isInsideButton(Object target, Node boundary) {
+        Node node = (target instanceof Node) ? (Node) target : null;
+        while (node != null && node != boundary) {
+            if (node instanceof ButtonBase) return true;
+            node = node.getParent();
+        }
+        return false;
+    }
+
+    private void expandSidebar() {
+        if (sidebarExpanded) return;
+        sidebarExpanded = true;
+        animateSidebar(true);
+    }
+
+    private void collapseSidebar() {
+        if (!sidebarExpanded) return;
+        sidebarExpanded = false;
+        animateSidebar(false);
+    }
+
+    private void animateSidebar(boolean show) {
+        if (sidebarAnimation != null) sidebarAnimation.stop();
+
+        if (show) {
+            sidebarScrim.setVisible(true);
+            expandedSidebar.setVisible(true);
+        }
+
+        Interpolator ease = Interpolator.EASE_BOTH;
+
+        // Width grows/shrinks over the full duration, along with the scrim
+        KeyFrame end = new KeyFrame(ANIM_DURATION,
+                new KeyValue(sidebarClip.widthProperty(), show ? EXPANDED_WIDTH : COMPACT_WIDTH, ease),
+                new KeyValue(sidebarScrim.opacityProperty(), show ? 1.0 : 0.0, ease));
+
+        // Content cross-fades with the compact sidebar underneath:
+        // fades in during the first 40% on expand, fades out during the last 40% on collapse
+        KeyFrame fade = show
+                ? new KeyFrame(ANIM_DURATION.multiply(0.4), new KeyValue(expandedSidebar.opacityProperty(), 1.0))
+                : new KeyFrame(ANIM_DURATION.multiply(0.6), new KeyValue(expandedSidebar.opacityProperty(), 1.0));
+        KeyFrame fadeEnd = show
+                ? null
+                : new KeyFrame(ANIM_DURATION, new KeyValue(expandedSidebar.opacityProperty(), 0.0));
+
+        sidebarAnimation = (fadeEnd == null)
+                ? new Timeline(fade, end)
+                : new Timeline(fade, end, fadeEnd);
+
+        if (!show) {
+            sidebarAnimation.setOnFinished(e -> {
+                sidebarScrim.setVisible(false);
+                expandedSidebar.setVisible(false);
+            });
+        }
+        sidebarAnimation.play();
     }
 
     public void setCategories(List<String> categories) { posViewController.setCategories(categories); }
