@@ -83,11 +83,6 @@
                 <Label fx:id="orderDateValueLabel" text="—" styleClass="filter-pill-value" />
                 <StackPane styleClass="icon-host-14"><SVGPath styleClass="phosphor-icon, icon-muted, filter-chevron" /></StackPane>
             </HBox>
-            <HBox fx:id="orderTypePill" styleClass="filter-pill" alignment="CENTER_LEFT" spacing="8.0">
-                <Label text="Order Type:" styleClass="filter-pill-label" />
-                <Label fx:id="orderTypeValueLabel" text="—" styleClass="filter-pill-value" />
-                <StackPane styleClass="icon-host-14"><SVGPath styleClass="phosphor-icon, icon-muted, filter-chevron" /></StackPane>
-            </HBox>
             <HBox fx:id="orderStatusPill" styleClass="filter-pill" alignment="CENTER_LEFT" spacing="8.0">
                 <Label text="Status:" styleClass="filter-pill-label" />
                 <Label fx:id="orderStatusValueLabel" text="—" styleClass="filter-pill-value" />
@@ -110,8 +105,7 @@
             </placeholder>
             <columns>
                 <TableColumn fx:id="orderIdColumn" text="ORDER ID" prefWidth="100.0" minWidth="90.0" sortable="false" reorderable="false" styleClass="col-first, col-id" />
-                <TableColumn fx:id="orderTypeColumn" text="TYPE" prefWidth="100.0" minWidth="80.0" sortable="false" reorderable="false" styleClass="col-type" />
-                <TableColumn fx:id="orderStaffColumn" text="STAFF" prefWidth="180.0" minWidth="120.0" sortable="false" reorderable="false" />
+                <TableColumn fx:id="orderTypeColumn" text="TYPE" prefWidth="100.0" minWidth="80.0" sortable="false" reorderable="false" styleClass="col-type" />                <TableColumn fx:id="orderStaffColumn" text="STAFF" prefWidth="180.0" minWidth="120.0" sortable="false" reorderable="false" />
                 <TableColumn fx:id="orderCreatedColumn" text="CREATED / LAST EDIT" prefWidth="180.0" minWidth="150.0" sortable="false" reorderable="false" styleClass="col-time" />
                 <TableColumn fx:id="orderTotalColumn" text="TOTAL" prefWidth="100.0" minWidth="80.0" sortable="false" reorderable="false" styleClass="col-total" />
                 <TableColumn fx:id="orderStatusColumn" text="STATUS" prefWidth="120.0" minWidth="110.0" sortable="false" reorderable="false" />

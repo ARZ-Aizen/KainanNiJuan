@@ -29,7 +29,6 @@ module com.kainanresto {
     exports com.kainanresto.controllers.id;
     opens com.kainanresto.controllers.id to javafx.fxml;
     exports com.kainanresto.controllers.util;
-    opens com.kainanresto.controllers.util to javafx.fxml;
     exports com.kainanresto.model.account;
     opens com.kainanresto.model.account to javafx.base;
     exports com.kainanresto.model.dish;
@@ -69,4 +68,5 @@ module com.kainanresto {
 
     exports com.kainanresto.controllers.main.admin.settings;
     opens com.kainanresto.controllers.main.admin.settings to javafx.fxml;
+    opens com.kainanresto.controllers.util to javafx.base, javafx.fxml;
 }

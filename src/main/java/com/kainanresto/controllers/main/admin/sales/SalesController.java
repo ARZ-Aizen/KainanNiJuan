@@ -29,7 +29,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 import com.kainanresto.util.AlertUtil;
-import com.kainanresto.model.transac.PaymentResult;
 
 import java.awt.*;
 import java.io.File;
@@ -52,9 +51,9 @@ public class SalesController {
     @FXML private Label ordersVoidsValueLabel, ordersVoidsNoteLabel;
     @FXML private Label ordersAvgSpendValueLabel, ordersAvgSpendNoteLabel;
 
-    @FXML private HBox ordersSearchBox, orderDatePill, orderTypePill, orderStatusPill, orderPaymentPill;
+    @FXML private HBox ordersSearchBox, orderDatePill, orderStatusPill, orderPaymentPill;
     @FXML private TextField ordersSearchField;
-    @FXML private Label orderDateValueLabel, orderTypeValueLabel, orderStatusValueLabel, orderPaymentValueLabel;
+    @FXML private Label orderDateValueLabel, orderStatusValueLabel, orderPaymentValueLabel;
 
     @FXML private SVGPath ordersSearchIcon, ordersRevenueIcon, ordersTotalIcon, ordersVoidsIcon, ordersAvgSpendIcon;
 
@@ -62,7 +61,6 @@ public class SalesController {
     @FXML private Label ordersTablePlaceholder;
     @FXML private TableColumn<Transaction, String> orderIdColumn, orderTypeColumn, orderCreatedColumn, orderTotalColumn, orderStatusColumn, orderPaymentColumn;
     @FXML private TableColumn<Transaction, Transaction> orderStaffColumn, orderActionsColumn;
-
     private static final PseudoClass FIELD_FOCUSED = PseudoClass.getPseudoClass("field-focused");
     private static final DateTimeFormatter ORDER_TIME_FORMAT = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
     private static final DateTimeFormatter ORDER_DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy, h:mm a", Locale.ENGLISH);
@@ -70,7 +68,7 @@ public class SalesController {
     private final OrderDAO orderDAO = new OrderDAO();
     private final ObservableList<Transaction> orderItems = FXCollections.observableArrayList();
     private FilteredList<Transaction> filteredOrders;
-    private FilterPill orderDateFilter, orderTypeFilter, orderStatusFilter, orderPaymentFilter;
+    private FilterPill orderDateFilter, orderStatusFilter, orderPaymentFilter;
 
     @FXML
     public void initialize() {
@@ -141,15 +139,15 @@ public class SalesController {
 
     private void setupOrdersPage() {
         orderDateFilter    = new FilterPill(orderDatePill, orderDateValueLabel, this::onOrderDateChanged);
-        orderTypeFilter    = new FilterPill(orderTypePill, orderTypeValueLabel, this::applyOrderFilters);
         orderStatusFilter  = new FilterPill(orderStatusPill, orderStatusValueLabel, this::applyOrderFilters);
         orderPaymentFilter = new FilterPill(orderPaymentPill, orderPaymentValueLabel, this::applyOrderFilters);
 
         // The first option in each list is the "no filter" default
         orderDateFilter.setOptions(List.of("Today", "Yesterday", "Last 7 Days", "This Month", "All Time"));
-        orderTypeFilter.setOptions(List.of("All Types", "Dine in", "Takeout", "Delivery"));
         orderStatusFilter.setOptions(List.of("All States", "Preparing", "Completed", "Cancelled"));
-        orderPaymentFilter.setOptions(List.of("All", "Paid", "Unpaid", "Refunded"));
+
+        // Updated to only show Paid and Refunded
+        orderPaymentFilter.setOptions(List.of("All", "Paid", "Refunded"));
 
         setupOrdersTable();
 
@@ -186,7 +184,6 @@ public class SalesController {
 
         filteredOrders.setPredicate(order ->
                 matchesOrderText(order, query)
-                        && orderTypeFilter.accepts(order.orderType())
                         && orderStatusFilter.accepts(order.status())
                         && orderPaymentFilter.accepts(order.paymentStatus()));
 
@@ -207,14 +204,16 @@ public class SalesController {
     private void onClearOrderFilters() {
         boolean dateWasChanged = !orderDateFilter.isDefault();
         ordersSearchField.clear();
-        orderDateFilter.reset(); orderTypeFilter.reset(); orderStatusFilter.reset(); orderPaymentFilter.reset();
+        orderDateFilter.reset();
+        orderStatusFilter.reset();
+        orderPaymentFilter.reset();
         applyOrderFilters();
         if (dateWasChanged) onOrderDateChanged();
     }
 
     private void onOrderActions(Transaction order, Node anchor) {
         ContextMenu menu = new ContextMenu();
-        menu.getStyleClass().add("filter-menu"); // reuses your dropdown style
+        menu.getStyleClass().add("filter-menu");
 
         MenuItem viewReceipt = new MenuItem("View Receipt");
         viewReceipt.setMnemonicParsing(false);
@@ -235,7 +234,6 @@ public class SalesController {
                     return;
                 }
 
-                // null is fine for old rows without payment data: the PDF then skips the Cash/Change lines
                 PaymentResult pay = orderDAO.findPayment(order.orderId());
                 File pdf = ReceiptPdfGenerator.generate(receipt, pay);
 
@@ -345,7 +343,7 @@ public class SalesController {
         private final Region dot = new Region();
         private final Label text = new Label();
         private final HBox chip = new HBox(6.0);
-        private final HBox holder = new HBox(chip);   // keeps the chip at its natural size
+        private final HBox holder = new HBox(chip);
         private final Function<String, String> styleResolver;
         private String appliedStyle;
 
@@ -377,7 +375,6 @@ public class SalesController {
             setGraphic(holder);
         }
     }
-
 
     private final class ActionsCell extends TableCell<Transaction, Transaction> {
         private final Button button = new Button();

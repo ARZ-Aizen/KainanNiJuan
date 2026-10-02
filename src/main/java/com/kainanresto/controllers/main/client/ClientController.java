@@ -1,5 +1,6 @@
 package com.kainanresto.controllers.main.client;
 
+import com.kainanresto.controllers.main.client.pos.AdminAuthDialog;
 import com.kainanresto.dao.OrderDAO;
 import com.kainanresto.dao.ProductDAO;
 import com.kainanresto.model.account.User;
@@ -124,6 +125,25 @@ public class ClientController {
 
         // 2. Change quantity via receipt stepper (+ / -)
         posViewController.setOnReceiptQuantityChange((line, newQty) -> {
+
+            // --- VALIDATION ADDED HERE ---
+            if (newQty < line.quantity()) {
+
+                // CHECK IF ADMIN OVERRIDE IS REQUIRED IN SETTINGS
+                if (isPinRequiredForVoid()) {
+                    boolean isAuthorized = AdminAuthDialog.show(
+                            appRoot.getScene().getWindow(),
+                            "Authorize Item Void / Reduction"
+                    );
+
+                    // If they canceled the dialog or failed the login, abort the quantity change
+                    if (!isAuthorized) {
+                        return;
+                    }
+                }
+            }
+            // -----------------------------
+
             if (newQty <= 0) {
                 currentCart.remove(line);
             } else {
@@ -131,6 +151,8 @@ public class ClientController {
             }
             refreshReceiptUI();
         });
+
+
 
         // 3. Discount type (None / Senior / PWD)
         posViewController.setOnReceiptDiscountChange(discountName -> {
@@ -248,7 +270,7 @@ public class ClientController {
                 orderType,
                 null,                                   // orderTypeDetail (table no., etc.)
                 OrderStatus.PREPARING,
-                LocalDateTime.now(),
+                com.kainanresto.controllers.util.SystemTimeManager.getCurrentLocalDateTime(),
                 currentCashierName(),
                 List.copyOf(currentCart),
                 hasDiscount ? currentDiscountName : null,
@@ -425,4 +447,17 @@ public class ClientController {
     public void setCategories(List<String> categories) { posViewController.setCategories(categories); }
     public void setDishes(List<Dishes> dishes) { posViewController.setDishes(dishes); }
     public void setDiscountOptions(List<String> options) { posViewController.setDiscountOptions(options); }
+
+    /** Reads the config.properties file to check if Admin PIN is required for voids. */
+    private boolean isPinRequiredForVoid() {
+        java.util.Properties props = new java.util.Properties();
+        try (java.io.InputStream input = new java.io.FileInputStream("config.properties")) {
+            props.load(input);
+            return Boolean.parseBoolean(props.getProperty("requirePinForVoid", "false"));
+        } catch (java.io.IOException e) {
+            // Default to false if the file hasn't been created yet
+            return false;
+        }
+    }
+
 }

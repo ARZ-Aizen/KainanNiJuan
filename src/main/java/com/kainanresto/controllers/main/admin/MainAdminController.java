@@ -53,7 +53,7 @@ public class MainAdminController {
     @FXML
     public void initialize() {
         if (currentDateLabel != null) {
-            currentDateLabel.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.ENGLISH)));
+            currentDateLabel.setText(com.kainanresto.controllers.util.SystemTimeManager.getCurrentLocalDateTime().format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.ENGLISH)));
         }
         if (restaurantLogoImage != null) {
             restaurantLogoImage.setClip(new Circle(34, 34, 34));
