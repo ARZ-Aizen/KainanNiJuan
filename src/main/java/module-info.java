@@ -15,6 +15,8 @@ module com.kainanresto {
     requires java.prefs; //PARA SA REMEMBER ME
     requires javafx.base;
     requires javafx.graphics;
+    requires org.apache.pdfbox;
+    requires java.desktop;
 
     //FXML LOADER TO
     opens com.kainanresto to javafx.fxml;

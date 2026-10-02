@@ -5,6 +5,9 @@ import com.kainanresto.model.order.OrderReceipt;
 import com.kainanresto.model.transac.PaymentResult;
 import com.kainanresto.model.transac.ReceiptLine;
 import com.kainanresto.model.transac.ReceiptTotals;
+import com.kainanresto.util.AlertUtil;
+import com.kainanresto.util.ReceiptPdfGenerator;
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -13,6 +16,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
@@ -86,7 +90,10 @@ public final class ReceiptDialog {
         scroll.getStyleClass().add("rcpt-scroll");
         scroll.setFitToWidth(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setMaxHeight(240);
+        // Grows with the number of dishes, then scrolls once it reaches the cap
+        double cap = Math.max(160, Screen.getPrimary().getVisualBounds().getHeight() - 56 - 620);
+        scroll.prefHeightProperty().bind(items.heightProperty().add(2));
+        scroll.setMaxHeight(cap);
 
         // ---------- summary ----------
         // The discount is already baked into total, so recover it: subtotal + service + vat - total
@@ -131,7 +138,28 @@ public final class ReceiptDialog {
         card.getStyleClass().add("rcpt-card");
 
         Stage stage = DialogSupport.createStage(owner, card);
-        done.setOnAction(e -> stage.close());
+
+        // Re-fit and re-center once the item list has been measured
+        stage.setOnShown(e -> Platform.runLater(() -> {
+            stage.sizeToScene();
+            stage.centerOnScreen();
+        }));
+
+        // DONE: close the popup and generate the PDF in the background
+        done.setOnAction(e -> {
+            stage.close();
+            Thread worker = new Thread(() -> {
+                try {
+                    ReceiptPdfGenerator.generate(r, pay);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    Platform.runLater(() -> AlertUtil.showError("Receipt PDF",
+                            "The order was saved, but the receipt PDF could not be created."));
+                }
+            });
+            worker.setDaemon(true);
+            worker.start();
+        });
         stage.showAndWait();
     }
 

@@ -1,9 +1,12 @@
 package com.kainanresto.controllers.main.admin.sales;
 
 import com.kainanresto.dao.OrderDAO;
+import com.kainanresto.model.order.OrderReceipt;
 import com.kainanresto.model.order.OrderStats;
+import com.kainanresto.model.transac.PaymentResult;
 import com.kainanresto.model.transac.Transaction;
 import com.kainanresto.model.util.Icons;
+import com.kainanresto.util.ReceiptPdfGenerator;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -16,12 +19,20 @@ import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
+import com.kainanresto.util.AlertUtil;
+import com.kainanresto.model.transac.PaymentResult;
 
+import java.awt.*;
+import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -202,7 +213,46 @@ public class SalesController {
     }
 
     private void onOrderActions(Transaction order, Node anchor) {
-        // TODO: open the row-actions menu (view details / print receipt)
+        ContextMenu menu = new ContextMenu();
+        menu.getStyleClass().add("filter-menu"); // reuses your dropdown style
+
+        MenuItem viewReceipt = new MenuItem("View Receipt");
+        viewReceipt.setMnemonicParsing(false);
+        viewReceipt.setOnAction(e -> viewReceipt(order));
+
+        menu.getItems().add(viewReceipt);
+        menu.show(anchor, Side.BOTTOM, 0.0, 4.0);
+    }
+
+    /** Placeholder: will generate the receipt PDF and open it once PDF conversion is built. */
+    private void viewReceipt(Transaction order) {
+        Thread worker = new Thread(() -> {
+            try {
+                OrderReceipt receipt = orderDAO.findReceipt(order.orderId());
+                if (receipt == null) {
+                    Platform.runLater(() -> AlertUtil.showError("View Receipt",
+                            "Could not find the details for order " + order.orderId() + "."));
+                    return;
+                }
+
+                // null is fine for old rows without payment data: the PDF then skips the Cash/Change lines
+                PaymentResult pay = orderDAO.findPayment(order.orderId());
+                File pdf = ReceiptPdfGenerator.generate(receipt, pay);
+
+                if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+                    Desktop.getDesktop().open(pdf);
+                } else {
+                    Platform.runLater(() -> AlertUtil.showInfo("View Receipt",
+                            "Receipt saved to:\n" + pdf.getAbsolutePath()));
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                Platform.runLater(() -> AlertUtil.showError("View Receipt",
+                        "The receipt PDF could not be created."));
+            }
+        });
+        worker.setDaemon(true);
+        worker.start();
     }
 
     /* ============================== DATA SETTERS ============================== */
