@@ -91,7 +91,6 @@ public class ForgotPasswordController {
         try {
             adminStage.getIcons().add(new Image(getClass().getResourceAsStream("/com/kainanresto/images/id/KainanNiJuanLogo.png")));
         } catch (Exception e) {
-            // Fallback if image path is missing
         }
 
 

@@ -19,12 +19,10 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
-/** Modal "virtual receipt" shown right after a successful payment. */
 public final class ReceiptDialog {
 
     private static final DateTimeFormatter DATE_FMT =
@@ -139,13 +137,11 @@ public final class ReceiptDialog {
 
         Stage stage = DialogSupport.createStage(owner, card);
 
-        // Re-fit and re-center once the item list has been measured
         stage.setOnShown(e -> Platform.runLater(() -> {
             stage.sizeToScene();
             stage.centerOnScreen();
         }));
 
-        // DONE: close the popup and generate the PDF in the background
         done.setOnAction(e -> {
             stage.close();
             Thread worker = new Thread(() -> {

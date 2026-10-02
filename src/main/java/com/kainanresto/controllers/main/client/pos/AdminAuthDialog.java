@@ -13,17 +13,12 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
-/** Modal popup that requests admin credentials before performing a restricted action. */
 public final class AdminAuthDialog {
 
     private static final PseudoClass FIELD_FOCUSED = PseudoClass.getPseudoClass("field-focused");
 
     private AdminAuthDialog() {}
 
-    /**
-     * Shows the admin authorization dialog.
-     * @return true if an admin successfully authenticated, false if cancelled.
-     */
     public static boolean show(Window owner, String actionDesc) {
         boolean[] authorized = new boolean[1];
 

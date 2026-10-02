@@ -15,7 +15,6 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -24,14 +23,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/** Modal cash-payment popup: shows the total, takes the amount received and shows the change live. */
 public final class PaymentDialog {
 
     private static final PseudoClass FIELD_FOCUSED = PseudoClass.getPseudoClass("field-focused");
 
     private PaymentDialog() {}
 
-    /** Returns the payment if the cashier confirmed, or empty if the popup was cancelled/closed. */
     public static Optional<PaymentResult> show(Window owner, String orderNumber, String orderType, BigDecimal total) {
         PaymentResult[] result = new PaymentResult[1];
 

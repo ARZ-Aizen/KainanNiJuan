@@ -13,10 +13,8 @@ import javafx.stage.Window;
 
 import java.net.URL;
 
-/** Builds the modal, transparent-window stage shared by the payment and receipt popups. */
 final class DialogSupport {
 
-    // Same stylesheet the client view loads (ClientView.fxml: @../../../styles/main/ClientView.css)
     private static final String STYLESHEET = "/com/kainanresto/styles/main/ClientView.css";
 
     private DialogSupport() {}
@@ -26,7 +24,6 @@ final class DialogSupport {
         stage.initModality(Modality.APPLICATION_MODAL);
         if (owner != null) stage.initOwner(owner);
 
-        // Padding around the card leaves room for its drop shadow
         StackPane shell = new StackPane(card);
         shell.setPadding(new Insets(28));
         shell.setStyle("-fx-background-color: transparent;");

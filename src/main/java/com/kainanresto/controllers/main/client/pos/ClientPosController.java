@@ -21,7 +21,6 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -39,8 +38,6 @@ public class ClientPosController {
     @FXML private ScrollPane posScroll;
     @FXML private Label posGridPlaceholder;
     @FXML private FlowPane posDishGrid;
-
-    @FXML private VBox receiptPanel;
     @FXML private VBox receiptLines;
     @FXML private Label receiptSubtotalLabel;
     @FXML private ComboBox<String> receiptDiscountBox;

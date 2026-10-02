@@ -20,7 +20,6 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
-
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -646,7 +645,6 @@ public class MenuController {
         setInvalid(addCategoryNameField, false);
     }
 
-    /** Marks a field red, shows the message, and focuses it. */
     private void failDish(Node field, String message) {
         setInvalid(field, true);
         setAddDishError(message);

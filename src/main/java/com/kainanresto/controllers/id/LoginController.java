@@ -46,8 +46,7 @@
                 rememberMeCheckbox.setSelected(true);
                 passwordField.requestFocus();
             }
-    
-            // FIX: Synchronize text between both fields in real-time
+
             passwordField.textProperty().addListener((obs, oldVal, newVal) -> {
                 if (!passwordVisibleField.getText().equals(newVal)) {
                     passwordVisibleField.setText(newVal);
@@ -68,8 +67,7 @@
             passwordVisibleField.setVisible(passwordVisible);
             passwordField.setManaged(!passwordVisible);
             passwordField.setVisible(!passwordVisible);
-    
-            // Switch focus and keep caret at the end of the text
+
             if (passwordVisible) {
                 passwordVisibleField.requestFocus();
                 passwordVisibleField.positionCaret(passwordVisibleField.getText().length());
@@ -85,7 +83,6 @@
     
         @FXML private void handleLogin(ActionEvent event) {
             String username = usernameField.getText().trim();
-            // Since fields are synced, either one will have the exact text
             String password = passwordField.getText();
     
             boolean rememberMe = rememberMeCheckbox != null
