@@ -3,7 +3,7 @@ package com.kainanresto.controllers.main.admin.dashboard;
 import com.kainanresto.controllers.main.admin.dashboard.DashboardData.BestSeller;
 import com.kainanresto.controllers.main.admin.dashboard.DashboardData.ChartPoint;
 import com.kainanresto.model.util.Icons;
-import com.kainanresto.service.DashboardService;
+import com.kainanresto.controllers.main.admin.dashboard.DashboardService;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;

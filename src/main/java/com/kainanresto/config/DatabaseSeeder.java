@@ -1,4 +1,4 @@
-package com.kainanresto.seeder;
+package com.kainanresto.config;
 
 import com.kainanresto.config.DatabaseConfig;
 import com.kainanresto.util.PasswordHasher; // Imported your hashing utility
