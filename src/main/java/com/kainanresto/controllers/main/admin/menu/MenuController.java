@@ -26,6 +26,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 public class MenuController {
 
@@ -72,6 +73,18 @@ public class MenuController {
 
     private Dishes currentEditingDish = null;
     private boolean isViewMode = false; // Tracks if form is locked
+
+    //*================================VALIDATIONS==============================================*//
+    private static final PseudoClass INVALID = PseudoClass.getPseudoClass("invalid");
+    private static final int MAX_NAME_LENGTH = 60;
+    private static final int MAX_DESCRIPTION_LENGTH = 200;
+    private static final BigDecimal MAX_PRICE = new BigDecimal("99999.99");
+
+    // Dish names may have digits ("Combo 1") but must contain at least one letter (checked on save)
+    private static final String NAME_ALLOWED = "[\\p{L}\\p{N} '&.,()\\-]*";
+    // Category names: letters only, plus space ' & -
+    private static final String CATEGORY_ALLOWED = "[\\p{L} '&\\-]*";
+
 
     @FXML
     public void initialize() {
@@ -259,27 +272,33 @@ public class MenuController {
     /* ============================== ADD/EDIT DISH FORM LOGIC ============================== */
 
     private void setupAddDishPage() {
-        addDishPreviewImage.setClip(new Circle(75, 75, 75));
-        addDishPriceField.setTextFormatter(new TextFormatter<>(c -> c.getControlNewText().matches("\\d*(\\.\\d{0,2})?") ? c : null));
-        addDishQuantityField.setTextFormatter(new TextFormatter<>(c -> c.getControlNewText().matches("\\d{0,5}") ? c : null));
+        addDishNameField.setTextFormatter(textFilter(NAME_ALLOWED, MAX_NAME_LENGTH));
+        addDishDescriptionField.setTextFormatter(new TextFormatter<>(c ->
+                c.getControlNewText().length() <= MAX_DESCRIPTION_LENGTH ? c : null));
+        addCategoryNameField.setTextFormatter(textFilter(CATEGORY_ALLOWED, MAX_CATEGORY_LENGTH));
 
-        addDishPriceField.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
-            if (!isFocused && !addDishPriceField.getText().isEmpty()) {
-                try {
-                    // Remove existing commas before parsing
-                    String cleanText = addDishPriceField.getText().replace(",", "");
-                    BigDecimal price = new BigDecimal(cleanText);
-                    addDishPriceField.setText(String.format(Locale.ENGLISH, "%,.2f", price));
-                } catch (NumberFormatException ignored) {}
+        // Price: no leading zeros, max 5 whole digits, max 2 decimals
+        addDishPriceField.setTextFormatter(new TextFormatter<>(c ->
+                c.getControlNewText().matches("(0|[1-9]\\d{0,4})?(\\.\\d{0,2})?") ? c : null));
+        addDishQuantityField.setTextFormatter(new TextFormatter<>(c ->
+                c.getControlNewText().matches("\\d{0,5}") ? c : null));
+
+        // Tidy up when the user leaves a field
+        addDishPriceField.focusedProperty().addListener((obs, was, is) -> {
+            String t = addDishPriceField.getText();
+            if (!is && t != null && !t.isEmpty() && !t.equals(".")) {
+                addDishPriceField.setText(new BigDecimal(t).setScale(2, java.math.RoundingMode.HALF_UP).toPlainString());
             }
         });
-
-        addDishStatusGroup.selectedToggleProperty().addListener((obs, old, now) -> {
-            if (now == null && old != null) addDishStatusGroup.selectToggle(old);
+        addDishQuantityField.focusedProperty().addListener((obs, was, is) -> {
+            if (!is && addDishQuantityField.getText().isBlank()) addDishQuantityField.setText("0");
         });
 
-        addCategoryNameField.setOnAction(e -> onAddCategory());
-        resetAddDishForm();
+        // Remove the red border as soon as the user edits the field again
+        addDishNameField.textProperty().addListener((o, a, b) -> setInvalid(addDishNameField, false));
+        addCategoryNameField.textProperty().addListener((o, a, b) -> setInvalid(addCategoryNameField, false));
+        addDishPriceField.textProperty().addListener((o, a, b) -> setInvalid(addDishPriceField.getParent(), false));
+        addDishCategoryCombo.valueProperty().addListener((o, a, b) -> setInvalid(addDishCategoryCombo, false));
     }
 
     private void resetAddDishForm() {
@@ -424,22 +443,44 @@ public class MenuController {
 
         // Handle Save/Update Logic
         setAddDishError(null);
+        clearInvalidStates();
 
-        String name = addDishNameField.getText() == null ? "" : addDishNameField.getText().trim();
+        String name = normalize(addDishNameField.getText());
         String category = addDishCategoryCombo.getValue();
         String priceText = addDishPriceField.getText() == null ? "" : addDishPriceField.getText().trim();
 
-        if (name.isEmpty() || category == null || priceText.isEmpty()) {
-            setAddDishError("Please fill in all required fields.");
+        if (name.isEmpty()) {
+            failDish(addDishNameField, "Menu item name is required.");
+            return;
+        }
+        if (name.length() < 2 || !hasLetter(name)) {
+            failDish(addDishNameField, "Name must be at least 2 characters and contain letters.");
+            return;
+        }
+        boolean duplicate = dishItems.stream().anyMatch(d ->
+                d.name() != null && d.name().equalsIgnoreCase(name)
+                        && (currentEditingDish == null || !Objects.equals(d.id(), currentEditingDish.id())));
+        if (duplicate) {
+            failDish(addDishNameField, "A menu item named \"" + name + "\" already exists.");
+            return;
+        }
+        if (category == null) {
+            failDish(addDishCategoryCombo, "Please select a category.");
+            return;
+        }
+        if (priceText.isEmpty()) {
+            failDish(addDishPriceField, "Selling price is required.");
+            setInvalid(addDishPriceField.getParent(), true);
             return;
         }
 
         BigDecimal price;
         try {
             price = new BigDecimal(priceText);
-            if (price.signum() <= 0) throw new NumberFormatException();
+            if (price.signum() <= 0 || price.compareTo(MAX_PRICE) > 0) throw new NumberFormatException();
         } catch (NumberFormatException ex) {
-            setAddDishError("Enter a valid selling price greater than zero.");
+            failDish(addDishPriceField, "Price must be greater than 0 and not more than ₱99,999.99.");
+            setInvalid(addDishPriceField.getParent(), true);
             return;
         }
 
@@ -488,14 +529,17 @@ public class MenuController {
     @FXML
     private void onAddCategory() {
         setAddCategoryError(null);
-        String name = addCategoryNameField.getText() == null ? "" : addCategoryNameField.getText().trim();
+        setInvalid(addCategoryNameField, false);
+        String name = normalize(addCategoryNameField.getText());
 
-        if (name.isEmpty() || name.length() > MAX_CATEGORY_LENGTH) {
-            setAddCategoryError("Invalid category name.");
-            return;
-        }
-        if (categoryNames.stream().anyMatch(e -> e.equalsIgnoreCase(name))) {
-            setAddCategoryError("That category already exists.");
+        String problem = null;
+        if (name.isEmpty()) problem = "Enter a category name.";
+        else if (name.length() < 2 || !hasLetter(name)) problem = "Category name must be at least 2 letters.";
+        else if (categoryNames.stream().anyMatch(e -> e.equalsIgnoreCase(name))) problem = "That category already exists.";
+
+        if (problem != null) {
+            setInvalid(addCategoryNameField, true);
+            setAddCategoryError(problem);
             return;
         }
 
@@ -569,5 +613,43 @@ public class MenuController {
         boolean has = msg != null && !msg.isBlank();
         addCategoryErrorLabel.setText(has ? msg : "");
         addCategoryErrorLabel.setVisible(has); addCategoryErrorLabel.setManaged(has);
+    }
+
+    /** Blocks disallowed characters, leading spaces, double spaces, and text over maxLen. */
+    private static TextFormatter<String> textFilter(String allowedRegex, int maxLen) {
+        return new TextFormatter<>(c -> {
+            String t = c.getControlNewText();
+            boolean ok = t.length() <= maxLen
+                    && t.matches(allowedRegex)
+                    && !t.startsWith(" ")
+                    && !t.contains("  ");
+            return ok ? c : null;
+        });
+    }
+
+    private static String normalize(String s) {
+        return s == null ? "" : s.trim().replaceAll("\\s+", " ");
+    }
+
+    private static boolean hasLetter(String s) {
+        return s.codePoints().anyMatch(Character::isLetter);
+    }
+
+    private void setInvalid(Node node, boolean invalid) {
+        if (node != null) node.pseudoClassStateChanged(INVALID, invalid);
+    }
+
+    private void clearInvalidStates() {
+        setInvalid(addDishNameField, false);
+        setInvalid(addDishCategoryCombo, false);
+        setInvalid(addDishPriceField.getParent(), false);   // the price box
+        setInvalid(addCategoryNameField, false);
+    }
+
+    /** Marks a field red, shows the message, and focuses it. */
+    private void failDish(Node field, String message) {
+        setInvalid(field, true);
+        setAddDishError(message);
+        field.requestFocus();
     }
 }
