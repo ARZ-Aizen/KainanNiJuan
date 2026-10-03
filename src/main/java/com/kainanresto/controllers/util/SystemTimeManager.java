@@ -23,10 +23,6 @@ public final class SystemTimeManager {
 
     private SystemTimeManager() {}
 
-    /**
-     * Returns the current system time. If Auto Sync is on, it returns real-time.
-     * If Manual mode is selected, it uses the configured manual date combined with a ticking time.
-     */
     public static LocalDateTime getCurrentLocalDateTime() {
         Properties props = new Properties();
         try (FileInputStream input = new FileInputStream(CONFIG_FILE)) {

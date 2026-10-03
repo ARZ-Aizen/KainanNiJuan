@@ -33,7 +33,7 @@ public final class ReceiptDialog {
     public static void show(Window owner, OrderReceipt r, PaymentResult pay) {
         ReceiptTotals t = r.totals();
 
-        // ---------- brand ----------
+        //BRAND
         Label brand = new Label("KAINAN NI JUAN");
         brand.getStyleClass().add("rcpt-brand");
         Label sub = new Label("Order Receipt");
@@ -41,7 +41,7 @@ public final class ReceiptDialog {
         VBox header = new VBox(2, brand, sub);
         header.setAlignment(Pos.CENTER);
 
-        // ---------- order info ----------
+        //INFO
         String type = ClientUIHelper.valueOrDash(r.orderType());
         if (r.orderTypeDetail() != null && !r.orderTypeDetail().isBlank()) {
             type += " \u2022 " + r.orderTypeDetail().trim();
@@ -52,7 +52,7 @@ public final class ReceiptDialog {
                 kv("Cashier", ClientUIHelper.valueOrDash(r.cashierName())),
                 kv("Order type", type));
 
-        // ---------- table head ----------
+        //HEADER
         Label hItem = new Label("Item");
         hItem.getStyleClass().add("rcpt-head");
         hItem.setMaxWidth(Double.MAX_VALUE);
@@ -88,13 +88,11 @@ public final class ReceiptDialog {
         scroll.getStyleClass().add("rcpt-scroll");
         scroll.setFitToWidth(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        // Grows with the number of dishes, then scrolls once it reaches the cap
         double cap = Math.max(160, Screen.getPrimary().getVisualBounds().getHeight() - 56 - 620);
         scroll.prefHeightProperty().bind(items.heightProperty().add(2));
         scroll.setMaxHeight(cap);
 
-        // ---------- summary ----------
-        // The discount is already baked into total, so recover it: subtotal + service + vat - total
+        // SUMMARY
         BigDecimal discount = t.subtotal().add(t.serviceCharge()).add(t.vat()).subtract(t.total());
 
         VBox summary = new VBox(8);
@@ -159,8 +157,6 @@ public final class ReceiptDialog {
         stage.showAndWait();
     }
 
-    // ---------- small builders ----------
-
     private static HBox kv(String key, String value) {
         Label k = new Label(key);
         k.getStyleClass().add("rcpt-key");
@@ -195,7 +191,7 @@ public final class ReceiptDialog {
 
     private static Region dash() {
         Region r = new Region();
-        r.getStyleClass().add("receipt-dash");   // dashed rule already defined in ClientView.css
+        r.getStyleClass().add("receipt-dash");
         return r;
     }
 

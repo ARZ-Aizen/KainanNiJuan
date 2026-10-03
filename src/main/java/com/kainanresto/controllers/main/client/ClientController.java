@@ -59,7 +59,6 @@ public class ClientController {
     @FXML private SVGPath historyNavIcon;
     @FXML private SVGPath logoutIcon;
 
-    // View includes injected directly
     @FXML private HBox posView;
     @FXML private ClientPosController posViewController;
 
@@ -71,7 +70,6 @@ public class ClientController {
     private final ProductDAO productDAO = new ProductDAO();
     private final OrderDAO orderDAO = new OrderDAO();
 
-    // Active cart state
     private final ObservableList<ReceiptLine> currentCart = FXCollections.observableArrayList();
     private BigDecimal currentDiscountRate = BigDecimal.ZERO;
     private int discountCards = 1;
@@ -81,7 +79,6 @@ public class ClientController {
     private static final BigDecimal VAT_RATE = new BigDecimal("0.12");            // 12% VAT
     private static final BigDecimal SERVICE_CHARGE_RATE = new BigDecimal("0.05"); // 5% service charge
 
-    // Discounted dishes are VAT-exempt (PH senior/PWD rule). Set to false to charge VAT on the full net amount instead.
     private static final boolean VAT_EXEMPT_ON_DISCOUNTED = true;
 
     @FXML
@@ -108,7 +105,6 @@ public class ClientController {
     }
 
     private void setupCartHandlers() {
-        // 1. Add dish to order (match on dish id, not name)
         posViewController.setOnAddToOrder(dish -> {
             Optional<ReceiptLine> existingLine = currentCart.stream()
                     .filter(line -> line.dishId() == dish.id())
@@ -123,10 +119,9 @@ public class ClientController {
             refreshReceiptUI();
         });
 
-        // 2. Change quantity via receipt stepper (+ / -)
         posViewController.setOnReceiptQuantityChange((line, newQty) -> {
 
-            // --- VALIDATION ADDED HERE ---
+            //VALIDATION
             if (newQty < line.quantity()) {
 
                 // CHECK IF ADMIN OVERRIDE IS REQUIRED IN SETTINGS
@@ -136,13 +131,11 @@ public class ClientController {
                             "Authorize Item Void / Reduction"
                     );
 
-                    // If they canceled the dialog or failed the login, abort the quantity change
                     if (!isAuthorized) {
                         return;
                     }
                 }
             }
-            // -----------------------------
 
             if (newQty <= 0) {
                 currentCart.remove(line);
@@ -154,7 +147,7 @@ public class ClientController {
 
 
 
-        // 3. Discount type (None / Senior / PWD)
+        //DISCOUNT TYPE
         posViewController.setOnReceiptDiscountChange(discountName -> {
             currentDiscountName = discountName;
             currentDiscountRate = discountName.contains("20%") ? new BigDecimal("0.20") : BigDecimal.ZERO;
@@ -162,17 +155,16 @@ public class ClientController {
             refreshReceiptUI();
         });
 
-        // 4. Number of discount cards (1 card = 1 discounted dish)
+        //NUMBER OF DISCOUNT
         posViewController.setOnReceiptDiscountCardsChange(delta -> {
-            discountCards += delta;   // clamped in refreshReceiptUI
+            discountCards += delta;
             refreshReceiptUI();
         });
 
-        // 5. Proceed to payment
+        //PAYMENT
         posViewController.setOnProceedToPayment(this::onProceedToPayment);
     }
 
-    // Helper to update an immutable ReceiptLine record
     private void updateCartItem(ReceiptLine oldLine, int newQty) {
         int index = currentCart.indexOf(oldLine);
         if (index >= 0) {
@@ -186,7 +178,6 @@ public class ClientController {
         }
     }
 
-    // Calculates discount, taxes and totals, then pushes to the UI
     private void refreshReceiptUI() {
         if (currentCart.isEmpty()) {
             lastTotals = null;
@@ -195,7 +186,6 @@ public class ClientController {
             return;
         }
 
-        // Expand the cart into individual units, highest price first
         List<BigDecimal> unitPrices = new ArrayList<>();
         for (ReceiptLine line : currentCart) {
             for (int i = 0; i < line.quantity(); i++) unitPrices.add(line.unitPrice());
@@ -203,11 +193,10 @@ public class ClientController {
         unitPrices.sort(Comparator.reverseOrder());
 
         boolean discountActive = currentDiscountRate.signum() > 0;
-        discountCards = Math.max(1, Math.min(discountCards, unitPrices.size())); // can't exceed dishes ordered
+        discountCards = Math.max(1, Math.min(discountCards, unitPrices.size()));
 
         BigDecimal subtotal = unitPrices.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // 1 card = 1 discounted dish, always the highest-priced remaining one
         BigDecimal discountedBase = BigDecimal.ZERO;
         if (discountActive) {
             for (int i = 0; i < discountCards; i++) discountedBase = discountedBase.add(unitPrices.get(i));
@@ -216,7 +205,7 @@ public class ClientController {
 
         BigDecimal netSubtotal = subtotal.subtract(discountAmount);
         BigDecimal vatBase = (discountActive && VAT_EXEMPT_ON_DISCOUNTED)
-                ? subtotal.subtract(discountedBase)   // discounted dishes carry no VAT
+                ? subtotal.subtract(discountedBase)
                 : netSubtotal;
 
         BigDecimal vatAmount = vatBase.multiply(VAT_RATE).setScale(2, RoundingMode.HALF_UP);
@@ -232,7 +221,6 @@ public class ClientController {
                 total
         );
 
-        // Work out which dishes actually got the discount (same highest-first rule as above)
         Map<String, Integer> discountedUnits = new HashMap<>();
         if (discountActive) {
             List<ReceiptLine> units = new ArrayList<>();
@@ -259,16 +247,15 @@ public class ClientController {
         String orderNumber = nextOrderNumber();
         String orderType = "Dine in";
 
-        // 1. Cash popup: amount received + change
-        Optional<PaymentResult> payment = PaymentDialog.show(owner, orderNumber, orderType, lastTotals.total());
-        if (payment.isEmpty()) return;   // cancelled: the cart stays untouched
 
-        // 2. Build the order (new orders start as PREPARING in Order Management)
+        Optional<PaymentResult> payment = PaymentDialog.show(owner, orderNumber, orderType, lastTotals.total());
+        if (payment.isEmpty()) return;
+
         boolean hasDiscount = currentDiscountRate.signum() > 0;
         OrderReceipt receipt = new OrderReceipt(
                 orderNumber,
                 orderType,
-                null,                                   // orderTypeDetail (table no., etc.)
+                null,
                 OrderStatus.PREPARING,
                 com.kainanresto.controllers.util.SystemTimeManager.getCurrentLocalDateTime(),
                 currentCashierName(),
@@ -276,7 +263,7 @@ public class ClientController {
                 hasDiscount ? currentDiscountName : null,
                 lastTotals);
 
-        // 3. Save order + items and deduct stock (one DB transaction)
+        //SAVE
         User user = SessionManager.getCurrentUser();
             Integer cashierId = user == null ? null : user.getUserId();
         if (!orderDAO.saveOrder(receipt, payment.get(), cashierId, currentCashierRole())) {
@@ -286,10 +273,10 @@ public class ClientController {
             return;
         }
 
-        // 4. Virtual receipt
+        //PDF RECEIPT
         ReceiptDialog.show(owner, receipt, payment.get());
 
-        // 5. Hand the order to Order Management, clear the cart and switch tabs
+        //TO ORDER MANAGEMENT
         omViewController.addOrder(receipt);
         resetOrder();
         showOrderManagement();
@@ -301,7 +288,7 @@ public class ClientController {
         currentDiscountName = "None";
         discountCards = 1;
         refreshReceiptUI();
-        loadPosData();   // refreshes stock and puts the discount box back on "None"
+        loadPosData();
     }
 
     private String nextOrderNumber() {
@@ -310,19 +297,18 @@ public class ClientController {
 
     private String currentCashierName() {
         User user = SessionManager.getCurrentUser();
-        return user == null ? "\u2014" : user.getFullName();   // adjust to your getter
+        return user == null ? "\u2014" : user.getFullName();
     }
 
     private String currentCashierRole() {
         User user = SessionManager.getCurrentUser();
-        if (user == null || user.getRole() == null) return "Cashier";   // adjust to your getter
-        String r = String.valueOf(user.getRole()).toLowerCase();        // "CASHIER" -> "Cashier"
+        if (user == null || user.getRole() == null) return "Cashier";
+        String r = String.valueOf(user.getRole()).toLowerCase();
         return Character.toUpperCase(r.charAt(0)) + r.substring(1);
     }
 
     // ================================= ORDER PERSISTENCE =================================
 
-    /** Loads today's saved orders into Order Management (so they survive a restart). */
     private void loadTodaysOrders() {
         Thread t = new Thread(() -> {
             List<OrderReceipt> receipts = orderDAO.loadReceipts(LocalDate.now().atStartOfDay());
@@ -332,7 +318,6 @@ public class ClientController {
         t.start();
     }
 
-    /** Saves status changes made in Order Management. */
     private void wireOrderPersistence() {
         omViewController.setOnCompleteOrder(order -> {
             if (!orderDAO.updateStatus(order.orderNumber(), OrderStatus.COMPLETED)) {
@@ -343,7 +328,7 @@ public class ClientController {
             if (!orderDAO.updateStatus(order.orderNumber(), OrderStatus.CANCELLED)) {
                 AlertUtil.showError("Error", "Could not cancel the order in the database.");
             } else {
-                loadPosData();   // stock was restored
+                loadPosData();
             }
         });
     }
@@ -396,7 +381,6 @@ public class ClientController {
         loadPosData();
     }
 
-    /** Fetches dishes (fresh stock) and the discount options in the background. */
     private void loadPosData() {
         Thread loadDataThread = new Thread(() -> {
             try {
@@ -430,32 +414,16 @@ public class ClientController {
 
     // ================================= DELEGATED PUBLIC API =================================
 
-    public void setRestaurantLogo(String uri) {
-        if (uri == null || uri.isBlank()) {
-            restaurantLogoImage.setImage(null);
-            return;
-        }
-        try {
-            Image image = new Image(uri, 136.0, 136.0, true, true, true);
-            restaurantLogoImage.setImage(image);
-            ClientUIHelper.applyCoverCrop(restaurantLogoImage, image);
-        } catch (IllegalArgumentException ex) {
-            restaurantLogoImage.setImage(null);
-        }
-    }
-
     public void setCategories(List<String> categories) { posViewController.setCategories(categories); }
     public void setDishes(List<Dishes> dishes) { posViewController.setDishes(dishes); }
     public void setDiscountOptions(List<String> options) { posViewController.setDiscountOptions(options); }
 
-    /** Reads the config.properties file to check if Admin PIN is required for voids. */
     private boolean isPinRequiredForVoid() {
         java.util.Properties props = new java.util.Properties();
         try (java.io.InputStream input = new java.io.FileInputStream("config.properties")) {
             props.load(input);
             return Boolean.parseBoolean(props.getProperty("requirePinForVoid", "false"));
         } catch (java.io.IOException e) {
-            // Default to false if the file hasn't been created yet
             return false;
         }
     }

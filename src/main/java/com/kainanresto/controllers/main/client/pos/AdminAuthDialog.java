@@ -22,7 +22,7 @@ public final class AdminAuthDialog {
     public static boolean show(Window owner, String actionDesc) {
         boolean[] authorized = new boolean[1];
 
-        // ---------- header ----------
+        //HEADER TO
         Label title = new Label("Admin Authorization");
         title.getStyleClass().add("pay-title");
         Label subtitle = new Label(actionDesc);
@@ -30,34 +30,34 @@ public final class AdminAuthDialog {
         VBox header = new VBox(2, title, subtitle);
         header.setAlignment(Pos.CENTER);
 
-        // ---------- credentials fields ----------
+        //CREDENTIALS
         Label errorMsg = new Label("");
         errorMsg.setStyle("-fx-text-fill: #d32f2f; -fx-font-size: 12px;");
         errorMsg.setVisible(false);
 
-        // Nabaruan a style para iti Username
+        //USERNAME
         TextField userField = new TextField();
         userField.setPromptText("Admin Username");
         userField.setStyle("-fx-background-color: transparent; -fx-font-size: 14px; -fx-prompt-text-fill: #a1887f; -fx-text-fill: #3e2723;");
         HBox userBox = new HBox(userField);
         userBox.getStyleClass().add("pay-input-box");
-        userBox.setStyle("-fx-padding: 4 8 4 8;"); // Nainayon a padding
+        userBox.setStyle("-fx-padding: 4 8 4 8;");
         HBox.setHgrow(userField, Priority.ALWAYS);
         userField.focusedProperty().addListener((o, was, is) -> userBox.pseudoClassStateChanged(FIELD_FOCUSED, is));
 
-        // Nabaruan a style para iti Password
+        //PASSWORD
         PasswordField passField = new PasswordField();
         passField.setPromptText("Admin Password");
         passField.setStyle("-fx-background-color: transparent; -fx-font-size: 14px; -fx-prompt-text-fill: #a1887f; -fx-text-fill: #3e2723;");
         HBox passBox = new HBox(passField);
         passBox.getStyleClass().add("pay-input-box");
-        passBox.setStyle("-fx-padding: 4 8 4 8;"); // Nainayon a padding
+        passBox.setStyle("-fx-padding: 4 8 4 8;");
         HBox.setHgrow(passField, Priority.ALWAYS);
         passField.focusedProperty().addListener((o, was, is) -> passBox.pseudoClassStateChanged(FIELD_FOCUSED, is));
 
         VBox inputs = new VBox(12, userBox, passBox, errorMsg);
 
-        // ---------- buttons ----------
+        //BUTTONS
         Button cancel = new Button("Cancel");
         cancel.setMnemonicParsing(false);
         cancel.getStyleClass().add("pay-cancel-btn");
@@ -75,7 +75,7 @@ public final class AdminAuthDialog {
 
         Stage stage = DialogSupport.createStage(owner, card);
 
-        // ---------- behaviour ----------
+        //BEHAVIOR
         Runnable doAuth = () -> {
             String uname = userField.getText().trim();
             String pwd = passField.getText();
@@ -98,9 +98,9 @@ public final class AdminAuthDialog {
             }
         };
 
-        // Keyboard Shortcuts
-        userField.setOnAction(e -> passField.requestFocus()); // Enter key on username goes to password
-        passField.setOnAction(e -> doAuth.run());             // Enter key on password triggers authorize
+        //KEYBOARD SHORTCUT TO
+        userField.setOnAction(e -> passField.requestFocus());
+        passField.setOnAction(e -> doAuth.run());
         confirm.setOnAction(e -> doAuth.run());
         cancel.setOnAction(e -> stage.close());
 

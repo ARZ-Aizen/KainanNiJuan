@@ -65,14 +65,13 @@
                     }
                 }
             }
-            return -1; // Category not found
+            return -1;
         }
 
         /* ============================== DISHES ============================== */
 
         public List<Dishes> getAllDishes() {
             List<Dishes> dishesList = new ArrayList<>();
-            // FIX: Added d.description to the SELECT statement
             String query = """
                 SELECT d.id, d.name, c.name AS category_name, d.price, d.image_url, d.available, d.description, d.quantity
                 FROM dishes d
@@ -85,10 +84,8 @@
                  ResultSet rs = stmt.executeQuery()) {
 
                 while (rs.next()) {
-                    // Determine actual availability based on the toggle AND the remaining quantity
                     boolean isAvailable = rs.getBoolean("available") && rs.getInt("quantity") > 0;
 
-                    // FIX: Added description and quantity to match the updated record
                     Dishes dish = new Dishes(
                             rs.getLong("id"),
                             rs.getString("name"),
@@ -134,7 +131,6 @@
             }
         }
 
-        // FIX: Added the missing updateDish method called by your controller
         public boolean updateDish(Dishes currentDish, NewDishForm form) {
             String query = """
                 UPDATE dishes 
@@ -154,7 +150,7 @@
                     stmt.setString(5, form.imageUri());
                     stmt.setInt(6, form.quantity());
                     stmt.setBoolean(7, form.available());
-                    stmt.setLong(8, currentDish.id()); // Target the existing row by ID
+                    stmt.setLong(8, currentDish.id());
 
                     return stmt.executeUpdate() > 0;
                 }

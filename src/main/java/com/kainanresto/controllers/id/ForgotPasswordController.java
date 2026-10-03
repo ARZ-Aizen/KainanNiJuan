@@ -25,8 +25,6 @@ public class ForgotPasswordController {
     @FXML private PasswordField newPasswordField;
     @FXML private TextField newPasswordVisibleField;
     @FXML private Button togglePasswordBtn;
-    @FXML private Button nextButton;
-    @FXML private Button backToLoginButton;
 
     private boolean passwordVisible = false;
     private final UserDAO userDAO = new UserDAO();

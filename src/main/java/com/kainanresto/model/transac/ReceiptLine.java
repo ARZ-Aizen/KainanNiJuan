@@ -1,4 +1,3 @@
-// ReceiptLine.java
 package com.kainanresto.model.transac;
 
 import java.math.BigDecimal;

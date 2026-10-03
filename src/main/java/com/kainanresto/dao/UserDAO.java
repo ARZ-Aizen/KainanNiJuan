@@ -30,7 +30,6 @@ public class UserDAO {
 
     // LOGIN
     public Optional<User> login(String username, String plainPassword) {
-        // REMOVED 'AND is_active = 1' so the user can be found even if they are inactive
         String sql = "SELECT user_id, username, password, role, full_name, is_active " +
                 "FROM users WHERE username = ? LIMIT 1";
 
@@ -147,25 +146,6 @@ public class UserDAO {
             System.err.println("UserDAO.permanentDeleteUser: DB Error - " + e.getMessage());
             return OperationResult.DATABASE_ERROR;
         }
-    }
-
-    // RETRIEVE ALL ACTIVE USERS
-    public List<User> findAllActive() {
-        List<User> users = new ArrayList<>();
-        String sql = "SELECT user_id, username, password, role, full_name, is_active " +
-                "FROM users WHERE is_active = 1 ORDER BY full_name ASC";
-
-        try (Connection conn = DatabaseConfig.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-
-            while (rs.next()) {
-                users.add(mapResultSetToUser(rs));
-            }
-        } catch (SQLException e) {
-            System.err.println("UserDAO.findAllActive: DB Error - " + e.getMessage());
-        }
-        return users;
     }
 
     private User mapResultSetToUser(ResultSet rs) throws SQLException {

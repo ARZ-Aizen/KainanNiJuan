@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/** Builds a receipt PDF: 80 mm wide, with a height that grows with the number of items. */
 public final class ReceiptPdfGenerator {
 
     private static final float PAGE_W = 226.77f;            // 80 mm
@@ -43,7 +42,6 @@ public final class ReceiptPdfGenerator {
 
     private ReceiptPdfGenerator() {}
 
-    /** Saves to ~/Documents/KainanNiJuan/Receipts/receipt-<orderNo>.pdf and returns the file. */
     public static File generate(OrderReceipt r, PaymentResult pay) throws IOException {
         List<Element> elements = build(r, pay);
         float contentH = 0;
@@ -212,7 +210,6 @@ public final class ReceiptPdfGenerator {
         }
     }
 
-    /** Standard PDF fonts can't encode every character; swap unsupported ones for '?'. */
     private static String safe(String s, PDFont font) {
         if (s == null) return "";
         StringBuilder sb = new StringBuilder();
@@ -240,7 +237,7 @@ public final class ReceiptPdfGenerator {
                 lines.add(cur.toString());
                 cur.setLength(0);
             }
-            while (word.length() > 1 && width(word, font, size) > maxW) {   // very long single word
+            while (word.length() > 1 && width(word, font, size) > maxW) {
                 int n = word.length();
                 while (n > 1 && width(word.substring(0, n), font, size) > maxW) n--;
                 lines.add(word.substring(0, n));
@@ -252,7 +249,6 @@ public final class ReceiptPdfGenerator {
         return lines;
     }
 
-    /** Standard PDF fonts have no peso sign, so this prints "PHP". Embed a TTF if you want the real symbol. */
     private static String money(BigDecimal amount) {
         return amount == null ? "-" : "PHP " + String.format(Locale.ENGLISH, "%,.2f", amount);
     }

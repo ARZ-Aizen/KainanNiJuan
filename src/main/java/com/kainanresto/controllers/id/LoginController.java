@@ -24,9 +24,6 @@
         @FXML private TextField passwordVisibleField;
         @FXML private Button togglePasswordButton;
         @FXML private CheckBox rememberMeCheckbox;
-        @FXML private Button forgotPasswordLink;
-        @FXML private Button registerLink;
-        @FXML private Button loginButton;
     
         private boolean passwordVisible = false;
         private final UserDAO userDAO = new UserDAO();

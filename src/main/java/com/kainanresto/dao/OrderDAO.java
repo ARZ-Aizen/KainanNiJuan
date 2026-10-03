@@ -24,7 +24,6 @@ public class OrderDAO {
     private static final String ORDER_CODE_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    /** Short random order number (e.g. "7F3K9Q"), checked against the DB so it is unique. */
     public String generateOrderNumber() {
         String check = "SELECT 1 FROM orders WHERE order_number = ?";
         try (Connection conn = DatabaseConfig.getConnection();
@@ -41,7 +40,6 @@ public class OrderDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        // Fallback if the DB check fails: still short, still practically unique
         return Long.toString(System.currentTimeMillis() % 2_176_782_336L, 36).toUpperCase();
     }
 
@@ -170,7 +168,6 @@ public class OrderDAO {
     public List<OrderReceipt> loadReceipts(LocalDateTime since) {
         Map<Long, List<ReceiptLine>> linesByOrder = new HashMap<>();
 
-        // Updated: include items from today's orders OR any order currently PREPARING
         String linesSql = """
         SELECT oi.order_id, oi.dish_id, oi.dish_name, oi.image_url, oi.unit_price, oi.quantity
         FROM order_items oi 
@@ -225,7 +222,6 @@ public class OrderDAO {
         return result;
     }
 
-    /** Loads one order (with its items) by order number, or null if not found. */
     public OrderReceipt findReceipt(String orderNumber) {
         String orderSql = """
         SELECT id, order_number, order_type, order_type_detail, status, created_at, cashier_name, discount_name,
@@ -279,7 +275,6 @@ public class OrderDAO {
         }
     }
 
-    /** Cash tendered and change saved with the order, or null if not available. */
     public PaymentResult findPayment(String orderNumber) {
         String sql = "SELECT cash_tendered, change_amount FROM orders WHERE order_number = ?";
         try (Connection conn = DatabaseConfig.getConnection();
@@ -328,7 +323,6 @@ public class OrderDAO {
         return list;
     }
 
-    /** Stat cards are always for today. */
     public OrderStats getOrderStats() {
         LocalDate today = LocalDate.now();
         String sql = """
@@ -357,7 +351,6 @@ public class OrderDAO {
                 }
             }
 
-            // same weekday last week, for the revenue note
             LocalDate lastWeek = today.minusDays(7);
             BigDecimal prev = BigDecimal.ZERO;
             try (PreparedStatement ps = conn.prepareStatement(

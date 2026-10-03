@@ -4,12 +4,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 
 public class Icons {
-    // Icons Phosphor
     public static final String SEARCH = "M11 3a8 8 0 1 0 0 16 8 8 0 0 0 0-16z M21 21l-4.3-4.3";
     public static final String PLUS   = "M5 12h14 M12 5v14";
 
-    // Icons Lucide
-    // 24-unit grid, drawn as 2px strokes (fill transparent)
     public static final String NAV_DASHBOARD =
             "M4 3h5a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z "
                     + "M15 3h5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z "
@@ -110,7 +107,6 @@ public class Icons {
                     + "M9 12h6 M9 16h6";
 
 
-    // Use this to create an icon in code
     public static SVGPath icon(String pathData, Color color, double sizePx) {
         SVGPath p = new SVGPath();
         p.setContent(pathData);
