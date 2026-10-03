@@ -39,6 +39,13 @@
                     <graphic><StackPane styleClass="nav-icon-host"><SVGPath fx:id="settingsIcon" styleClass="phosphor-icon" /></StackPane></graphic>
                 </Button>
             </VBox>
+
+            <Button fx:id="navSwitchBtn" onAction="#onSwitchToPos" styleClass="nav-item"
+                    mnemonicParsing="false" contentDisplay="GRAPHIC_ONLY" visible="false" managed="false">
+                <tooltip><Tooltip text="Switch to POS" /></tooltip>
+                <graphic><StackPane styleClass="nav-icon-host"><SVGPath fx:id="switchIcon" styleClass="phosphor-icon" /></StackPane></graphic>
+            </Button>
+
             <VBox styleClass="sidebar-bottom" alignment="CENTER" spacing="16.0">
                 <Region styleClass="sidebar-divider" />
                 <Button fx:id="logoutBtn" onAction="#onLogout" styleClass="nav-item, logout-item" mnemonicParsing="false" contentDisplay="GRAPHIC_ONLY">

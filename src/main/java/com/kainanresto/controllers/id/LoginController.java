@@ -5,6 +5,7 @@
     import com.kainanresto.model.account.User;
     import com.kainanresto.util.AlertUtil;
     import com.kainanresto.util.NavigationUtil;
+    import com.kainanresto.util.RoleAccess;
     import com.kainanresto.util.SessionManager;
     import javafx.event.ActionEvent;
     import javafx.fxml.FXML;
@@ -124,21 +125,20 @@
     
             navigateToDashboard(event, user);
         }
-    
+
         private void navigateToDashboard(ActionEvent event, User user) {
             String fxmlPath;
-    
-            if (user.getRole() == AccountRole.ADMIN ||
-                    user.getRole() == AccountRole.MANAGER) {
+
+            if (user.getRole() == AccountRole.ADMIN || RoleAccess.canUseBoth(user)) {
                 fxmlPath = "/com/kainanresto/views/main/admin/MainAdminView.fxml";
             } else {
                 fxmlPath = "/com/kainanresto/views/main/client/ClientView.fxml";
             }
-    
+
             String title = "Kainan Ni Juan POS - " + user.getFullName() + " (" + user.getRole() + ")";
             NavigationUtil.switchScene(event, fxmlPath, title);
         }
-    
+
         @FXML private void handleForgotPassword(ActionEvent event) {
             NavigationUtil.switchScene(event, "/com/kainanresto/views/id/ForgotPasswordView.fxml", "Kainan Ni Juan - Forgot Password");
         }

@@ -3,6 +3,7 @@ package com.kainanresto.controllers.main.admin;
 import com.kainanresto.model.account.User;
 import com.kainanresto.model.util.Icons;
 import com.kainanresto.util.NavigationUtil;
+import com.kainanresto.util.RoleAccess;
 import com.kainanresto.util.SessionManager;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -47,6 +48,9 @@ public class MainAdminController {
     private final Map<String, Node> viewCache = new HashMap<>();
     private static final String NAV_ACTIVE = "nav-item-active";
 
+    @FXML private Button navSwitchBtn;
+    @FXML private SVGPath switchIcon;
+
     @FXML
     public void initialize() {
         if (currentDateLabel != null) {
@@ -56,6 +60,11 @@ public class MainAdminController {
             restaurantLogoImage.setClip(new Circle(34, 34, 34));
         }
 
+        boolean both = RoleAccess.canUseBoth(SessionManager.getCurrentUser());
+        if (navSwitchBtn != null) {
+            navSwitchBtn.setVisible(both);
+            navSwitchBtn.setManaged(both);
+        }
         initializeIcons();
 
         // Load the Dashboard by default
@@ -80,6 +89,7 @@ public class MainAdminController {
         setIconAndScale(settingsIcon, Icons.NAV_SETTINGS, 34.0);
         setIconAndScale(logoutIcon, Icons.NAV_LOGOUT, 30.0);
         setIconAndScale(calendarIcon, Icons.CALENDAR, 16.0);
+        setIconAndScale(switchIcon, Icons.RECEIPT_TEXT, 34.0);
     }
 
     private void setIconAndScale(SVGPath icon, String content, double targetSize) {
@@ -134,6 +144,13 @@ public class MainAdminController {
 
     @FXML private void onNavSettings() {
         switchView("/com/kainanresto/views/main/admin/settings/SettingsView.fxml", "Settings", "Configure your restaurant preferences, system defaults, and security configurations", navSettingsBtn);
+    }
+
+    @FXML private void onSwitchToPos(ActionEvent event) {
+        User u = SessionManager.getCurrentUser();
+        if (!RoleAccess.canUseBoth(u)) return;
+        NavigationUtil.switchScene(event, "/com/kainanresto/views/main/client/ClientView.fxml",
+                "Kainan Ni Juan POS - " + u.getFullName() + " (" + u.getRole() + ")");
     }
 
     @FXML private void onLogout(ActionEvent event) {

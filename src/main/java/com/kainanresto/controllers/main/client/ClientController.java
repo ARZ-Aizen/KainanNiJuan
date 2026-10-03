@@ -13,6 +13,7 @@ import com.kainanresto.model.transac.ReceiptTotals;
 import com.kainanresto.model.util.Icons;
 import com.kainanresto.util.AlertUtil;
 import com.kainanresto.util.NavigationUtil;
+import com.kainanresto.util.RoleAccess;
 import com.kainanresto.util.SessionManager;
 
 import com.kainanresto.controllers.main.client.pos.ClientPosController;
@@ -81,6 +82,9 @@ public class ClientController {
 
     private static final boolean VAT_EXEMPT_ON_DISCOUNTED = true;
 
+    @FXML private Button navSwitchBtn;
+    @FXML private SVGPath switchIcon;
+
     @FXML
     public void initialize() {
         restaurantLogoImage.setClip(new Circle(34, 34, 34));
@@ -92,6 +96,12 @@ public class ClientController {
         wireOrderPersistence();
         showOrder();
         loadTodaysOrders();
+
+        boolean both = RoleAccess.canUseBoth(SessionManager.getCurrentUser());
+        if (navSwitchBtn != null) {
+            navSwitchBtn.setVisible(both);
+            navSwitchBtn.setManaged(both);
+        }
 
         Platform.runLater(() -> {
             if (appRoot.getScene() == null) return;
@@ -337,6 +347,8 @@ public class ClientController {
         setIcon(orderNavIcon, Icons.RECEIPT_TEXT);
         setIcon(historyNavIcon, Icons.CLOCK);
         setIcon(logoutIcon, Icons.NAV_LOGOUT);
+        setIcon(switchIcon, Icons.NAV_DASHBOARD);
+        ClientUIHelper.fitGridIcon(switchIcon, 34.0, 2.0);
     }
 
     private void setIcon(SVGPath icon, String content) {
@@ -354,6 +366,13 @@ public class ClientController {
 
     @FXML
     private void onNavHistory() { showOrderManagement(); }
+
+    @FXML private void onSwitchToAdmin(ActionEvent event) {
+        User u = SessionManager.getCurrentUser();
+        if (!RoleAccess.canUseBoth(u)) return;
+        NavigationUtil.switchScene(event, "/com/kainanresto/views/main/admin/MainAdminView.fxml",
+                "Kainan Ni Juan POS - " + u.getFullName() + " (" + u.getRole() + ")");
+    }
 
     @FXML
     private void onLogout(ActionEvent event) {
