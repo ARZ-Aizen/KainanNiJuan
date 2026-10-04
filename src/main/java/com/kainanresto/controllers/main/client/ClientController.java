@@ -11,10 +11,7 @@ import com.kainanresto.model.transac.PaymentResult;
 import com.kainanresto.model.transac.ReceiptLine;
 import com.kainanresto.model.transac.ReceiptTotals;
 import com.kainanresto.model.util.Icons;
-import com.kainanresto.util.AlertUtil;
-import com.kainanresto.util.NavigationUtil;
-import com.kainanresto.util.RoleAccess;
-import com.kainanresto.util.SessionManager;
+import com.kainanresto.util.*;
 
 import com.kainanresto.controllers.main.client.pos.ClientPosController;
 import com.kainanresto.controllers.main.client.pos.PaymentDialog;
@@ -49,9 +46,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.scene.control.ButtonBase;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
+import javafx.util.Duration;
+
 public class ClientController {
 
-    @FXML private BorderPane appRoot;
+    @FXML private StackPane appRoot;
     @FXML private ImageView restaurantLogoImage;
     @FXML private Button navOrderBtn;
     @FXML private Button navHistoryBtn;
@@ -61,10 +72,27 @@ public class ClientController {
     @FXML private SVGPath logoutIcon;
 
     @FXML private HBox posView;
+    @FXML private StackPane viewStack;
     @FXML private ClientPosController posViewController;
 
     @FXML private HBox omView;
     @FXML private ClientOrderManagementController omViewController;
+
+    @FXML private VBox sidebarRoot;
+    @FXML private Region sidebarScrim;
+    @FXML private VBox expandedSidebar;
+    @FXML private ImageView expandedLogoImage;
+    @FXML private Button expNavOrderBtn, expNavHistoryBtn, expNavSwitchBtn;
+    @FXML private SVGPath expOrderIcon, expHistoryIcon, expSwitchIcon, expLogoutIcon;
+
+    private static final String EXP_NAV_ACTIVE = "exp-nav-item-active";
+    private static final double COMPACT_WIDTH = 93.0;
+    private static final double EXPANDED_WIDTH = 304.0;
+    private static final Duration ANIM_DURATION = Duration.millis(260);
+
+    private boolean sidebarExpanded = false;
+    private final Rectangle sidebarClip = new Rectangle(COMPACT_WIDTH, 0);
+    private Timeline sidebarAnimation;
 
     private static final String NAV_ACTIVE = "nav-item-active";
 
@@ -87,6 +115,7 @@ public class ClientController {
 
     @FXML
     public void initialize() {
+        EntranceAnimation.prepare(sidebarRoot, null, viewStack);
         restaurantLogoImage.setClip(new Circle(34, 34, 34));
 
         initializeIcons();
@@ -97,14 +126,31 @@ public class ClientController {
         showOrder();
         loadTodaysOrders();
 
+        expandedLogoImage.setClip(new Circle(34, 34, 34));
+
+        sidebarClip.heightProperty().bind(expandedSidebar.heightProperty());
+        expandedSidebar.setClip(sidebarClip);
+        expandedSidebar.setOpacity(0);
+        sidebarScrim.setOpacity(0);
+
         boolean both = RoleAccess.canUseBoth(SessionManager.getCurrentUser());
         if (navSwitchBtn != null) {
             navSwitchBtn.setVisible(both);
             navSwitchBtn.setManaged(both);
+            expNavSwitchBtn.setVisible(both);
+            expNavSwitchBtn.setManaged(both);
         }
 
         Platform.runLater(() -> {
+            EntranceAnimation.play(sidebarRoot, null, viewStack);
+
             if (appRoot.getScene() == null) return;
+            appRoot.getScene().addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+                if (e.getCode() == KeyCode.ESCAPE && sidebarExpanded) {
+                    collapseSidebar();
+                    e.consume();
+                }
+            });
             Stage stage = (Stage) appRoot.getScene().getWindow();
             stage.setOnCloseRequest((WindowEvent closeEvent) -> {
                 closeEvent.consume();
@@ -349,6 +395,10 @@ public class ClientController {
         setIcon(logoutIcon, Icons.NAV_LOGOUT);
         setIcon(switchIcon, Icons.NAV_DASHBOARD);
         ClientUIHelper.fitGridIcon(switchIcon, 34.0, 2.0);
+        setIcon(expOrderIcon, Icons.RECEIPT_TEXT);
+        setIcon(expHistoryIcon, Icons.CLOCK);
+        setIcon(expSwitchIcon, Icons.NAV_DASHBOARD);
+        setIcon(expLogoutIcon, Icons.NAV_LOGOUT);
     }
 
     private void setIcon(SVGPath icon, String content) {
@@ -359,13 +409,14 @@ public class ClientController {
         ClientUIHelper.fitGridIcon(orderNavIcon, 34.0, 2.0);
         ClientUIHelper.fitGridIcon(historyNavIcon, 34.0, 2.0);
         ClientUIHelper.fitGridIcon(logoutIcon, 30.0, 2.0);
+        ClientUIHelper.fitGridIcon(expOrderIcon, 30.0, 2.0);
+        ClientUIHelper.fitGridIcon(expHistoryIcon, 30.0, 2.0);
+        ClientUIHelper.fitGridIcon(expSwitchIcon, 30.0, 2.0);
+        ClientUIHelper.fitGridIcon(expLogoutIcon, 30.0, 2.0);
     }
 
-    @FXML
-    private void onNavOrder() { showOrder(); }
-
-    @FXML
-    private void onNavHistory() { showOrderManagement(); }
+    @FXML private void onNavOrder()   { showOrder();           collapseSidebar(); }
+    @FXML private void onNavHistory() { showOrderManagement(); collapseSidebar(); }
 
     @FXML private void onSwitchToAdmin(ActionEvent event) {
         User u = SessionManager.getCurrentUser();
@@ -427,8 +478,80 @@ public class ClientController {
     }
 
     private void setActiveNav(Button active) {
-        for (Button btn : new Button[]{navOrderBtn, navHistoryBtn}) btn.getStyleClass().remove(NAV_ACTIVE);
-        if (!active.getStyleClass().contains(NAV_ACTIVE)) active.getStyleClass().add(NAV_ACTIVE);
+        boolean order = (active == navOrderBtn);
+
+        for (Button b : new Button[]{navOrderBtn, navHistoryBtn}) b.getStyleClass().remove(NAV_ACTIVE);
+        for (Button b : new Button[]{expNavOrderBtn, expNavHistoryBtn}) b.getStyleClass().remove(EXP_NAV_ACTIVE);
+
+        (order ? navOrderBtn : navHistoryBtn).getStyleClass().add(NAV_ACTIVE);
+        (order ? expNavOrderBtn : expNavHistoryBtn).getStyleClass().add(EXP_NAV_ACTIVE);
+    }
+
+    /* ================= SIDEBAR EXPAND / COLLAPSE ================= */
+
+    @FXML private void onSidebarClicked(MouseEvent e) {
+        if (isInsideButton(e.getTarget(), sidebarRoot)) return;
+        expandSidebar();
+    }
+
+    @FXML private void onExpandedSidebarClicked(MouseEvent e) {
+        if (isInsideButton(e.getTarget(), expandedSidebar)) return;
+        collapseSidebar();
+    }
+
+    @FXML private void onScrimClicked(MouseEvent e) { collapseSidebar(); }
+
+    private boolean isInsideButton(Object target, Node boundary) {
+        Node node = (target instanceof Node) ? (Node) target : null;
+        while (node != null && node != boundary) {
+            if (node instanceof ButtonBase) return true;
+            node = node.getParent();
+        }
+        return false;
+    }
+
+    private void expandSidebar() {
+        if (sidebarExpanded) return;
+        sidebarExpanded = true;
+        animateSidebar(true);
+    }
+
+    private void collapseSidebar() {
+        if (!sidebarExpanded) return;
+        sidebarExpanded = false;
+        animateSidebar(false);
+    }
+
+    private void animateSidebar(boolean show) {
+        if (sidebarAnimation != null) sidebarAnimation.stop();
+
+        if (show) {
+            sidebarScrim.setVisible(true);
+            expandedSidebar.setVisible(true);
+        }
+
+        Interpolator ease = Interpolator.EASE_BOTH;
+
+        KeyFrame end = new KeyFrame(ANIM_DURATION,
+                new KeyValue(sidebarClip.widthProperty(), show ? EXPANDED_WIDTH : COMPACT_WIDTH, ease),
+                new KeyValue(sidebarScrim.opacityProperty(), show ? 1.0 : 0.0, ease));
+
+        KeyFrame fade = new KeyFrame(ANIM_DURATION.multiply(show ? 0.4 : 0.6),
+                new KeyValue(expandedSidebar.opacityProperty(), 1.0));
+
+        sidebarAnimation = show
+                ? new Timeline(fade, end)
+                : new Timeline(fade, end,
+                new KeyFrame(ANIM_DURATION, new KeyValue(expandedSidebar.opacityProperty(), 0.0)));
+
+        if (!show) {
+            sidebarAnimation.setOnFinished(e -> {
+                sidebarScrim.setVisible(false);
+                expandedSidebar.setVisible(false);
+            });
+        }
+
+        sidebarAnimation.play();
     }
 
     // ================================= DELEGATED PUBLIC API =================================
