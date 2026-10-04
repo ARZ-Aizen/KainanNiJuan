@@ -409,8 +409,11 @@ public class MenuController {
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.gif"));
         File file = chooser.showOpenDialog(menuGridView.getScene().getWindow());
         if (file != null) {
-            addDishImageUri = file.toURI().toString();
-            Image image = new Image(addDishImageUri, 300.0, 300.0, true, true, true);
+            addDishImageUri = file.getName();
+
+            String previewUri = file.toURI().toString();
+            Image image = new Image(previewUri, 300.0, 300.0, true, true, true);
+
             addDishPreviewImage.setImage(image);
             applyCoverCrop(addDishPreviewImage, image);
         }
@@ -439,6 +442,8 @@ public class MenuController {
             }
             return;
         }
+
+
 
         // Handle Save/Update Logic
         setAddDishError(null);
@@ -485,9 +490,21 @@ public class MenuController {
 
         boolean finalAvailable = currentQuantity() > 0;
 
+
+        String cleanImageUri = addDishImageUri;
+        if (cleanImageUri != null) {
+            if (cleanImageUri.contains("/")) {
+                cleanImageUri = cleanImageUri.substring(cleanImageUri.lastIndexOf("/") + 1);
+            }
+            if (cleanImageUri.contains("\\")) {
+                cleanImageUri = cleanImageUri.substring(cleanImageUri.lastIndexOf("\\") + 1);
+            }
+        }
+
         String desc = addDishDescriptionField.getText() == null ? "" : addDishDescriptionField.getText().trim();
+
         NewDishForm form = new NewDishForm(name, category, price, desc.isEmpty() ? null : desc,
-                finalAvailable, addDishImageUri, currentQuantity());
+                finalAvailable, cleanImageUri, currentQuantity());
 
         if (currentEditingDish == null) {
             if (productDAO.addDish(form)) {
