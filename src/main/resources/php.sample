@@ -1,0 +1,33 @@
+<?php
+// Place this file in htdocs (next to the kainan_images folder).
+// Usage: POST http://192.168.1.15/upload.php?category=Deserts&filename=banana%20cue.png
+// Body: raw image bytes
+
+$category = basename($_GET['category'] ?? '');
+$file     = basename($_GET['filename'] ?? '');
+$ext      = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+
+if ($category === '' || $file === '' || $category[0] === '.' || $file[0] === '.'
+        || !in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true)) {
+    http_response_code(400);
+    exit('Bad request');
+}
+
+$data = file_get_contents('php://input');
+if ($data === false || strlen($data) === 0 || strlen($data) > 5 * 1024 * 1024) {
+    http_response_code(400);
+    exit('Empty or too large (max 5 MB)');
+}
+
+$dir = __DIR__ . '/kainan_images/' . $category;
+if (!is_dir($dir) && !mkdir($dir, 0777, true)) {
+    http_response_code(500);
+    exit('Could not create category folder');
+}
+
+if (file_put_contents($dir . '/' . $file, $data) === false) {
+    http_response_code(500);
+    exit('Could not save file');
+}
+
+echo 'OK';

@@ -200,7 +200,3 @@ UPDATE dishes
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 
-CREATE USER 'pos_user'@'%' IDENTIFIED BY 'pos123';
-GRANT ALL PRIVILEGES ON kainan_pos.* TO 'pos_user'@'%';
-FLUSH PRIVILEGES;
-EXIT;

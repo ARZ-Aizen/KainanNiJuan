@@ -22,6 +22,8 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
 import java.io.File;
 import java.math.BigDecimal;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -69,6 +71,7 @@ public class MenuController {
     private String selectedCategory = null;
     private boolean rebuildingChips = false;
     private String addDishImageUri;
+    private File addDishImageFile;   // newly chosen photo that still has to be uploaded to the server
 
     private Dishes currentEditingDish = null;
     private boolean isViewMode = false; // Tracks if form is locked
@@ -326,6 +329,7 @@ public class MenuController {
         addDishDescriptionField.clear();
         addDishAvailableBtn.setSelected(true);
         addDishImageUri = null;
+        addDishImageFile = null;
         addDishPreviewImage.setImage(null);
         addCategoryNameField.clear();
         setAddDishError(null);
@@ -410,6 +414,7 @@ public class MenuController {
         File file = chooser.showOpenDialog(menuGridView.getScene().getWindow());
         if (file != null) {
             addDishImageUri = file.getName();
+            addDishImageFile = file;   // remember the real file so it can be uploaded on save
 
             String previewUri = file.toURI().toString();
             Image image = new Image(previewUri, 300.0, 300.0, true, true, true);
@@ -499,9 +504,20 @@ public class MenuController {
             if (cleanImageUri.contains("\\")) {
                 cleanImageUri = cleanImageUri.substring(cleanImageUri.lastIndexOf("\\") + 1);
             }
+            // The existing image came from a URL (spaces shown as %20). Decode it so the DB keeps the real
+            // filename. Skipped for a freshly chosen file, whose name is already plain text.
+            if (addDishImageFile == null) {
+                cleanImageUri = URLDecoder.decode(cleanImageUri.replace("+", "%2B"), StandardCharsets.UTF_8);
+            }
         }
 
         String desc = addDishDescriptionField.getText() == null ? "" : addDishDescriptionField.getText().trim();
+
+        // Upload a newly chosen photo to the image server before saving the dish
+        if (addDishImageFile != null && !productDAO.uploadImage(addDishImageFile, category)) {
+            setAddDishError("Could not upload the image to the server. Check the connection and try again.");
+            return;
+        }
 
         NewDishForm form = new NewDishForm(name, category, price, desc.isEmpty() ? null : desc,
                 finalAvailable, cleanImageUri, currentQuantity());
