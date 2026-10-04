@@ -1,73 +1,131 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.SVGPath?>
-<?import javafx.scene.image.Image?>
 
-<BorderPane fx:id="appRoot" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.kainanresto.controllers.main.client.ClientController"
-            stylesheets="@../../../styles/main/ClientView.css"
-            styleClass="pos-root" prefWidth="1440" prefHeight="920">
+<StackPane fx:id="appRoot" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.kainanresto.controllers.main.client.ClientController"
+           stylesheets="@../../../styles/main/ClientView.css"
+           styleClass="pos-root" prefWidth="1440" prefHeight="920">
 
-    <left>
-        <VBox fx:id="sidebarRoot" styleClass="sidebar" viewOrder="-1">
+    <!-- ============ LAYER 1: MAIN LAYOUT (original client layout) ============ -->
+    <BorderPane fx:id="mainLayout" styleClass="pos-root">
+
+        <!-- COMPACT SIDEBAR -->
+        <left>
+            <VBox fx:id="sidebarRoot" styleClass="sidebar" viewOrder="-1" onMouseClicked="#onSidebarClicked">
+                <StackPane styleClass="logo-shell">
+                    <ImageView fx:id="restaurantLogoImage" fitWidth="68" fitHeight="68">
+                        <image>
+                            <Image url="@../../../images/id/KainanNiJuanLogo.png" />
+                        </image>
+                    </ImageView>
+                </StackPane>
+
+                <VBox styleClass="primary-nav, client-nav" spacing="24" VBox.vgrow="ALWAYS">
+                    <Button fx:id="navOrderBtn" styleClass="nav-item, nav-item-active" mnemonicParsing="false"
+                            contentDisplay="GRAPHIC_ONLY" onAction="#onNavOrder">
+                        <graphic>
+                            <StackPane styleClass="nav-icon-host">
+                                <SVGPath fx:id="orderNavIcon" styleClass="phosphor-icon"/>
+                            </StackPane>
+                        </graphic>
+                        <tooltip><Tooltip text="Order"/></tooltip>
+                    </Button>
+                    <Button fx:id="navHistoryBtn" styleClass="nav-item" mnemonicParsing="false"
+                            contentDisplay="GRAPHIC_ONLY" onAction="#onNavHistory">
+                        <graphic>
+                            <StackPane styleClass="nav-icon-host">
+                                <SVGPath fx:id="historyNavIcon" styleClass="phosphor-icon"/>
+                            </StackPane>
+                        </graphic>
+                        <tooltip><Tooltip text="Order Management"/></tooltip>
+                    </Button>
+                </VBox>
+
+                <Button fx:id="navSwitchBtn" onAction="#onSwitchToAdmin" styleClass="nav-item"
+                        mnemonicParsing="false" contentDisplay="GRAPHIC_ONLY" visible="false" managed="false">
+                    <tooltip><Tooltip text="Switch to POS" /></tooltip>
+                    <graphic><StackPane styleClass="nav-icon-host"><SVGPath fx:id="switchIcon" styleClass="phosphor-icon" /></StackPane></graphic>
+                </Button>
+
+                <VBox styleClass="sidebar-bottom" spacing="16">
+                    <Region styleClass="sidebar-divider"/>
+                    <Button fx:id="logoutBtn" styleClass="nav-item, logout-item" mnemonicParsing="false"
+                            contentDisplay="GRAPHIC_ONLY" onAction="#onLogout">
+                        <graphic>
+                            <StackPane styleClass="logout-icon-host">
+                                <SVGPath fx:id="logoutIcon" styleClass="phosphor-icon"/>
+                            </StackPane>
+                        </graphic>
+                        <tooltip><Tooltip text="Log out"/></tooltip>
+                    </Button>
+                </VBox>
+            </VBox>
+        </left>
+
+        <center>
+            <StackPane fx:id="viewStack">
+                <!-- Includes are injected as fx:id components -->
+                <fx:include source="pos/ClientPosView.fxml" fx:id="posView"/>
+                <fx:include source="om/ClientOrderManagementView.fxml" fx:id="omView"/>
+            </StackPane>
+        </center>
+    </BorderPane>
+
+    <!-- ============ LAYER 2: SCRIM (80% black), starts at the compact sidebar's right edge ============ -->
+    <Region fx:id="sidebarScrim" styleClass="sidebar-scrim" visible="false" onMouseClicked="#onScrimClicked">
+        <StackPane.margin>
+            <Insets left="93.0" />
+        </StackPane.margin>
+    </Region>
+
+    <!-- ============ LAYER 3: EXPANDED SIDEBAR (animated) ============ -->
+    <VBox fx:id="expandedSidebar" styleClass="sidebar-expanded" visible="false"
+          maxHeight="Infinity"
+          StackPane.alignment="CENTER_LEFT" onMouseClicked="#onExpandedSidebarClicked">
+
+        <!-- Brand: static logo and name -->
+        <HBox alignment="CENTER_LEFT" spacing="12.0">
             <StackPane styleClass="logo-shell">
-                <ImageView fx:id="restaurantLogoImage" fitWidth="68" fitHeight="68">
-                    <image>
-                        <Image url="@../../../images/id/KainanNiJuanLogo.png" />
-                    </image>
+                <ImageView fx:id="expandedLogoImage" fitWidth="68.0" fitHeight="68.0" preserveRatio="true">
+                    <image><Image url="@../../../images/id/KainanNiJuanLogo.png" /></image>
                 </ImageView>
             </StackPane>
-
-            <VBox styleClass="primary-nav, client-nav" spacing="24" VBox.vgrow="ALWAYS">
-                <Button fx:id="navOrderBtn" styleClass="nav-item, nav-item-active" mnemonicParsing="false"
-                        contentDisplay="GRAPHIC_ONLY" onAction="#onNavOrder">
-                    <graphic>
-                        <StackPane styleClass="nav-icon-host">
-                            <SVGPath fx:id="orderNavIcon" styleClass="phosphor-icon"/>
-                        </StackPane>
-                    </graphic>
-                    <tooltip><Tooltip text="Order"/></tooltip>
-                </Button>
-                <Button fx:id="navHistoryBtn" styleClass="nav-item" mnemonicParsing="false"
-                        contentDisplay="GRAPHIC_ONLY" onAction="#onNavHistory">
-                    <graphic>
-                        <StackPane styleClass="nav-icon-host">
-                            <SVGPath fx:id="historyNavIcon" styleClass="phosphor-icon"/>
-                        </StackPane>
-                    </graphic>
-                    <tooltip><Tooltip text="Order Management"/></tooltip>
-                </Button>
+            <VBox spacing="2.0" alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                <Label styleClass="exp-brand-name" text="Kainan Ni Juan" />
+                <Label styleClass="exp-brand-sub" text="Client Portal" />
             </VBox>
+        </HBox>
 
-        <Button fx:id="navSwitchBtn" onAction="#onSwitchToAdmin" styleClass="nav-item"
-                mnemonicParsing="false" contentDisplay="GRAPHIC_ONLY" visible="false" managed="false">
-            <tooltip><Tooltip text="Switch to POS" /></tooltip>
-            <graphic><StackPane styleClass="nav-icon-host"><SVGPath fx:id="switchIcon" styleClass="phosphor-icon" /></StackPane></graphic>
-        </Button>
-
-            <VBox styleClass="sidebar-bottom" spacing="16">
-                <Region styleClass="sidebar-divider"/>
-                <Button fx:id="logoutBtn" styleClass="nav-item, logout-item" mnemonicParsing="false"
-                        contentDisplay="GRAPHIC_ONLY" onAction="#onLogout">
-                    <graphic>
-                        <StackPane styleClass="logout-icon-host">
-                            <SVGPath fx:id="logoutIcon" styleClass="phosphor-icon"/>
-                        </StackPane>
-                    </graphic>
-                    <tooltip><Tooltip text="Log out"/></tooltip>
-                </Button>
-            </VBox>
+        <!-- Nav -->
+        <VBox spacing="8.0">
+            <Button fx:id="expNavOrderBtn" text="Order" onAction="#onNavOrder" styleClass="exp-nav-item, exp-nav-item-active"
+                    maxWidth="Infinity" mnemonicParsing="false" contentDisplay="LEFT">
+                <graphic><StackPane styleClass="exp-icon-host"><SVGPath fx:id="expOrderIcon" styleClass="phosphor-icon" /></StackPane></graphic>
+            </Button>
+            <Button fx:id="expNavHistoryBtn" text="Order Management" onAction="#onNavHistory" styleClass="exp-nav-item"
+                    maxWidth="Infinity" mnemonicParsing="false" contentDisplay="LEFT">
+                <graphic><StackPane styleClass="exp-icon-host"><SVGPath fx:id="expHistoryIcon" styleClass="phosphor-icon" /></StackPane></graphic>
+            </Button>
+            <Button fx:id="expNavSwitchBtn" text="Switch to POS" onAction="#onSwitchToAdmin" styleClass="exp-nav-item"
+                    maxWidth="Infinity" mnemonicParsing="false" contentDisplay="LEFT" visible="false" managed="false">
+                <graphic><StackPane styleClass="exp-icon-host"><SVGPath fx:id="expSwitchIcon" styleClass="phosphor-icon" /></StackPane></graphic>
+            </Button>
         </VBox>
-    </left>
 
-    <center>
-        <StackPane fx:id="viewStack">
-            <!-- Includes are injected as fx:id components -->
-            <fx:include source="pos/ClientPosView.fxml" fx:id="posView"/>
-            <fx:include source="om/ClientOrderManagementView.fxml" fx:id="omView"/>
-        </StackPane>
-    </center>
-</BorderPane>
+        <Region VBox.vgrow="ALWAYS" />
+
+        <!-- Bottom -->
+        <VBox spacing="16.0">
+            <Region styleClass="exp-divider" />
+            <Button fx:id="expLogoutBtn" text="Logout" onAction="#onLogout" styleClass="exp-nav-item"
+                    maxWidth="Infinity" mnemonicParsing="false" contentDisplay="LEFT">
+                <graphic><StackPane styleClass="exp-icon-host"><SVGPath fx:id="expLogoutIcon" styleClass="phosphor-icon" /></StackPane></graphic>
+            </Button>
+        </VBox>
+    </VBox>
+</StackPane>
