@@ -1,34 +1,29 @@
 package com.kainanresto.controllers.main.admin.settings;
 
-import com.kainanresto.model.util.AppSettings;
 import com.kainanresto.model.util.Icons;
-import com.kainanresto.model.util.TimeSyncMode;
 import com.kainanresto.util.AlertUtil;
-import javafx.css.PseudoClass;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.geometry.Rectangle2D;
-import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
-
-import java.io.File;
+import java.io.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
+import java.util.Properties;
+import com.kainanresto.dao.OrderDAO;
+import com.kainanresto.model.transac.Transaction;
+import java.time.LocalDateTime;
+import com.kainanresto.dao.ProductDAO;
+import com.kainanresto.model.dish.Dishes;
+
 
 public class SettingsController {
 
@@ -36,31 +31,29 @@ public class SettingsController {
     @FXML private HBox settingsRoot;
     @FXML private ScrollPane settingsScroll;
     @FXML private VBox settingsContent;
-    @FXML private VBox settingsGeneralCard, settingsPreferencesCard, settingsBackupCard, settingsSecurityCard;
+    @FXML private VBox settingsTimeCard, settingsBackupCard, settingsSecurityCard;
 
     /* ============================== TAB BUTTONS & ICONS ============================== */
-    @FXML private Button settingsTabGeneralBtn, settingsTabPreferencesBtn, settingsTabBackupBtn, settingsTabSecurityBtn;
-    @FXML private SVGPath settingsGeneralIcon, settingsPreferencesIcon, settingsBackupTabIcon, settingsSecurityIcon;
-    @FXML private SVGPath settingsLogoPlaceholderIcon, settingsLanguageChevron;
-    @FXML private SVGPath settingsBackupBtnIcon, settingsExportBtnIcon, settingsRestoreBtnIcon;
+    @FXML private Button settingsTabTimeBtn, settingsTabBackupBtn, settingsTabSecurityBtn;
+    @FXML private SVGPath settingsGeneralIcon, settingsBackupTabIcon, settingsSecurityIcon;
+    @FXML private SVGPath settingsBackupBtnIcon;
 
     /* ============================== FORM CONTROLS ============================== */
-    @FXML private ImageView settingsLogoImage;
-    @FXML private TextField settingsNameField, settingsEmailField, settingsDateField, settingsTimeField;
+    @FXML private TextField settingsDateField, settingsTimeField;
     @FXML private ToggleGroup settingsSyncGroup;
     @FXML private ToggleButton settingsSyncManualBtn, settingsSyncAutoBtn;
-    @FXML private HBox settingsLanguagePill;
-    @FXML private Label settingsLanguageValueLabel, settingsErrorLabel;
-    @FXML private ToggleButton settingsAutoBackupToggle, settingsRequirePinToggle;
+    @FXML private ToggleButton settingsRequirePinToggle;
+    @FXML private Label settingsErrorLabel;
 
     private static final String SETTINGS_TAB_ACTIVE = "settings-tab-active";
     private static final DateTimeFormatter SETTINGS_DATE_FMT = new DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern("MMMM d, yyyy").toFormatter(Locale.ENGLISH);
     private static final DateTimeFormatter SETTINGS_TIME_FMT = new DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern("h:mm a").toFormatter(Locale.ENGLISH);
 
-    private FilterPill settingsLanguageFilter;
-    private String settingsPendingLanguage;
-    private String settingsLogoUri;
-    private AppSettings settingsLoaded;
+    // File to store app settings
+    private static final String CONFIG_FILE = "config.properties";
+    private Properties appProperties = new Properties();
+
+    @FXML private SVGPath settingsExportInvBtnIcon;
 
     @FXML
     public void initialize() {
@@ -70,15 +63,11 @@ public class SettingsController {
     }
 
     private void setupIcons() {
-        setIconScale(settingsGeneralIcon, Icons.HOUSE, 18.0);
-        setIconScale(settingsPreferencesIcon, Icons.GLOBE, 18.0);
+        setIconScale(settingsGeneralIcon, Icons.CLOCK, 18.0);
         setIconScale(settingsBackupTabIcon, Icons.DATABASE, 18.0);
         setIconScale(settingsSecurityIcon, Icons.SHIELD, 18.0);
-        setIconScale(settingsLogoPlaceholderIcon, Icons.IMAGE, 32.0);
-        setIconScale(settingsLanguageChevron, Icons.CHEVRON_DOWN, 16.0);
-        setIconScale(settingsBackupBtnIcon, Icons.DATABASE, 16.0);
-        setIconScale(settingsExportBtnIcon, Icons.DOWNLOAD, 16.0);
-        setIconScale(settingsRestoreBtnIcon, Icons.ROTATE_CCW, 16.0);
+        setIconScale(settingsBackupBtnIcon, Icons.DOWNLOAD, 16.0);
+        setIconScale(settingsExportInvBtnIcon, Icons.CLIPBOARD_TEXT, 16.0);
     }
 
     private void setIconScale(SVGPath icon, String content, double targetSize) {
@@ -90,130 +79,49 @@ public class SettingsController {
         }
     }
 
-    private void loadSettingsData() {
-        // TODO: Wire up SettingsDAO here to load the actual configuration
-        // Example empty load:
-        setSettingsLanguageOptions(List.of("English (US)", "Tagalog"));
-        setSettings(null);
-    }
-
     private void setupSettingsPage() {
-        settingsLanguageFilter = new FilterPill(settingsLanguagePill, settingsLanguageValueLabel, () -> { });
-
-        Rectangle clip = new Rectangle(78.0, 78.0);
-        clip.setArcWidth(18.0); clip.setArcHeight(18.0);
-        settingsLogoImage.setFitWidth(78.0); settingsLogoImage.setFitHeight(78.0);
-        settingsLogoImage.setClip(clip);
-
         settingsSyncManualBtn.setSelected(true);
         settingsSyncGroup.selectedToggleProperty().addListener((obs, old, now) -> {
             if (now == null && old != null) settingsSyncGroup.selectToggle(old);
             else updateSettingsTimeFieldsEnabled();
         });
         updateSettingsTimeFieldsEnabled();
-        showSettingsLogo(null);
         setSettingsError(null);
     }
 
     private void updateSettingsTimeFieldsEnabled() {
-        boolean manual = settingsSyncManualBtn.isSelected();
-        settingsDateField.setDisable(!manual);
-        settingsTimeField.setDisable(!manual);
+        boolean auto = settingsSyncAutoBtn.isSelected();
+        settingsDateField.setDisable(auto);
+        settingsTimeField.setDisable(auto);
+
+        if (auto) {
+            settingsDateField.setText(LocalDate.now().format(SETTINGS_DATE_FMT));
+            settingsTimeField.setText(LocalTime.now().format(SETTINGS_TIME_FMT));
+        }
     }
 
     /* ============================== LOGIC & VALIDATION ============================== */
 
-    public void setSettingsLanguageOptions(List<String> options) {
-        settingsLanguageFilter.setOptions(options);
-        if (settingsPendingLanguage != null) {
-            settingsLanguageFilter.setSelected(settingsPendingLanguage);
-        }
-    }
-
-    public void setSettings(AppSettings settings) {
-        settingsLoaded = settings;
-        applySettingsToForm(settings);
-    }
-
-    private void applySettingsToForm(AppSettings s) {
-        setSettingsError(null);
-        if (s == null) {
-            settingsNameField.clear(); settingsEmailField.clear();
-            settingsDateField.clear(); settingsTimeField.clear();
-            settingsSyncManualBtn.setSelected(true);
-            settingsAutoBackupToggle.setSelected(false); settingsRequirePinToggle.setSelected(false);
-            settingsPendingLanguage = null; settingsLogoUri = null;
-            showSettingsLogo(null);
-            return;
+    private void loadSettingsData() {
+        try (InputStream input = new FileInputStream(CONFIG_FILE)) {
+            appProperties.load(input);
+        } catch (IOException ex) {
+            // File might not exist yet, ignore
         }
 
-        settingsNameField.setText(s.restaurantName() == null ? "" : s.restaurantName());
-        settingsEmailField.setText(s.contactEmail() == null ? "" : s.contactEmail());
-        settingsLogoUri = s.logoUri();
-        showSettingsLogo(settingsLogoUri);
-
-        if (s.timeSyncMode() == TimeSyncMode.AUTO) settingsSyncAutoBtn.setSelected(true);
-        else settingsSyncManualBtn.setSelected(true);
-
-        settingsDateField.setText(s.systemDate() == null ? "" : s.systemDate().format(SETTINGS_DATE_FMT));
-        settingsTimeField.setText(s.systemTime() == null ? "" : s.systemTime().format(SETTINGS_TIME_FMT));
-
-        settingsPendingLanguage = s.language();
-        if (settingsPendingLanguage != null) settingsLanguageFilter.setSelected(settingsPendingLanguage);
-
-        settingsAutoBackupToggle.setSelected(s.autoBackupEnabled());
-        settingsRequirePinToggle.setSelected(s.requirePinForSensitiveActions());
-    }
-
-    private AppSettings readSettingsForm() {
-        String name = settingsNameField.getText() == null ? "" : settingsNameField.getText().trim();
-        if (name.isEmpty()) { setSettingsError("Restaurant name is required."); return null; }
-        String email = settingsEmailField.getText() == null ? "" : settingsEmailField.getText().trim();
-        if (!email.isEmpty() && !email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) { setSettingsError("Enter a valid contact email."); return null; }
-
-        TimeSyncMode mode = settingsSyncAutoBtn.isSelected() ? TimeSyncMode.AUTO : TimeSyncMode.MANUAL;
-        LocalDate date = null; LocalTime time = null;
-
-        if (mode == TimeSyncMode.MANUAL) {
-            try { date = LocalDate.parse(normalizeSpaces(settingsDateField.getText()), SETTINGS_DATE_FMT); }
-            catch (DateTimeParseException ex) { setSettingsError("System date must be in the form Month D, YYYY."); return null; }
-            try { time = LocalTime.parse(normalizeSpaces(settingsTimeField.getText()), SETTINGS_TIME_FMT); }
-            catch (DateTimeParseException ex) { setSettingsError("System time must be in the form H:MM AM/PM."); return null; }
-        }
-
-        return new AppSettings(name, email.isEmpty() ? null : email, settingsLogoUri, mode, date, time,
-                settingsLanguageFilter.getSelected(), settingsAutoBackupToggle.isSelected(), settingsRequirePinToggle.isSelected());
-    }
-
-    private static String normalizeSpaces(String s) {
-        return s == null ? "" : s.replace('\u202F', ' ').replace('\u00A0', ' ').trim();
-    }
-
-    private void showSettingsLogo(String uri) {
-        boolean shown = false;
-        if (uri != null && !uri.isBlank()) {
-            try {
-                Image image = new Image(uri, 156.0, 156.0, true, true, true);
-                settingsLogoImage.setImage(image);
-                applyCoverCrop(settingsLogoImage, image);
-                shown = true;
-            } catch (IllegalArgumentException ex) { settingsLogoImage.setImage(null); }
+        // Apply Time Settings
+        boolean isAuto = Boolean.parseBoolean(appProperties.getProperty("timeSyncAuto", "true"));
+        if (isAuto) {
+            settingsSyncAutoBtn.setSelected(true);
         } else {
-            settingsLogoImage.setImage(null);
+            settingsSyncManualBtn.setSelected(true);
+            settingsDateField.setText(appProperties.getProperty("manualDate", LocalDate.now().format(SETTINGS_DATE_FMT)));
+            settingsTimeField.setText(appProperties.getProperty("manualTime", LocalTime.now().format(SETTINGS_TIME_FMT)));
         }
-        settingsLogoImage.setVisible(shown); settingsLogoImage.setManaged(shown);
-        settingsLogoPlaceholderIcon.setVisible(!shown);
-    }
 
-    private void applyCoverCrop(ImageView view, Image image) {
-        Runnable crop = () -> {
-            double w = image.getWidth(); double h = image.getHeight();
-            if (w <= 0.0 || h <= 0.0) return;
-            double side = Math.min(w, h);
-            view.setViewport(new Rectangle2D((w - side) / 2.0, (h - side) / 2.0, side, side));
-        };
-        if (image.getProgress() >= 1.0) crop.run();
-        else image.progressProperty().addListener((obs, o, n) -> { if (n.doubleValue() >= 1.0) crop.run(); });
+        // Apply Security Settings
+        boolean requirePin = Boolean.parseBoolean(appProperties.getProperty("requirePinForVoid", "false"));
+        settingsRequirePinToggle.setSelected(requirePin);
     }
 
     private void setSettingsError(String message) {
@@ -224,41 +132,103 @@ public class SettingsController {
 
     /* ============================== ACTIONS ============================== */
 
-    @FXML private void onSettingsSave() {
+    @FXML
+    private void onSettingsSave() {
         setSettingsError(null);
-        AppSettings values = readSettingsForm();
-        if (values != null) {
-            // TODO: Wire up DAO to save configuration here
+
+        boolean isAuto = settingsSyncAutoBtn.isSelected();
+
+        if (!isAuto) {
+            try {
+                LocalDate.parse(settingsDateField.getText().trim(), SETTINGS_DATE_FMT);
+            } catch (DateTimeParseException ex) {
+                setSettingsError("System date must be in the form Month D, YYYY."); return;
+            }
+            try {
+                LocalTime.parse(settingsTimeField.getText().trim(), SETTINGS_TIME_FMT);
+            } catch (DateTimeParseException ex) {
+                setSettingsError("System time must be in the form H:MM AM/PM."); return;
+            }
+        }
+
+        // Save to properties
+        appProperties.setProperty("timeSyncAuto", String.valueOf(isAuto));
+        appProperties.setProperty("manualDate", settingsDateField.getText().trim());
+        appProperties.setProperty("manualTime", settingsTimeField.getText().trim());
+        appProperties.setProperty("requirePinForVoid", String.valueOf(settingsRequirePinToggle.isSelected()));
+
+        try (OutputStream output = new FileOutputStream(CONFIG_FILE)) {
+            appProperties.store(output, "Kainan Ni Juan System Settings");
             AlertUtil.showInfo("Settings Saved", "System configuration updated successfully.");
+        } catch (IOException io) {
+            setSettingsError("Error saving settings file.");
+            io.printStackTrace();
         }
     }
 
-    @FXML private void onSettingsCancel() { applySettingsToForm(settingsLoaded); }
+    @FXML
+    private void onSettingsCancel() {
+        loadSettingsData();
+    }
 
-    @FXML private void onSettingsChangeLogo() {
+    /* ============================== BACKUP & RESTORE ============================== */
+
+    @FXML
+    private void onSettingsBackupDatabase() {
         FileChooser chooser = new FileChooser();
-        chooser.setTitle("Choose restaurant logo");
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.gif"));
-        File file = chooser.showOpenDialog(settingsRoot.getScene().getWindow());
+        chooser.setTitle("Export Sales History to Excel");
+        chooser.setInitialFileName("Sales_Backup_" + LocalDate.now().toString() + ".csv");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel/CSV File", "*.csv"));
+
+        File file = chooser.showSaveDialog(settingsRoot.getScene().getWindow());
         if (file != null) {
-            settingsLogoUri = file.toURI().toString();
-            showSettingsLogo(settingsLogoUri);
+            Thread t = new Thread(() -> {
+                try {
+                    OrderDAO orderDAO = new OrderDAO();
+                    java.util.List<Transaction> sales = orderDAO.getTransactions(
+                            LocalDateTime.of(2000, 1, 1, 0, 0),
+                            LocalDateTime.now().plusDays(1)
+                    );
+
+                    try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
+                        writer.println("Order ID,Created At,Staff,Total Amount,Order Status,Payment Status");
+
+                        for (Transaction tx : sales) {
+                            String date = tx.lastActivityAt() != null ?
+                                    tx.lastActivityAt().format(DateTimeFormatter.ofPattern("MMM d yyyy h:mm a", Locale.ENGLISH)) : "";
+
+                            // Using quotes around strings ensures Excel doesn't break if a name has a comma in it
+                            writer.printf("\"%s\",\"%s\",\"%s\",%.2f,\"%s\",\"%s\"%n",
+                                    tx.orderId(),
+                                    date,
+                                    tx.staffName(),
+                                    tx.total(),
+                                    tx.status(),
+                                    tx.paymentStatus()
+                            );
+                        }
+                    }
+
+                    Platform.runLater(() -> {
+                        AlertUtil.showInfo("Export Successful", "Sales history successfully exported to:\n" + file.getAbsolutePath());
+                    });
+                } catch (Exception e) {
+                    Platform.runLater(() -> AlertUtil.showError("Export Error", "Could not create the Excel file:\n" + e.getMessage()));
+                }
+            });
+            t.setDaemon(true);
+            t.start();
         }
     }
-
-    @FXML private void onSettingsBackupDatabase() { AlertUtil.showInfo("Backup", "Database backup requested."); }
-    @FXML private void onSettingsExportData() { AlertUtil.showInfo("Export", "CSV export requested."); }
-    @FXML private void onSettingsRestorePoint() { AlertUtil.showInfo("Restore", "Restore point dialog requested."); }
 
     /* ============================== TAB NAVIGATION ============================== */
 
-    @FXML private void onSettingsTabGeneral() { selectSettingsTab(settingsTabGeneralBtn, settingsGeneralCard); }
-    @FXML private void onSettingsTabPreferences() { selectSettingsTab(settingsTabPreferencesBtn, settingsPreferencesCard); }
+    @FXML private void onSettingsTabTime() { selectSettingsTab(settingsTabTimeBtn, settingsTimeCard); }
     @FXML private void onSettingsTabBackup() { selectSettingsTab(settingsTabBackupBtn, settingsBackupCard); }
     @FXML private void onSettingsTabSecurity() { selectSettingsTab(settingsTabSecurityBtn, settingsSecurityCard); }
 
     private void selectSettingsTab(Button active, Node section) {
-        for (Button btn : new Button[]{settingsTabGeneralBtn, settingsTabPreferencesBtn, settingsTabBackupBtn, settingsTabSecurityBtn}) {
+        for (Button btn : new Button[]{settingsTabTimeBtn, settingsTabBackupBtn, settingsTabSecurityBtn}) {
             btn.getStyleClass().remove(SETTINGS_TAB_ACTIVE);
         }
         if (!active.getStyleClass().contains(SETTINGS_TAB_ACTIVE)) active.getStyleClass().add(SETTINGS_TAB_ACTIVE);
@@ -272,53 +242,5 @@ public class SettingsController {
         if (scrollable <= 0.0) return;
         double y = section.getBoundsInParent().getMinY();
         settingsScroll.setVvalue(Math.max(0.0, Math.min(1.0, y / scrollable)));
-    }
-
-    /* ============================== INNER CLASSES ============================== */
-
-    private static final class FilterPill {
-        private static final PseudoClass OPEN = PseudoClass.getPseudoClass("open");
-        private final Label valueLabel;
-        private final Runnable onChange;
-        private final ContextMenu menu = new ContextMenu();
-        private List<String> options = List.of();
-        private String selected;
-
-        private FilterPill(HBox pill, Label valueLabel, Runnable onChange) {
-            this.valueLabel = valueLabel;
-            this.onChange = onChange;
-            menu.getStyleClass().add("filter-menu");
-            menu.showingProperty().addListener((obs, was, showing) -> pill.pseudoClassStateChanged(OPEN, showing));
-            pill.setOnMouseClicked(e -> {
-                if (options.isEmpty()) return;
-                if (menu.isShowing()) menu.hide(); else menu.show(pill, Side.BOTTOM, 0.0, 4.0);
-            });
-        }
-
-        private void setOptions(List<String> newOptions) {
-            options = newOptions == null ? List.of() : List.copyOf(newOptions);
-            select(options.isEmpty() ? null : options.get(0), false);
-        }
-
-        private void setSelected(String value) {
-            if (value != null && options.contains(value)) select(value, false);
-        }
-
-        private String getSelected() { return selected; }
-
-        private void select(String value, boolean notify) {
-            selected = value;
-            valueLabel.setText(value == null ? "—" : value);
-            List<MenuItem> items = new ArrayList<>();
-            for (String option : options) {
-                MenuItem item = new MenuItem(option);
-                item.setMnemonicParsing(false);
-                if (option.equals(selected)) item.getStyleClass().add("filter-option-selected");
-                item.setOnAction(e -> { if (!option.equals(selected)) select(option, true); });
-                items.add(item);
-            }
-            menu.getItems().setAll(items);
-            if (notify) onChange.run();
-        }
     }
 }

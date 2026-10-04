@@ -25,8 +25,6 @@ public class ForgotPasswordController {
     @FXML private PasswordField newPasswordField;
     @FXML private TextField newPasswordVisibleField;
     @FXML private Button togglePasswordBtn;
-    @FXML private Button nextButton;
-    @FXML private Button backToLoginButton;
 
     private boolean passwordVisible = false;
     private final UserDAO userDAO = new UserDAO();
@@ -91,7 +89,6 @@ public class ForgotPasswordController {
         try {
             adminStage.getIcons().add(new Image(getClass().getResourceAsStream("/com/kainanresto/images/id/KainanNiJuanLogo.png")));
         } catch (Exception e) {
-            // Fallback if image path is missing
         }
 
 

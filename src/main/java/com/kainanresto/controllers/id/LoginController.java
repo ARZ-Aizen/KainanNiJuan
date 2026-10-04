@@ -5,6 +5,7 @@
     import com.kainanresto.model.account.User;
     import com.kainanresto.util.AlertUtil;
     import com.kainanresto.util.NavigationUtil;
+    import com.kainanresto.util.RoleAccess;
     import com.kainanresto.util.SessionManager;
     import javafx.event.ActionEvent;
     import javafx.fxml.FXML;
@@ -24,9 +25,6 @@
         @FXML private TextField passwordVisibleField;
         @FXML private Button togglePasswordButton;
         @FXML private CheckBox rememberMeCheckbox;
-        @FXML private Button forgotPasswordLink;
-        @FXML private Button registerLink;
-        @FXML private Button loginButton;
     
         private boolean passwordVisible = false;
         private final UserDAO userDAO = new UserDAO();
@@ -46,8 +44,7 @@
                 rememberMeCheckbox.setSelected(true);
                 passwordField.requestFocus();
             }
-    
-            // FIX: Synchronize text between both fields in real-time
+
             passwordField.textProperty().addListener((obs, oldVal, newVal) -> {
                 if (!passwordVisibleField.getText().equals(newVal)) {
                     passwordVisibleField.setText(newVal);
@@ -68,8 +65,7 @@
             passwordVisibleField.setVisible(passwordVisible);
             passwordField.setManaged(!passwordVisible);
             passwordField.setVisible(!passwordVisible);
-    
-            // Switch focus and keep caret at the end of the text
+
             if (passwordVisible) {
                 passwordVisibleField.requestFocus();
                 passwordVisibleField.positionCaret(passwordVisibleField.getText().length());
@@ -85,7 +81,6 @@
     
         @FXML private void handleLogin(ActionEvent event) {
             String username = usernameField.getText().trim();
-            // Since fields are synced, either one will have the exact text
             String password = passwordField.getText();
     
             boolean rememberMe = rememberMeCheckbox != null
@@ -130,21 +125,20 @@
     
             navigateToDashboard(event, user);
         }
-    
+
         private void navigateToDashboard(ActionEvent event, User user) {
             String fxmlPath;
-    
-            if (user.getRole() == AccountRole.ADMIN ||
-                    user.getRole() == AccountRole.MANAGER) {
+
+            if (user.getRole() == AccountRole.ADMIN || RoleAccess.canUseBoth(user)) {
                 fxmlPath = "/com/kainanresto/views/main/admin/MainAdminView.fxml";
             } else {
                 fxmlPath = "/com/kainanresto/views/main/client/ClientView.fxml";
             }
-    
+
             String title = "Kainan Ni Juan POS - " + user.getFullName() + " (" + user.getRole() + ")";
             NavigationUtil.switchScene(event, fxmlPath, title);
         }
-    
+
         @FXML private void handleForgotPassword(ActionEvent event) {
             NavigationUtil.switchScene(event, "/com/kainanresto/views/id/ForgotPasswordView.fxml", "Kainan Ni Juan - Forgot Password");
         }

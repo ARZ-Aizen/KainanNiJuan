@@ -5,6 +5,9 @@ import com.kainanresto.model.order.OrderReceipt;
 import com.kainanresto.model.transac.PaymentResult;
 import com.kainanresto.model.transac.ReceiptLine;
 import com.kainanresto.model.transac.ReceiptTotals;
+import com.kainanresto.util.AlertUtil;
+import com.kainanresto.util.ReceiptPdfGenerator;
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -13,14 +16,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
-/** Modal "virtual receipt" shown right after a successful payment. */
 public final class ReceiptDialog {
 
     private static final DateTimeFormatter DATE_FMT =
@@ -31,7 +33,7 @@ public final class ReceiptDialog {
     public static void show(Window owner, OrderReceipt r, PaymentResult pay) {
         ReceiptTotals t = r.totals();
 
-        // ---------- brand ----------
+        //BRAND
         Label brand = new Label("KAINAN NI JUAN");
         brand.getStyleClass().add("rcpt-brand");
         Label sub = new Label("Order Receipt");
@@ -39,7 +41,7 @@ public final class ReceiptDialog {
         VBox header = new VBox(2, brand, sub);
         header.setAlignment(Pos.CENTER);
 
-        // ---------- order info ----------
+        //INFO
         String type = ClientUIHelper.valueOrDash(r.orderType());
         if (r.orderTypeDetail() != null && !r.orderTypeDetail().isBlank()) {
             type += " \u2022 " + r.orderTypeDetail().trim();
@@ -50,7 +52,7 @@ public final class ReceiptDialog {
                 kv("Cashier", ClientUIHelper.valueOrDash(r.cashierName())),
                 kv("Order type", type));
 
-        // ---------- table head ----------
+        //HEADER
         Label hItem = new Label("Item");
         hItem.getStyleClass().add("rcpt-head");
         hItem.setMaxWidth(Double.MAX_VALUE);
@@ -86,10 +88,11 @@ public final class ReceiptDialog {
         scroll.getStyleClass().add("rcpt-scroll");
         scroll.setFitToWidth(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setMaxHeight(240);
+        double cap = Math.max(160, Screen.getPrimary().getVisualBounds().getHeight() - 56 - 620);
+        scroll.prefHeightProperty().bind(items.heightProperty().add(2));
+        scroll.setMaxHeight(cap);
 
-        // ---------- summary ----------
-        // The discount is already baked into total, so recover it: subtotal + service + vat - total
+        // SUMMARY
         BigDecimal discount = t.subtotal().add(t.serviceCharge()).add(t.vat()).subtract(t.total());
 
         VBox summary = new VBox(8);
@@ -131,11 +134,28 @@ public final class ReceiptDialog {
         card.getStyleClass().add("rcpt-card");
 
         Stage stage = DialogSupport.createStage(owner, card);
-        done.setOnAction(e -> stage.close());
+
+        stage.setOnShown(e -> Platform.runLater(() -> {
+            stage.sizeToScene();
+            stage.centerOnScreen();
+        }));
+
+        done.setOnAction(e -> {
+            stage.close();
+            Thread worker = new Thread(() -> {
+                try {
+                    ReceiptPdfGenerator.generate(r, pay);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    Platform.runLater(() -> AlertUtil.showError("Receipt PDF",
+                            "The order was saved, but the receipt PDF could not be created."));
+                }
+            });
+            worker.setDaemon(true);
+            worker.start();
+        });
         stage.showAndWait();
     }
-
-    // ---------- small builders ----------
 
     private static HBox kv(String key, String value) {
         Label k = new Label(key);
@@ -171,7 +191,7 @@ public final class ReceiptDialog {
 
     private static Region dash() {
         Region r = new Region();
-        r.getStyleClass().add("receipt-dash");   // dashed rule already defined in ClientView.css
+        r.getStyleClass().add("receipt-dash");
         return r;
     }
 

@@ -3,7 +3,6 @@ package com.kainanresto.controllers.main.admin.dashboard;
 import com.kainanresto.controllers.main.admin.dashboard.DashboardData.BestSeller;
 import com.kainanresto.controllers.main.admin.dashboard.DashboardData.ChartPoint;
 import com.kainanresto.model.util.Icons;
-import com.kainanresto.service.DashboardService;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -23,7 +22,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -48,7 +46,7 @@ public class DashboardController {
 
     @FXML private VBox bestSellingItemsContainer;
 
-    // Sales Overview summary labels (Bound to updated FXML)
+    //SUMMARY LABEL SA SALES
     @FXML private Label weeklySalesSummaryLabel, monthlySalesSummaryLabel, yearlySalesSummaryLabel;
 
     private static final String DASH = "\u2014";
@@ -64,14 +62,8 @@ public class DashboardController {
         setupIcons();
         setupDashboardChart();
         applyRangeCaptions();
-
-        // Re-fetch data whenever a range button (Today / Week / Month) is clicked
         setOnRangeChanged(selectedRange -> fetchLiveData());
-
-        // Initial async data fetch
         fetchLiveData();
-
-        // Auto refresh every 30 seconds
         startAutoRefresh(30);
     }
 
@@ -119,7 +111,6 @@ public class DashboardController {
 
     public Range getRange() { return range; }
 
-    /** Fills the dashboard with new data. Safely handles null checks. */
     public void setData(DashboardData data) {
         if (data == null) {
             clearData();

@@ -4,12 +4,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 
 public class Icons {
-    // Icons Phosphor
     public static final String SEARCH = "M11 3a8 8 0 1 0 0 16 8 8 0 0 0 0-16z M21 21l-4.3-4.3";
     public static final String PLUS   = "M5 12h14 M12 5v14";
 
-    // Icons Lucide
-    // 24-unit grid, drawn as 2px strokes (fill transparent)
     public static final String NAV_DASHBOARD =
             "M4 3h5a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z "
                     + "M15 3h5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z "
@@ -43,6 +40,7 @@ public class Icons {
     public static final String CALENDAR =
             "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z "
                     + "M16 2v4 M8 2v4 M3 10h18";
+
     public static final String CHEVRON_DOWN = "M6 9l6 6 6-6";
 
     public static final String ELLIPSIS_VERTICAL =
@@ -72,31 +70,43 @@ public class Icons {
     public static final String HOUSE =
             "M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"
                     + "M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z";
+
     public static final String GLOBE =
             "M22 12a10 10 0 1 1-20 0a10 10 0 1 1 20 0z"
                     + "M12 2a14.5 14.5 0 0 0 0 20a14.5 14.5 0 0 0 0-20M2 12h20";
+
     public static final String DATABASE =
             "M21 5a9 3 0 1 1-18 0a9 3 0 1 1 18 0z"
                     + "M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0";
+
     public static final String SHIELD =
             "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1"
                     + "c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z";
+
     public static final String IMAGE =
             "M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"
                     + "M9 8.5a1.5 1.5 0 1 1-3 0a1.5 1.5 0 1 1 3 0z"
                     + "M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21";
+
     public static final String DOWNLOAD =
             "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3";
+
     public static final String RECEIPT_TEXT =
             "M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"
                     + "M14 8H8M16 12H8M13 16H8";
+
     public static final String CLOCK =
             "M22 12a10 10 0 1 1-20 0a10 10 0 1 1 20 0z"
                     + "M12 6v6l4 2";
+
     public static final String MINUS = "M5 12h14";
 
+    public static final String CLIPBOARD_TEXT =
+            "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2 "
+                    + "M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z "
+                    + "M9 12h6 M9 16h6";
 
-    // Use this to create an icon in code
+
     public static SVGPath icon(String pathData, Color color, double sizePx) {
         SVGPath p = new SVGPath();
         p.setContent(pathData);

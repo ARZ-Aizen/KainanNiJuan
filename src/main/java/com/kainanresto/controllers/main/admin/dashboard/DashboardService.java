@@ -1,7 +1,6 @@
-package com.kainanresto.service;
+package com.kainanresto.controllers.main.admin.dashboard;
 
 import com.kainanresto.controllers.main.admin.dashboard.DashboardController.Range;
-import com.kainanresto.controllers.main.admin.dashboard.DashboardData;
 import com.kainanresto.controllers.main.admin.dashboard.DashboardData.ChartPoint;
 import com.kainanresto.dao.TransactionDAO;
 

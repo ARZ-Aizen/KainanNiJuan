@@ -43,7 +43,7 @@ public class TransactionDAO {
                 if (rs.next()) yesterday = rs.getBigDecimal(1);
             }
 
-            if (yesterday.compareTo(BigDecimal.ZERO) == 0) return null; // Avoid division by zero
+            if (yesterday.compareTo(BigDecimal.ZERO) == 0) return null;
 
             return today.subtract(yesterday)
                     .multiply(BigDecimal.valueOf(100))

@@ -9,7 +9,6 @@ public enum OrderStatus {
     OrderStatus(String displayName) { this.displayName = displayName; }
     public String getDisplayName() { return displayName; }
 
-    /** Returns null for blank or unknown values (the card then shows a neutral badge). */
     public static OrderStatus fromString(String s) {
         if (s == null || s.isBlank()) return null;
         try {

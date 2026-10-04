@@ -1,9 +1,12 @@
 package com.kainanresto.controllers.main.admin.sales;
 
 import com.kainanresto.dao.OrderDAO;
+import com.kainanresto.model.order.OrderReceipt;
 import com.kainanresto.model.order.OrderStats;
+import com.kainanresto.model.transac.PaymentResult;
 import com.kainanresto.model.transac.Transaction;
 import com.kainanresto.model.util.Icons;
+import com.kainanresto.util.ReceiptPdfGenerator;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -16,12 +19,18 @@ import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
-
+import com.kainanresto.util.AlertUtil;
+import java.awt.*;
+import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -41,9 +50,9 @@ public class SalesController {
     @FXML private Label ordersVoidsValueLabel, ordersVoidsNoteLabel;
     @FXML private Label ordersAvgSpendValueLabel, ordersAvgSpendNoteLabel;
 
-    @FXML private HBox ordersSearchBox, orderDatePill, orderTypePill, orderStatusPill, orderPaymentPill;
+    @FXML private HBox ordersSearchBox, orderDatePill, orderStatusPill, orderPaymentPill;
     @FXML private TextField ordersSearchField;
-    @FXML private Label orderDateValueLabel, orderTypeValueLabel, orderStatusValueLabel, orderPaymentValueLabel;
+    @FXML private Label orderDateValueLabel, orderStatusValueLabel, orderPaymentValueLabel;
 
     @FXML private SVGPath ordersSearchIcon, ordersRevenueIcon, ordersTotalIcon, ordersVoidsIcon, ordersAvgSpendIcon;
 
@@ -51,7 +60,6 @@ public class SalesController {
     @FXML private Label ordersTablePlaceholder;
     @FXML private TableColumn<Transaction, String> orderIdColumn, orderTypeColumn, orderCreatedColumn, orderTotalColumn, orderStatusColumn, orderPaymentColumn;
     @FXML private TableColumn<Transaction, Transaction> orderStaffColumn, orderActionsColumn;
-
     private static final PseudoClass FIELD_FOCUSED = PseudoClass.getPseudoClass("field-focused");
     private static final DateTimeFormatter ORDER_TIME_FORMAT = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
     private static final DateTimeFormatter ORDER_DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy, h:mm a", Locale.ENGLISH);
@@ -59,7 +67,7 @@ public class SalesController {
     private final OrderDAO orderDAO = new OrderDAO();
     private final ObservableList<Transaction> orderItems = FXCollections.observableArrayList();
     private FilteredList<Transaction> filteredOrders;
-    private FilterPill orderDateFilter, orderTypeFilter, orderStatusFilter, orderPaymentFilter;
+    private FilterPill orderDateFilter, orderStatusFilter, orderPaymentFilter;
 
     @FXML
     public void initialize() {
@@ -130,15 +138,15 @@ public class SalesController {
 
     private void setupOrdersPage() {
         orderDateFilter    = new FilterPill(orderDatePill, orderDateValueLabel, this::onOrderDateChanged);
-        orderTypeFilter    = new FilterPill(orderTypePill, orderTypeValueLabel, this::applyOrderFilters);
         orderStatusFilter  = new FilterPill(orderStatusPill, orderStatusValueLabel, this::applyOrderFilters);
         orderPaymentFilter = new FilterPill(orderPaymentPill, orderPaymentValueLabel, this::applyOrderFilters);
 
         // The first option in each list is the "no filter" default
         orderDateFilter.setOptions(List.of("Today", "Yesterday", "Last 7 Days", "This Month", "All Time"));
-        orderTypeFilter.setOptions(List.of("All Types", "Dine in", "Takeout", "Delivery"));
         orderStatusFilter.setOptions(List.of("All States", "Preparing", "Completed", "Cancelled"));
-        orderPaymentFilter.setOptions(List.of("All", "Paid", "Unpaid", "Refunded"));
+
+        // Updated to only show Paid and Refunded
+        orderPaymentFilter.setOptions(List.of("All", "Paid", "Refunded"));
 
         setupOrdersTable();
 
@@ -175,7 +183,6 @@ public class SalesController {
 
         filteredOrders.setPredicate(order ->
                 matchesOrderText(order, query)
-                        && orderTypeFilter.accepts(order.orderType())
                         && orderStatusFilter.accepts(order.status())
                         && orderPaymentFilter.accepts(order.paymentStatus()));
 
@@ -196,13 +203,53 @@ public class SalesController {
     private void onClearOrderFilters() {
         boolean dateWasChanged = !orderDateFilter.isDefault();
         ordersSearchField.clear();
-        orderDateFilter.reset(); orderTypeFilter.reset(); orderStatusFilter.reset(); orderPaymentFilter.reset();
+        orderDateFilter.reset();
+        orderStatusFilter.reset();
+        orderPaymentFilter.reset();
         applyOrderFilters();
         if (dateWasChanged) onOrderDateChanged();
     }
 
     private void onOrderActions(Transaction order, Node anchor) {
-        // TODO: open the row-actions menu (view details / print receipt)
+        ContextMenu menu = new ContextMenu();
+        menu.getStyleClass().add("filter-menu");
+
+        MenuItem viewReceipt = new MenuItem("View Receipt");
+        viewReceipt.setMnemonicParsing(false);
+        viewReceipt.setOnAction(e -> viewReceipt(order));
+
+        menu.getItems().add(viewReceipt);
+        menu.show(anchor, Side.BOTTOM, 0.0, 4.0);
+    }
+
+    /** Placeholder: will generate the receipt PDF and open it once PDF conversion is built. */
+    private void viewReceipt(Transaction order) {
+        Thread worker = new Thread(() -> {
+            try {
+                OrderReceipt receipt = orderDAO.findReceipt(order.orderId());
+                if (receipt == null) {
+                    Platform.runLater(() -> AlertUtil.showError("View Receipt",
+                            "Could not find the details for order " + order.orderId() + "."));
+                    return;
+                }
+
+                PaymentResult pay = orderDAO.findPayment(order.orderId());
+                File pdf = ReceiptPdfGenerator.generate(receipt, pay);
+
+                if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+                    Desktop.getDesktop().open(pdf);
+                } else {
+                    Platform.runLater(() -> AlertUtil.showInfo("View Receipt",
+                            "Receipt saved to:\n" + pdf.getAbsolutePath()));
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                Platform.runLater(() -> AlertUtil.showError("View Receipt",
+                        "The receipt PDF could not be created."));
+            }
+        });
+        worker.setDaemon(true);
+        worker.start();
     }
 
     /* ============================== DATA SETTERS ============================== */
@@ -295,7 +342,7 @@ public class SalesController {
         private final Region dot = new Region();
         private final Label text = new Label();
         private final HBox chip = new HBox(6.0);
-        private final HBox holder = new HBox(chip);   // keeps the chip at its natural size
+        private final HBox holder = new HBox(chip);
         private final Function<String, String> styleResolver;
         private String appliedStyle;
 
@@ -327,7 +374,6 @@ public class SalesController {
             setGraphic(holder);
         }
     }
-
 
     private final class ActionsCell extends TableCell<Transaction, Transaction> {
         private final Button button = new Button();

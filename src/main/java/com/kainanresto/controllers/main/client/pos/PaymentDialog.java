@@ -15,7 +15,6 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -24,25 +23,23 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/** Modal cash-payment popup: shows the total, takes the amount received and shows the change live. */
 public final class PaymentDialog {
 
     private static final PseudoClass FIELD_FOCUSED = PseudoClass.getPseudoClass("field-focused");
 
     private PaymentDialog() {}
 
-    /** Returns the payment if the cashier confirmed, or empty if the popup was cancelled/closed. */
     public static Optional<PaymentResult> show(Window owner, String orderNumber, String orderType, BigDecimal total) {
         PaymentResult[] result = new PaymentResult[1];
 
-        // ---------- header ----------
+        //HEADER
         Label title = new Label("Payment");
         title.getStyleClass().add("pay-title");
         Label subtitle = new Label(orderType + " \u2022 " + orderNumber);
         subtitle.getStyleClass().add("pay-subtitle");
         VBox header = new VBox(2, title, subtitle);
 
-        // ---------- total due ----------
+        //TOTAL
         Label dueLabel = new Label("Total due");
         dueLabel.getStyleClass().add("pay-label");
         Label dueValue = new Label(ClientUIHelper.formatPeso(total));
@@ -50,7 +47,7 @@ public final class PaymentDialog {
         VBox dueBox = new VBox(4, dueLabel, dueValue);
         dueBox.getStyleClass().add("pay-due-box");
 
-        // ---------- amount received ----------
+        //AMOUNT
         Label tenderedLabel = new Label("Amount received (cash)");
         tenderedLabel.getStyleClass().add("pay-label");
 
@@ -67,7 +64,7 @@ public final class PaymentDialog {
         inputBox.setAlignment(Pos.CENTER_LEFT);
         field.focusedProperty().addListener((o, was, is) -> inputBox.pseudoClassStateChanged(FIELD_FOCUSED, is));
 
-        // ---------- quick amounts ----------
+        //QUICK AMOUNT
         FlowPane quick = new FlowPane(8, 8);
         List<BigDecimal> suggestions = suggestions(total);
         for (int i = 0; i < suggestions.size(); i++) {
@@ -85,7 +82,7 @@ public final class PaymentDialog {
             quick.getChildren().add(b);
         }
 
-        // ---------- change ----------
+        //CHANGE
         Label changeLabel = new Label("Change");
         changeLabel.getStyleClass().add("pay-change-label");
         Label changeValue = new Label(ClientUIHelper.formatPeso(BigDecimal.ZERO));
@@ -96,7 +93,7 @@ public final class PaymentDialog {
         changeRow.getStyleClass().add("pay-change-row");
         changeRow.setAlignment(Pos.CENTER_LEFT);
 
-        // ---------- buttons ----------
+        //BUTTONS
         Button cancel = new Button("Cancel");
         cancel.setMnemonicParsing(false);
         cancel.getStyleClass().add("pay-cancel-btn");
@@ -114,7 +111,7 @@ public final class PaymentDialog {
 
         Stage stage = DialogSupport.createStage(owner, card);
 
-        // ---------- behaviour ----------
+        //BEHAVIOR
         field.textProperty().addListener((o, old, now) -> {
             BigDecimal tendered = parse(now);
             BigDecimal diff = tendered.subtract(total);
@@ -151,7 +148,6 @@ public final class PaymentDialog {
         return Optional.ofNullable(result[0]);
     }
 
-    /** "Exact" first, then the next round-ups (50 / 100 / 500 / 1000) that are different. */
     private static List<BigDecimal> suggestions(BigDecimal total) {
         Set<BigDecimal> set = new LinkedHashSet<>();
         set.add(total.setScale(2, RoundingMode.UP));

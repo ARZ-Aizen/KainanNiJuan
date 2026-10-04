@@ -1849,3 +1849,12 @@
 .alert-item-detail { -fx-font-family: 'Inter'; -fx-font-size: 12px; -fx-font-weight: 700; }
 .alert-detail-warning  { -fx-text-fill: #E07A5F; }
 .alert-detail-critical { -fx-text-fill: #E74C3C; }
+
+/* ============================== INVALID FIELD ============================== */
+.add-input:invalid,
+.add-input:invalid:focused,
+.add-combo:invalid,
+.add-combo:invalid:focused,
+.add-price-box:invalid {
+    -fx-border-color: #E74C3C;
+}

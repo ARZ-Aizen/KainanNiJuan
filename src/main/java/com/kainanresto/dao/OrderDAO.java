@@ -24,7 +24,6 @@ public class OrderDAO {
     private static final String ORDER_CODE_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    /** Short random order number (e.g. "7F3K9Q"), checked against the DB so it is unique. */
     public String generateOrderNumber() {
         String check = "SELECT 1 FROM orders WHERE order_number = ?";
         try (Connection conn = DatabaseConfig.getConnection();
@@ -41,7 +40,6 @@ public class OrderDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        // Fallback if the DB check fails: still short, still practically unique
         return Long.toString(System.currentTimeMillis() % 2_176_782_336L, 36).toUpperCase();
     }
 
@@ -170,7 +168,6 @@ public class OrderDAO {
     public List<OrderReceipt> loadReceipts(LocalDateTime since) {
         Map<Long, List<ReceiptLine>> linesByOrder = new HashMap<>();
 
-        // Updated: include items from today's orders OR any order currently PREPARING
         String linesSql = """
         SELECT oi.order_id, oi.dish_id, oi.dish_name, oi.image_url, oi.unit_price, oi.quantity
         FROM order_items oi 
@@ -225,6 +222,76 @@ public class OrderDAO {
         return result;
     }
 
+    public OrderReceipt findReceipt(String orderNumber) {
+        String orderSql = """
+        SELECT id, order_number, order_type, order_type_detail, status, created_at, cashier_name, discount_name,
+               subtotal, service_charge_rate, service_charge, vat_rate, vat, total
+        FROM orders WHERE order_number = ?
+    """;
+        String linesSql = """
+        SELECT dish_id, dish_name, image_url, unit_price, quantity
+        FROM order_items WHERE order_id = ? ORDER BY id
+    """;
+
+        try (Connection conn = DatabaseConfig.getConnection()) {
+            long orderId;
+            OrderReceipt base;
+            try (PreparedStatement ps = conn.prepareStatement(orderSql)) {
+                ps.setString(1, orderNumber);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) return null;
+                    orderId = rs.getLong("id");
+                    ReceiptTotals totals = new ReceiptTotals(
+                            rs.getBigDecimal("subtotal"),
+                            rs.getBigDecimal("service_charge_rate"), rs.getBigDecimal("service_charge"),
+                            rs.getBigDecimal("vat_rate"), rs.getBigDecimal("vat"),
+                            rs.getBigDecimal("total"));
+                    base = new OrderReceipt(
+                            rs.getString("order_number"), rs.getString("order_type"), rs.getString("order_type_detail"),
+                            OrderStatus.fromString(rs.getString("status")),
+                            rs.getTimestamp("created_at").toLocalDateTime(),
+                            rs.getString("cashier_name"),
+                            List.of(),                       // filled in below
+                            rs.getString("discount_name"), totals);
+                }
+            }
+
+            List<ReceiptLine> lines = new ArrayList<>();
+            try (PreparedStatement ps = conn.prepareStatement(linesSql)) {
+                ps.setLong(1, orderId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        lines.add(new ReceiptLine(rs.getLong("dish_id"), rs.getString("dish_name"),
+                                rs.getString("image_url"), rs.getBigDecimal("unit_price"), rs.getInt("quantity")));
+                    }
+                }
+            }
+
+            return new OrderReceipt(base.orderNumber(), base.orderType(), base.orderTypeDetail(), base.status(),
+                    base.createdAt(), base.cashierName(), lines, base.discountName(), base.totals());
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public PaymentResult findPayment(String orderNumber) {
+        String sql = "SELECT cash_tendered, change_amount FROM orders WHERE order_number = ?";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, orderNumber);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return null;
+                BigDecimal cash = rs.getBigDecimal("cash_tendered");
+                BigDecimal change = rs.getBigDecimal("change_amount");
+                return (cash == null || change == null) ? null : new PaymentResult(cash, change);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     /* ====================== ADMIN: Sales & Orders table ====================== */
 
     public List<Transaction> getTransactions(LocalDateTime from, LocalDateTime to) {
@@ -256,7 +323,6 @@ public class OrderDAO {
         return list;
     }
 
-    /** Stat cards are always for today. */
     public OrderStats getOrderStats() {
         LocalDate today = LocalDate.now();
         String sql = """
@@ -285,7 +351,6 @@ public class OrderDAO {
                 }
             }
 
-            // same weekday last week, for the revenue note
             LocalDate lastWeek = today.minusDays(7);
             BigDecimal prev = BigDecimal.ZERO;
             try (PreparedStatement ps = conn.prepareStatement(

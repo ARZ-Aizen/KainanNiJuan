@@ -40,7 +40,7 @@ public class ClientUIHelper {
 
     public static void fitGridIcon(SVGPath icon, double targetSize, double strokePx) {
         if (icon == null) return;
-        double scale = targetSize / 24.0; // 24.0 is ICON_GRID
+        double scale = targetSize / 24.0;
         icon.setScaleX(scale);
         icon.setScaleY(scale);
         icon.setStyle("-fx-stroke-width: " + (strokePx / scale) + ";");

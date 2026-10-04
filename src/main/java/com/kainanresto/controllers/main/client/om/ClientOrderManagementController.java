@@ -42,7 +42,6 @@
         @FXML private ScrollPane omScroll;
         @FXML private Label omGridPlaceholder;
         @FXML private GridPane omGrid;
-
         @FXML private VBox omReceiptPanel;
         @FXML private Label omrOrderTitleLabel;
         @FXML private Label omrStatusLabel;
@@ -75,10 +74,8 @@
         private String omSelectedOrderNo = null;
         private OrderReceipt omReceiptDetails = null;
         private Timeline refreshTimeline;
-        private static final int OM_MAX_CARD_LINES = 3;   // dishes shown on a card before "+ N more"
+        private static final int OM_MAX_CARD_LINES = 3;
 
-        // Optional hooks, e.g. to persist the status change in the database.
-        // The status is always updated on screen, whether or not a hook is set.
         private Consumer<OrderCard> onCompleteOrder;
         private Consumer<OrderCard> onCancelOrder;
         private Consumer<OrderCard> onOrderDetails;
@@ -116,7 +113,6 @@
             refreshTimeline.setCycleCount(Animation.INDEFINITE);
             refreshTimeline.play();
 
-            // Bind stop listener to grid since root property isn't available
             omGrid.sceneProperty().addListener((obs, oldScene, newScene) -> {
                 if (newScene == null) refreshTimeline.stop();
             });
@@ -167,18 +163,8 @@
             applyOmFilter();
         }
 
-        public void setOrderReceipt(OrderReceipt receipt) {
-            if (receipt == null) return;
-            omReceipts.put(receipt.orderNumber(), receipt);
-            if (!Objects.equals(receipt.orderNumber(), omSelectedOrderNo)) return;
-            omReceiptDetails = receipt;
-            updateOmReceiptPanel();
-        }
-
-        public void setOnOrderSelected(Consumer<OrderCard> handler) { this.onOrderSelected = handler; }
         public void setOnCompleteOrder(Consumer<OrderCard> handler) { this.onCompleteOrder = handler; }
         public void setOnCancelOrder(Consumer<OrderCard> handler) { this.onCancelOrder = handler; }
-        public void setOnOrderDetails(Consumer<OrderCard> handler) { this.onOrderDetails = handler; }
 
         private static OrderCard toCard(OrderReceipt receipt) {
             List<OrderLine> lines = new ArrayList<>();
@@ -323,7 +309,6 @@
             Region divider = new Region();
             divider.getStyleClass().add("om-divider");
 
-            // Every card reserves the same body height: OM_MAX_CARD_LINES dish rows + one "+ N more" row.
             VBox lines = new VBox(6.0);
             int lineCount = 0;
             if (order.lines() != null) {
@@ -349,7 +334,6 @@
                 }
             }
 
-            // Invisible placeholder rows (still managed, so they keep their space)
             for (int i = shown; i < OM_MAX_CARD_LINES; i++) {
                 Label name = new Label("\u00A0");
                 name.getStyleClass().add("om-line-name");
@@ -362,7 +346,6 @@
                 lines.getChildren().add(row);
             }
 
-            // "+ N more" row: always present, hidden when there is nothing to show
             int hidden = lineCount - shown;
             Label more = new Label(hidden > 0
                     ? "+ " + hidden + " more " + (hidden == 1 ? "dish" : "dishes")
@@ -392,7 +375,7 @@
             }));
 
             Region fill = new Region();
-            VBox.setVgrow(fill, Priority.ALWAYS);   // pushes total + buttons to the bottom of a taller card
+            VBox.setVgrow(fill, Priority.ALWAYS);
 
             VBox card = new VBox(header, meta, divider, lines, fill, total, actions);
             card.getStyleClass().add("om-card");

@@ -3,11 +3,8 @@ package com.kainanresto.controllers.main.admin.dashboard;
 import java.math.BigDecimal;
 import java.util.List;
 
-/**
- * Snapshot record for the admin dashboard.
- */
 public record DashboardData(
-        // Stat cards
+        //DASHBOARD MAIN
         BigDecimal todaysSales,
         BigDecimal salesDeltaPercent,      // vs yesterday, e.g. 12.5 or -3.2 (null = unknown)
         int transactionsToday,
@@ -17,15 +14,15 @@ public record DashboardData(
         int totalMenuItems,
         int availableMenuItems,
 
-        // Chart for selected range (TODAY, WEEK, MONTH)
+        //STAT CHART
         List<ChartPoint> chartPoints,
         BigDecimal rangeTotalSales,
         int rangeOrdersCount,
 
-        // Lower section cards
+        //BEST SELLER
         List<BestSeller> bestSellers,      // volume ranked
 
-        // Periodic sales summary (replacing inventory alerts)
+        //SALES TO
         BigDecimal weeklySales,
         BigDecimal monthlySales,
         BigDecimal yearlySales

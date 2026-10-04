@@ -21,7 +21,6 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -36,11 +35,8 @@ public class ClientPosController {
     @FXML private SVGPath posSearchIcon;
     @FXML private TextField posSearchField;
     @FXML private FlowPane posCategoryChips;
-    @FXML private ScrollPane posScroll;
     @FXML private Label posGridPlaceholder;
     @FXML private FlowPane posDishGrid;
-
-    @FXML private VBox receiptPanel;
     @FXML private VBox receiptLines;
     @FXML private Label receiptSubtotalLabel;
     @FXML private ComboBox<String> receiptDiscountBox;
@@ -174,7 +170,6 @@ public class ClientPosController {
         receiptPayBtn.setDisable(lines == null || lines.isEmpty());
     }
 
-    /** Shows/hides the "discount cards" row and the discount amount next to the combo. */
     public void setDiscountSummary(boolean active, int cards, BigDecimal discountAmount) {
         discountCardsRow.setVisible(active);
         discountCardsRow.setManaged(active);
@@ -255,7 +250,7 @@ public class ClientPosController {
     private Node createDishCard(Dishes dish) {
         boolean inStock = dish.quantity() > 0;
 
-        // Image
+        //IMAGE
         StackPane imageShell = new StackPane();
         imageShell.getStyleClass().add("pos-dish-image-shell");
         ClientUIHelper.fixSize(imageShell, DISH_IMAGE_SIZE, DISH_IMAGE_SIZE);
@@ -274,7 +269,7 @@ public class ClientPosController {
             } catch (IllegalArgumentException ignored) {}
         }
 
-        // Texts
+        //TEXT
         Label name = new Label(dish.name() == null ? "\u2014" : dish.name());
         name.getStyleClass().add("pos-dish-name");
         name.setWrapText(false);
@@ -294,7 +289,7 @@ public class ClientPosController {
         VBox badgeBox = new VBox(6, qtyLabel, statusBadge);
         badgeBox.setAlignment(Pos.CENTER);
 
-        // Card
+        //CARD
         VBox card = new VBox(name, price, badgeBox);
         card.getStyleClass().add("pos-dish-card");
         card.setMinWidth(CARD_WIDTH);
@@ -311,7 +306,7 @@ public class ClientPosController {
         wrapper.setMaxWidth(CARD_WIDTH);
         wrapper.setAlignment(Pos.TOP_CENTER);
 
-        // Click to add; out-of-stock dishes are dimmed and ignore clicks
+        //STOCK
         if (inStock) {
             wrapper.setCursor(Cursor.HAND);
             wrapper.setOnMouseClicked(e -> { if (onAddToOrder != null) onAddToOrder.accept(dish); });
@@ -340,7 +335,7 @@ public class ClientPosController {
             } catch (IllegalArgumentException ignored) {}
         }
 
-        // ---- discount info for this line ----
+        //DISCOUNT INFO
         int discQty = Math.min(discountedUnits.getOrDefault(line.name(), 0), line.quantity());
         boolean discounted = discQty > 0 && discountRate.signum() > 0;
         BigDecimal off = discounted
@@ -349,7 +344,7 @@ public class ClientPosController {
         BigDecimal discountedTotal = line.lineTotal().subtract(off);
         boolean wholeLine = discQty == line.quantity();
 
-        // ---- name + unit price ----
+        //NAME AND PRICE
         Label name = new Label(ClientUIHelper.valueOrDash(line.name()));
         name.getStyleClass().add("receipt-line-name");
         name.setWrapText(true);
@@ -360,7 +355,7 @@ public class ClientPosController {
         HBox.setHgrow(info, Priority.ALWAYS);
 
         if (discounted && wholeLine) {
-            // every unit discounted: old unit price struck through, then the new one
+            //DISCOUNT
             BigDecimal unitOff = line.unitPrice().multiply(discountRate).setScale(2, RoundingMode.HALF_UP);
             Text oldUnit = new Text(ClientUIHelper.formatPeso(line.unitPrice()));
             oldUnit.setStrikethrough(true);
@@ -386,7 +381,7 @@ public class ClientPosController {
             info.getChildren().add(badge);
         }
 
-        // ---- qty stepper ----
+        //QTY
         Button minus = createStepButton(Icons.MINUS, "Decrease quantity", () -> requestQuantity(line, line.quantity() - 1));
         Label qty = new Label(String.valueOf(line.quantity()));
         qty.getStyleClass().add("receipt-qty");
@@ -395,7 +390,7 @@ public class ClientPosController {
         stepper.setAlignment(Pos.CENTER);
         stepper.getStyleClass().add("receipt-col-qty");
 
-        // ---- line price (original struck through above the discounted total) ----
+        //LINE PRICE
         VBox priceBox = new VBox(2.0);
         priceBox.getStyleClass().add("receipt-col-price");
         priceBox.setAlignment(Pos.CENTER_RIGHT);

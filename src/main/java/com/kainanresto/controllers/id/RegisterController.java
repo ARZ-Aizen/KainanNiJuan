@@ -21,8 +21,6 @@ public class RegisterController {
     @FXML private PasswordField confirmPasswordField;
     @FXML private TextField confirmPasswordVisibleField;
     @FXML private Button toggleConfirmPasswordBtn;
-    @FXML private Button registerButton;
-    @FXML private Button loginLinkButton;
     private boolean passwordVisible = false;
     private boolean confirmPasswordVisible = false;
 
