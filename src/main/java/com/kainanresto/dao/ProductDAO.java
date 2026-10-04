@@ -118,7 +118,6 @@ public class ProductDAO {
                 connection.setReadTimeout(1500);
 
                 int code = connection.getResponseCode();
-                System.out.println("[IMG] " + serverUrl + " -> HTTP " + code);
 
                 if (code == 200) {
                     return serverUrl; // Image found on the server
@@ -127,7 +126,6 @@ public class ProductDAO {
             } catch (IOException e) {
                 // Server unreachable -> don't retry for a while
                 serverDownUntil = System.currentTimeMillis() + RETRY_AFTER_MS;
-                System.out.println("[IMG] server unreachable, using local images: " + e);
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
