@@ -42,6 +42,10 @@
                         <tooltip><Tooltip text="Settings" /></tooltip>
                         <graphic><StackPane styleClass="nav-icon-host"><SVGPath fx:id="settingsIcon" styleClass="phosphor-icon" /></StackPane></graphic>
                     </Button>
+                    <Button fx:id="navSwitchBtn" onAction="#onSwitchToPos" styleClass="nav-item" mnemonicParsing="false" contentDisplay="GRAPHIC_ONLY" visible="false" managed="false">
+                        <tooltip><Tooltip text="Switch to POS" /></tooltip>
+                        <graphic><StackPane styleClass="nav-icon-host"><SVGPath fx:id="switchIcon" styleClass="phosphor-icon" /></StackPane></graphic>
+                    </Button>
                 </VBox>
                 <VBox styleClass="sidebar-bottom" alignment="CENTER" spacing="16.0">
                     <Region styleClass="sidebar-divider" />
@@ -124,9 +128,17 @@
             <Button fx:id="expNavSettingsBtn" text="Settings" onAction="#onNavSettings" styleClass="exp-nav-item" maxWidth="Infinity" mnemonicParsing="false" contentDisplay="LEFT">
                 <graphic><StackPane styleClass="exp-icon-host"><SVGPath fx:id="expSettingsIcon" styleClass="phosphor-icon" /></StackPane></graphic>
             </Button>
+            <Button fx:id="expNavSwitchBtn" text="Switch to POS" onAction="#onSwitchToPos" styleClass="exp-nav-item"
+                    maxWidth="Infinity" mnemonicParsing="false" contentDisplay="LEFT" visible="false" managed="false">
+                <graphic><StackPane styleClass="exp-icon-host"><SVGPath fx:id="expSwitchIcon" styleClass="phosphor-icon" /></StackPane></graphic>
+            </Button>
         </VBox>
 
+
+
         <Region VBox.vgrow="ALWAYS" />
+
+
 
         <!-- Bottom -->
         <VBox spacing="16.0">

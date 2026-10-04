@@ -4,6 +4,7 @@ import com.kainanresto.model.account.User;
 import com.kainanresto.model.util.Icons;
 import com.kainanresto.util.EntranceAnimation;
 import com.kainanresto.util.NavigationUtil;
+import com.kainanresto.util.RoleAccess;
 import com.kainanresto.util.SessionManager;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
@@ -112,6 +113,11 @@ public class MainAdminController {
 
     private Timeline sidebarAnimation;
 
+    //SWITCHING SA ADMIN OR CLIENT IF SUPERVISOR OR MANAGER
+
+    @FXML private Button navSwitchBtn, expNavSwitchBtn;
+    @FXML private SVGPath switchIcon, expSwitchIcon;
+
     @FXML
     public void initialize() {
 
@@ -205,6 +211,15 @@ public class MainAdminController {
                     }
             );
         });
+
+        //SA ROLE TO
+        boolean both = RoleAccess.canUseBoth(SessionManager.getCurrentUser());
+        for (Button b : new Button[]{navSwitchBtn, expNavSwitchBtn}) {
+            if (b == null) continue;
+            b.setVisible(both);
+            b.setManaged(both);
+        }
+
     }
 
     /* ================= ICONS ================= */
@@ -240,6 +255,11 @@ public class MainAdminController {
                 Icons.NAV_SETTINGS,
                 34.0
         );
+
+        setIconAndScale(
+                expSwitchIcon,
+                Icons.RECEIPT_TEXT,
+                30.0);
 
         setIconAndScale(
                 logoutIcon,
@@ -282,6 +302,11 @@ public class MainAdminController {
                 Icons.NAV_SETTINGS,
                 30.0
         );
+
+        setIconAndScale(
+                switchIcon,
+                Icons.RECEIPT_TEXT,
+                34.0);
 
         setIconAndScale(
                 expLogoutIcon,
@@ -592,6 +617,14 @@ public class MainAdminController {
                 "Configure your restaurant preferences, system defaults, and security configurations",
                 NAV_SETTINGS
         );
+    }
+
+    @FXML private void onSwitchToPos(ActionEvent event) {
+
+        User u = SessionManager.getCurrentUser();
+            if (!RoleAccess.canUseBoth(u)) return;
+            NavigationUtil.switchScene(event, "/com/kainanresto/views/main/client/ClientView.fxml",
+                "Kainan Ni Juan POS - " + u.getFullName() + " (" + u.getRole() + ")");
     }
 
     /* ================= LOGOUT ================= */

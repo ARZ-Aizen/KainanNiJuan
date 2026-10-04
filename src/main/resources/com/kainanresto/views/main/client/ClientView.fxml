@@ -44,13 +44,14 @@
                         </graphic>
                         <tooltip><Tooltip text="Order Management"/></tooltip>
                     </Button>
+                    <Button fx:id="navSwitchBtn" onAction="#onSwitchToAdmin" styleClass="nav-item"
+                            mnemonicParsing="false" contentDisplay="GRAPHIC_ONLY" visible="false" managed="false">
+                        <tooltip><Tooltip text="Switch to Admin" /></tooltip>
+                        <graphic><StackPane styleClass="nav-icon-host"><SVGPath fx:id="switchIcon" styleClass="phosphor-icon" /></StackPane></graphic>
+                    </Button>
                 </VBox>
 
-                <Button fx:id="navSwitchBtn" onAction="#onSwitchToAdmin" styleClass="nav-item"
-                        mnemonicParsing="false" contentDisplay="GRAPHIC_ONLY" visible="false" managed="false">
-                    <tooltip><Tooltip text="Switch to POS" /></tooltip>
-                    <graphic><StackPane styleClass="nav-icon-host"><SVGPath fx:id="switchIcon" styleClass="phosphor-icon" /></StackPane></graphic>
-                </Button>
+
 
                 <VBox styleClass="sidebar-bottom" spacing="16">
                     <Region styleClass="sidebar-divider"/>

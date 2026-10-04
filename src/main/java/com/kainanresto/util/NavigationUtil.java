@@ -6,6 +6,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.stage.WindowEvent;
@@ -70,14 +71,15 @@ public final class NavigationUtil {
 
     private static void configureWindowMode(Stage stage, String fxmlPath) {
         String pathLower = fxmlPath.toLowerCase();
-
         boolean isDashboard = pathLower.contains("mainadminview") || pathLower.contains("clientview");
 
         if (isDashboard) {
-            //FULL SCREEN PAG NASA LOOB NA
+            stage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH); // ESC no longer exits
+            stage.setFullScreenExitHint("");                                // hides the "Press ESC to exit" popup
             stage.setFullScreen(true);
         } else {
-            //MINIMIZED NA PAG NASA LABAS
+            stage.setFullScreenExitKeyCombination(KeyCombination.keyCombination("ESC")); // restore default
+            stage.setFullScreen(false);
             stage.setMaximized(false);
             stage.setResizable(false);
         }
