@@ -224,9 +224,14 @@ public class MenuController {
     private Node createDishCard(Dishes dish) {
         StackPane imageShell = new StackPane();
         imageShell.getStyleClass().add("dish-image-shell");
-        if (dish.imageUrl() != null && !dish.imageUrl().isBlank()) {
+
+        if (dish.imageUrl() == null || dish.imageUrl().isBlank()) {
+            System.out.println("[IMG] no URL for dish: " + dish.name());
+        } else {
             try {
                 Image image = new Image(dish.imageUrl(), DISH_IMAGE_SIZE * 2, DISH_IMAGE_SIZE * 2, true, true, true);
+                watchImage(image, dish.name(), dish.imageUrl());
+
                 ImageView imageView = new ImageView(image);
                 imageView.setFitWidth(DISH_IMAGE_SIZE);
                 imageView.setFitHeight(DISH_IMAGE_SIZE);
@@ -235,7 +240,9 @@ public class MenuController {
                 double r = DISH_IMAGE_SIZE / 2.0;
                 imageView.setClip(new Circle(r, r, r));
                 imageShell.getChildren().add(imageView);
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                System.out.println("[IMG EXCEPTION] " + dish.name() + " | " + dish.imageUrl() + " -> " + e);
+            }
         }
 
         Label name = new Label(dish.name());
@@ -269,6 +276,21 @@ public class MenuController {
         wrapper.setOnMouseClicked(e -> openViewDishForm(dish));
 
         return wrapper;
+    }
+
+    /** Debug helper: JavaFX never throws for background-loaded images, so log errors and successes here. */
+    private void watchImage(Image image, String label, String url) {
+        image.errorProperty().addListener((obs, was, isErr) -> {
+            if (isErr) System.out.println("[IMG ERROR] " + label + " | " + url + " -> " + image.getException());
+        });
+        image.progressProperty().addListener((obs, o, n) -> {
+            if (n.doubleValue() >= 1.0 && !image.isError()) {
+                System.out.println("[IMG OK] " + label + " " + image.getWidth() + "x" + image.getHeight());
+            }
+        });
+        if (image.isError()) {
+            System.out.println("[IMG ERROR] " + label + " | " + url + " -> " + image.getException());
+        }
     }
 
     /* ============================== ADD/EDIT DISH FORM LOGIC ============================== */
@@ -395,9 +417,12 @@ public class MenuController {
             addDishImageUri = dish.imageUrl();
             try {
                 Image image = new Image(addDishImageUri, 300.0, 300.0, true, true, true);
+                watchImage(image, "preview:" + dish.name(), addDishImageUri);
                 addDishPreviewImage.setImage(image);
                 applyCoverCrop(addDishPreviewImage, image);
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                System.out.println("[IMG EXCEPTION] preview " + dish.name() + " -> " + e);
+            }
         }
 
         menuGridView.setVisible(false);
@@ -447,8 +472,6 @@ public class MenuController {
             }
             return;
         }
-
-
 
         // Handle Save/Update Logic
         setAddDishError(null);

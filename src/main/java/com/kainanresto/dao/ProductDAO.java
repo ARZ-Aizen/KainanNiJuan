@@ -8,22 +8,51 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ProductDAO {
 
-    /* ============================== IMAGE SERVER SETTINGS ============================== */
+    /* ============================== IMAGE SETTINGS ============================== */
 
-    // Server layout: http://192.168.1.15/kainan_images/<Category>/<filename>
-    private static final String IMAGE_SERVER = "http://192.168.1.15/kainan_images/";
+    // Change the host without editing code:  -Dkainan.server=192.168.1.20
+    private static final String IMAGE_HOST   = System.getProperty("kainan.server", "192.168.1.15");
+    private static final String IMAGE_SERVER = "http://" + IMAGE_HOST + "/kainan_images/";
+    private static final String UPLOAD_URL   = "http://" + IMAGE_HOST + "/upload.php";
+
+    // Optional folder on disk, same layout:  <folder>/<Category>/<filename>
+    // Default: <user home>/kainan_images   (override with -Dkainan.localImages=D:/images)
+    private static final Path LOCAL_IMAGE_DIR = Paths.get(
+            System.getProperty("kainan.localImages", System.getProperty("user.home") + "/kainan_images"));
+
+    private static final String RESOURCE_BASE = "/com/kainanresto/images/main/PreloadDish/";
+
     private static final long RETRY_AFTER_MS = 30_000;   // retry the server after 30s if it was down
     private static volatile long serverDownUntil = 0;    // skip server checks until this time
+    private static final Map<String, String> serverHits = new ConcurrentHashMap<>();
+
+    private static boolean debugged = false;
+
+
+    private void debugClasspath(String category, String fileName) {
+        if (debugged) return;
+        debugged = true;
+        String path = RESOURCE_BASE + category + "/" + fileName;
+        System.out.println("[DEBUG] looking for: " + path);
+        System.out.println("[DEBUG] found: " + getClass().getResource(path));
+        System.out.println("[DEBUG] base folder: " + getClass().getResource(RESOURCE_BASE));
+        System.out.println("[DEBUG] classes root: " + getClass().getResource("/"));
+    }
 
     /* ============================== CATEGORIES ============================== */
 
@@ -89,73 +118,124 @@ public class ProductDAO {
         return URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
+    private static String fileNameOf(String raw) {
+        String f = raw.replace("%20", " ");
+        int i = Math.max(f.lastIndexOf('/'), f.lastIndexOf('\\'));
+        return i >= 0 ? f.substring(i + 1) : f;
+    }
+
+    /** Order: server -> classpath -> local folder -> stored path (if it exists on this PC). */
     private String resolveImageUrl(String rawImageUri, String categoryName) {
-        if (rawImageUri == null || rawImageUri.isEmpty()) {
-            return null;
+        if (rawImageUri == null || rawImageUri.isBlank()) return null;
+        String raw = rawImageUri.trim();
+
+        // Already an http(s) URL? Use as is.
+        if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
+
+        String fileName = fileNameOf(raw);
+        String cat = categoryName == null ? "" : categoryName;
+
+        String url = findOnServer(cat, fileName);
+        if (url == null) url = findInClasspath(cat, fileName);
+        if (url == null) url = findInLocalFolder(cat, fileName);
+        if (url == null) url = findStoredPath(raw);
+
+        if (url == null) {
+            System.out.println("[IMAGE] NOT FOUND: category='" + cat + "', file='" + fileName
+                    + "' (tried server, " + RESOURCE_BASE + cat + "/, " + LOCAL_IMAGE_DIR + ")");
+            return raw;
         }
+        return url;
+    }
 
-        // Already a full URL stored in the DB? Use it as is.
-        if (rawImageUri.startsWith("http://") || rawImageUri.startsWith("https://")) {
-            return rawImageUri;
-        }
+    private String findOnServer(String category, String fileName) {
+        if (category.isEmpty()) return null;
 
-        // Clean the filename
-        String fileName = rawImageUri;
-        if (fileName.contains("/") || fileName.contains("\\")) {
-            fileName = fileName.substring(Math.max(fileName.lastIndexOf("/"), fileName.lastIndexOf("\\")) + 1);
-        }
+        String key = category + "/" + fileName;
+        String cached = serverHits.get(key);
+        if (cached != null) return cached;
 
-        // 1. Try the server first (skipped if it was recently unreachable)
-        if (categoryName != null && System.currentTimeMillis() >= serverDownUntil) {
-            HttpURLConnection connection = null;
-            try {
-                // Encode spaces (e.g., "banana cue.png" -> "banana%20cue.png")
-                String serverUrl = IMAGE_SERVER + encodePath(categoryName) + "/" + encodePath(fileName);
+        if (System.currentTimeMillis() < serverDownUntil) return null;
 
-                connection = (HttpURLConnection) new URL(serverUrl).openConnection();
-                connection.setRequestMethod("GET");
-                connection.setConnectTimeout(1500);
-                connection.setReadTimeout(1500);
-
-                int code = connection.getResponseCode();
-
-                if (code == 200) {
-                    return serverUrl; // Image found on the server
-                }
-                // Server is up but file isn't there (404, etc.) -> fall through to local
-            } catch (IOException e) {
-                // Server unreachable -> don't retry for a while
-                serverDownUntil = System.currentTimeMillis() + RETRY_AFTER_MS;
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (connection != null) connection.disconnect();
-            }
-        }
-
-        // 2. Fallback: local resources
+        HttpURLConnection c = null;
         try {
-            String resourcePath = "/com/kainanresto/images/main/PreloadDish/" + categoryName + "/" + fileName;
-            URL localResource = getClass().getResource(resourcePath);
+            String serverUrl = IMAGE_SERVER + encodePath(category) + "/" + encodePath(fileName);
+            c = (HttpURLConnection) new URL(serverUrl).openConnection();
+            c.setRequestMethod("HEAD");
+            c.setConnectTimeout(1500);
+            c.setReadTimeout(1500);
 
-            if (localResource != null) {
-                return localResource.toExternalForm();
+            if (c.getResponseCode() == 200) {
+                serverHits.put(key, serverUrl);
+                return serverUrl;
+            }
+            // Server is up but file isn't there (404, etc.) -> fall through
+        } catch (IOException e) {
+            // Server unreachable -> don't retry for a while
+            serverDownUntil = System.currentTimeMillis() + RETRY_AFTER_MS;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (c != null) c.disconnect();
+        }
+        return null;
+    }
+
+    private String findInClasspath(String category, String fileName) {
+        debugClasspath(category, fileName);
+
+        String[] candidates = {
+                RESOURCE_BASE + category + "/" + fileName,
+                RESOURCE_BASE + category + "/" + fileName.toLowerCase(),
+                RESOURCE_BASE + fileName
+        };
+        for (String path : candidates) {
+            URL res = getClass().getResource(path);
+            if (res != null) return res.toExternalForm();
+        }
+        return null;
+    }
+
+    private String findInLocalFolder(String category, String fileName) {
+        try {
+            Path dir = LOCAL_IMAGE_DIR.resolve(category);
+            Path exact = dir.resolve(fileName);
+            if (Files.isRegularFile(exact)) return exact.toUri().toString();
+
+            // case-insensitive match (Banana Shake.png vs banana shake.png)
+            if (Files.isDirectory(dir)) {
+                try (var stream = Files.list(dir)) {
+                    return stream.filter(p -> p.getFileName().toString().equalsIgnoreCase(fileName))
+                            .findFirst().map(p -> p.toUri().toString()).orElse(null);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return null;
+    }
 
-        // 3. Last resort: whatever was stored
-        return rawImageUri;
+    /** Last resort: the path stored in the DB, only if it really exists on this machine. */
+    private String findStoredPath(String raw) {
+        try {
+            File f;
+            if (raw.startsWith("file:")) {
+                f = new File(new URI(raw.replace(" ", "%20")));
+            } else {
+                f = new File(raw);
+            }
+            if (f.isFile()) return f.toURI().toString();
+        } catch (Exception ignored) { }
+        return null;
     }
 
     /* ============================== IMAGE UPLOAD ============================== */
 
-    /** Sends the image to http://192.168.1.15/upload.php, which saves it in kainan_images/<Category>/. */
+    /** Sends the image to upload.php, which saves it in kainan_images/<Category>/. */
     public boolean uploadImage(File file, String categoryName) {
         HttpURLConnection conn = null;
         try {
-            String url = "http://192.168.1.15/upload.php?category=" + encodePath(categoryName)
+            String url = UPLOAD_URL + "?category=" + encodePath(categoryName)
                     + "&filename=" + encodePath(file.getName());
 
             conn = (HttpURLConnection) new URL(url).openConnection();
@@ -171,7 +251,9 @@ public class ProductDAO {
 
             int code = conn.getResponseCode();
             System.out.println("[UPLOAD] " + file.getName() + " -> HTTP " + code);
-            return code == 200;
+            boolean ok = code == 200;
+            if (ok) serverHits.clear();
+            return ok;
         } catch (Exception e) {
             System.out.println("[UPLOAD] failed: " + e);
             return false;
@@ -199,7 +281,6 @@ public class ProductDAO {
                 boolean isAvailable = rs.getBoolean("available") && rs.getInt("quantity") > 0;
                 String categoryName = rs.getString("category_name");
 
-                // Server first, then local resources, using the stored filename and category
                 String validImageUrl = resolveImageUrl(rs.getString("image_url"), categoryName);
 
                 Dishes dish = new Dishes(
@@ -222,7 +303,7 @@ public class ProductDAO {
 
     public boolean addDish(NewDishForm form) {
         String query = """
-            INSERT INTO dishes (category_id, name, price, description, image_url, quantity, available) 
+            INSERT INTO dishes (category_id, name, price, description, image_url, quantity, available)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """;
 
@@ -249,7 +330,7 @@ public class ProductDAO {
 
     public boolean updateDish(Dishes currentDish, NewDishForm form) {
         String query = """
-            UPDATE dishes 
+            UPDATE dishes
             SET category_id = ?, name = ?, price = ?, description = ?, image_url = ?, quantity = ?, available = ?
             WHERE id = ?
         """;

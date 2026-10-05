@@ -1,14 +1,14 @@
 bind-address = "0.0.0.0"
 
 CREATE USER 'pos_user'@'%' IDENTIFIED BY 'pos123';
-GRANT ALL PRIVILEGES ON kainan_pos.* TO 'pos_user'@'%';
+GRANT ALL PRIVILEGES ON kainan_db.* TO 'pos_user'@'%';
 FLUSH PRIVILEGES;
 EXIT;
 
 // Index for table 'db' is corrupt; try to repair it
 
 REPAIR TABLE mysql.db;
-GRANT ALL PRIVILEGES ON kainan_pos.* TO 'pos_user'@'%';
+GRANT ALL PRIVILEGES ON kainan_db.* TO 'pos_user'@'%';
 FLUSH PRIVILEGES;
 EXIT;
 
@@ -25,7 +25,15 @@ RESTART
 mysql_upgrade -u root -p --force
 
 mysql -u root -p
-GRANT ALL PRIVILEGES ON kainan_pos.* TO 'pos_user'@'%';
+GRANT ALL PRIVILEGES ON kainan_db.* TO 'pos_user'@'%';
 FLUSH PRIVILEGES;
 EXIT;
+
+OR
+
+mysql -u root -p
+GRANT ALL PRIVILEGES ON kainan_db.* TO 'pos_user'@'%';
+FLUSH PRIVILEGES;
+EXIT;
+
 
