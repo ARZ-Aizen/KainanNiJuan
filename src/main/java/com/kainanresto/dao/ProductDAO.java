@@ -155,28 +155,35 @@ public class ProductDAO {
         String cached = serverHits.get(key);
         if (cached != null) return cached;
 
-        if (System.currentTimeMillis() < serverDownUntil) return null;
+        if (System.currentTimeMillis() < serverDownUntil) {
+            System.out.println("[SERVER] skipped (marked down): " + key);
+            return null;
+        }
 
-        HttpURLConnection c = null;
-        try {
-            String serverUrl = IMAGE_SERVER + encodePath(category) + "/" + encodePath(fileName);
-            c = (HttpURLConnection) new URL(serverUrl).openConnection();
-            c.setRequestMethod("HEAD");
-            c.setConnectTimeout(1500);
-            c.setReadTimeout(1500);
+        String serverUrl = IMAGE_SERVER + encodePath(category) + "/" + encodePath(fileName);
 
-            if (c.getResponseCode() == 200) {
-                serverHits.put(key, serverUrl);
-                return serverUrl;
+        for (String method : new String[]{"HEAD", "GET"}) {
+            HttpURLConnection c = null;
+            try {
+                c = (HttpURLConnection) new URL(serverUrl).openConnection();
+                c.setRequestMethod(method);
+                c.setConnectTimeout(2000);
+                c.setReadTimeout(2000);
+
+                int code = c.getResponseCode();
+                if (code == 200) {
+                    serverHits.put(key, serverUrl);
+                    return serverUrl;
+                }
+                System.out.println("[SERVER] " + method + " " + code + " -> " + serverUrl);
+                if (code != 405 && code != 501 && code != 403) return null; // real answer, no need to retry with GET
+            } catch (IOException e) {
+                System.out.println("[SERVER] unreachable (" + e + ") -> " + serverUrl);
+                serverDownUntil = System.currentTimeMillis() + RETRY_AFTER_MS;
+                return null;
+            } finally {
+                if (c != null) c.disconnect();
             }
-            // Server is up but file isn't there (404, etc.) -> fall through
-        } catch (IOException e) {
-            // Server unreachable -> don't retry for a while
-            serverDownUntil = System.currentTimeMillis() + RETRY_AFTER_MS;
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (c != null) c.disconnect();
         }
         return null;
     }
