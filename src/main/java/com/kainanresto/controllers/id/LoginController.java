@@ -138,14 +138,6 @@
             String title = "Kainan Ni Juan POS - " + user.getFullName() + " (" + user.getRole() + ")";
             NavigationUtil.switchScene(event, fxmlPath, title);
         }
-
-        @FXML private void handleForgotPassword(ActionEvent event) {
-            NavigationUtil.switchScene(event, "/com/kainanresto/views/id/ForgotPasswordView.fxml", "Kainan Ni Juan - Forgot Password");
-        }
-    
-        @FXML private void handleRegister(ActionEvent event) {
-            NavigationUtil.switchScene(event, "/com/kainanresto/views/id/RegisterView.fxml", "Kainan Ni Juan - Register");
-        }
     
         @FXML private void handleUsernameEnter(ActionEvent event) {
             if (passwordVisible) {
