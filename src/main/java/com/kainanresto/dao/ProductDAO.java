@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -238,8 +239,16 @@ public class ProductDAO {
 
     /* ============================== IMAGE UPLOAD ============================== */
 
-    /** Sends the image to upload.php, which saves it in kainan_images/<Category>/. */
     public boolean uploadImage(File file, String categoryName) {
+        if (uploadToServer(file, categoryName)) return true;
+
+        System.out.println("[UPLOAD] server failed, saving locally instead");
+        return saveToLocalFolder(file, categoryName);
+    }
+
+    private boolean uploadToServer(File file, String categoryName) {
+        if (System.currentTimeMillis() < serverDownUntil) return false;
+
         HttpURLConnection conn = null;
         try {
             String url = UPLOAD_URL + "?category=" + encodePath(categoryName)
@@ -258,14 +267,35 @@ public class ProductDAO {
 
             int code = conn.getResponseCode();
             System.out.println("[UPLOAD] " + file.getName() + " -> HTTP " + code);
-            boolean ok = code == 200;
-            if (ok) serverHits.clear();
-            return ok;
-        } catch (Exception e) {
-            System.out.println("[UPLOAD] failed: " + e);
+            if (code == 200) {
+                serverHits.clear();
+                return true;
+            }
+            return false;
+        } catch (IOException e) {
+            System.out.println("[UPLOAD] server unreachable: " + e);
+            serverDownUntil = System.currentTimeMillis() + RETRY_AFTER_MS;
             return false;
         } finally {
             if (conn != null) conn.disconnect();
+        }
+    }
+
+    private boolean saveToLocalFolder(File file, String categoryName) {
+        try {
+            Path dir = LOCAL_IMAGE_DIR.resolve(categoryName);
+            Files.createDirectories(dir);
+            Path target = dir.resolve(file.getName());
+
+            if (file.toPath().toAbsolutePath().normalize().equals(target.toAbsolutePath().normalize())) {
+                return true;
+            }
+            Files.copy(file.toPath(), target, StandardCopyOption.REPLACE_EXISTING);
+            System.out.println("[UPLOAD] saved locally -> " + target);
+            return true;
+        } catch (Exception e) {
+            System.out.println("[UPLOAD] local save failed: " + e);
+            return false;
         }
     }
 
