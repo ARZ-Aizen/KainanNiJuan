@@ -187,7 +187,14 @@
 
         private void completeOrder(OrderCard order) {
             if (order == null || order.status() != OrderStatus.PREPARING) return;
-            if (onCompleteOrder != null) onCompleteOrder.accept(order);   // e.g. save to the database
+
+            boolean yes = AlertUtil.showYesNoConfirmation(
+                    "Complete Order",
+                    "Complete order #" + order.orderNumber() + "?",
+                    "This will mark the order as completed. This action cannot be undone.");
+            if (!yes) return;
+
+            if (onCompleteOrder != null) onCompleteOrder.accept(order);
             updateOrderStatus(order.orderNumber(), OrderStatus.COMPLETED);
         }
 
@@ -196,9 +203,10 @@
             boolean yes = AlertUtil.showYesNoConfirmation(
                     "Cancel Order",
                     "Cancel order #" + order.orderNumber() + "?",
-                    "This action cannot be undone.");
+                    "This will cancel the order and cannot be undone.");
             if (!yes) return;
-            if (onCancelOrder != null) onCancelOrder.accept(order);       // e.g. save to the database / restore stock
+
+            if (onCancelOrder != null) onCancelOrder.accept(order);
             updateOrderStatus(order.orderNumber(), OrderStatus.CANCELLED);
         }
 
@@ -323,7 +331,7 @@
                     Label name = new Label(ClientUIHelper.valueOrDash(line.name()));
                     name.getStyleClass().add("om-line-name");
                     name.setMaxWidth(Double.MAX_VALUE);
-                    name.setWrapText(false);                // long names get an ellipsis instead of growing the card
+                    name.setWrapText(false);
                     HBox.setHgrow(name, Priority.ALWAYS);
                     Label qty = new Label("\u00D7" + line.quantity());
                     qty.getStyleClass().add("om-line-qty");
@@ -370,9 +378,7 @@
                 HBox.setHgrow(complete, Priority.ALWAYS);
                 actions.getChildren().add(complete);
             }
-            actions.getChildren().add(createOmButton("Details", "om-btn-outline", () -> {
-                if (onOrderDetails != null) onOrderDetails.accept(order);
-            }));
+            actions.getChildren().add(createOmButton("Details", "om-btn-outline", () -> openOrderDetails(order)));
 
             Region fill = new Region();
             VBox.setVgrow(fill, Priority.ALWAYS);
@@ -399,7 +405,6 @@
         private void selectOrder(String orderNumber) {
             boolean wasOpen = omReceiptPanel.isVisible();
             omSelectedOrderNo = Objects.equals(omSelectedOrderNo, orderNumber) ? null : orderNumber;
-            // Use the stored receipt (lines, totals, cashier, discount) for the selected order
             omReceiptDetails = omSelectedOrderNo == null ? null : omReceipts.get(omSelectedOrderNo);
             updateOmReceiptPanel();
 
@@ -413,6 +418,15 @@
             if (omSelectedOrderNo != null && onOrderSelected != null) {
                 OrderCard order = findOmOrder(omSelectedOrderNo);
                 if (order != null) onOrderSelected.accept(order);
+            }
+        }
+
+        private void openOrderDetails(OrderCard order) {
+            if (order == null) return;
+            selectOrder(order.orderNumber());
+
+            if (Objects.equals(omSelectedOrderNo, order.orderNumber()) && onOrderDetails != null) {
+                onOrderDetails.accept(order);
             }
         }
 

@@ -2,6 +2,7 @@ package com.kainanresto.controllers.main.client.pos;
 
 import com.kainanresto.controllers.main.client.ClientUIHelper;
 import com.kainanresto.model.transac.PaymentResult;
+import com.kainanresto.util.AlertUtil;
 import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -136,12 +137,37 @@ public final class PaymentDialog {
         Runnable doConfirm = () -> {
             BigDecimal tendered = parse(field.getText());
             if (tendered.compareTo(total) < 0) return;
-            result[0] = new PaymentResult(tendered, tendered.subtract(total));
+
+            BigDecimal change = tendered.subtract(total);
+
+            boolean yes = AlertUtil.showYesNoConfirmation(
+                    "Confirm Payment",
+                    "Confirm payment?",
+                    "Total due: " + ClientUIHelper.formatPeso(total)
+                            + "\nAmount received: " + ClientUIHelper.formatPeso(tendered)
+                            + "\nChange: " + ClientUIHelper.formatPeso(change));
+            if (!yes) {
+                field.requestFocus();   // back to the amount field so the cashier can correct it
+                return;
+            }
+
+            result[0] = new PaymentResult(tendered, change);
             stage.close();
         };
+
         confirm.setOnAction(e -> doConfirm.run());
         field.setOnAction(e -> { if (!confirm.isDisable()) doConfirm.run(); });
-        cancel.setOnAction(e -> stage.close());
+
+        cancel.setOnAction(e -> {
+            boolean hasInput = parse(field.getText()).signum() > 0;
+            if (!hasInput || AlertUtil.showYesNoConfirmation(
+                    "Cancel Payment",
+                    "Cancel payment?",
+                    "The amount entered will be discarded.")) {
+                stage.close();
+            }
+        });
+
         stage.setOnShown(e -> field.requestFocus());
 
         stage.showAndWait();
