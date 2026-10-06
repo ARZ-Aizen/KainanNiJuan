@@ -8,6 +8,8 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.geometry.Rectangle2D;
+import javafx.stage.Screen;
 
 import java.io.IOException;
 
@@ -50,13 +52,9 @@ public final class AlertUtil {
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.initStyle(StageStyle.TRANSPARENT);
 
-            javafx.stage.Window activeWindow = javafx.stage.Window.getWindows().stream()
-                    .filter(javafx.stage.Window::isFocused)
-                    .findFirst()
-                    .orElse(null);
-
-            if (activeWindow instanceof Stage) {
-                stage.initOwner(activeWindow);
+            Stage owner = findOwnerStage();
+            if (owner != null) {
+                stage.initOwner(owner);
             }
 
             controller.setStage(stage);
@@ -66,7 +64,24 @@ public final class AlertUtil {
             scene.setFill(Color.TRANSPARENT);
             stage.setScene(scene);
 
-            stage.centerOnScreen();
+            stage.setOpacity(0);
+            stage.setOnShown(e -> {
+                double x, y;
+
+                if (owner != null && !owner.isIconified()) {
+                    x = owner.getX() + (owner.getWidth() - stage.getWidth()) / 2;
+                    y = owner.getY() + (owner.getHeight() - stage.getHeight()) / 2;
+                } else {
+                    Rectangle2D b = Screen.getPrimary().getVisualBounds();
+                    x = b.getMinX() + (b.getWidth() - stage.getWidth()) / 2;
+                    y = b.getMinY() + (b.getHeight() - stage.getHeight()) / 2;
+                }
+
+                stage.setX(x);
+                stage.setY(y);
+                stage.setOpacity(1);
+            });
+
             stage.showAndWait();
 
             return controller.getResult();
@@ -75,5 +90,15 @@ public final class AlertUtil {
             e.printStackTrace();
             return false;
         }
+    }
+
+    private static Stage findOwnerStage() {
+        Stage fallback = null;
+        for (javafx.stage.Window w : javafx.stage.Window.getWindows()) {
+            if (!(w instanceof Stage s) || !s.isShowing() || s.isIconified()) continue;
+            if (s.isFocused()) return s;
+            fallback = s;
+        }
+        return fallback;
     }
 }
