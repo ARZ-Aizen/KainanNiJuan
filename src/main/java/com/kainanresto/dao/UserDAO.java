@@ -6,12 +6,12 @@ import com.kainanresto.model.account.AccountRow;
 import com.kainanresto.model.account.AccountStatus;
 import com.kainanresto.model.account.User;
 import com.kainanresto.util.PasswordHasher;
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
-import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +20,12 @@ import java.util.Optional;
 public class UserDAO {
 
     private static final int MYSQL_DUPLICATE_KEY_ERROR = 1062;
+
+    // Random 8-digit user IDs (10,000,000 - 99,999,999)
+    private static final int USER_ID_MIN = 10_000_000;
+    private static final int USER_ID_MAX = 99_999_999;
+    private static final int USER_ID_MAX_ATTEMPTS = 10;
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     public enum OperationResult {
         SUCCESS,
@@ -79,37 +85,56 @@ public class UserDAO {
         }
     }
 
-    // REGISTER
+    // REGISTER (assigns a random, unique user_id)
     public OperationResult register(User user) {
-        String sql = "INSERT INTO users (username, password, role, full_name, is_active) " +
-                "VALUES (?, ?, ?, ?, ?)";
+        // Check the username first so a duplicate username is never confused with an ID collision
+        if (checkUserExists(user.getUsername())) {
+            return OperationResult.DUPLICATE_ENTRY;
+        }
 
-        try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        String sql = "INSERT INTO users (user_id, username, password, role, full_name, is_active) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
+        String hashedPassword = PasswordHasher.hash(user.getPassword());
 
-            stmt.setString(1, user.getUsername());
-            stmt.setString(2, PasswordHasher.hash(user.getPassword()));
-            stmt.setString(3, user.getRole().name());
-            stmt.setString(4, user.getFullName());
-            stmt.setBoolean(5, user.isActive());
+        for (int attempt = 0; attempt < USER_ID_MAX_ATTEMPTS; attempt++) {
+            int randomId = generateRandomUserId();
 
-            int affectedRows = stmt.executeUpdate();
-            if (affectedRows > 0) {
-                try (ResultSet keys = stmt.getGeneratedKeys()) {
-                    if (keys.next()) {
-                        user.setUserId(keys.getInt(1));
-                    }
+            try (Connection conn = DatabaseConfig.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+                stmt.setInt(1, randomId);
+                stmt.setString(2, user.getUsername());
+                stmt.setString(3, hashedPassword);
+                stmt.setString(4, user.getRole().name());
+                stmt.setString(5, user.getFullName());
+                stmt.setBoolean(6, user.isActive());
+
+                if (stmt.executeUpdate() > 0) {
+                    user.setUserId(randomId);
+                    return OperationResult.SUCCESS;
                 }
-                return OperationResult.SUCCESS;
+                return OperationResult.DATABASE_ERROR;
+
+            } catch (SQLIntegrityConstraintViolationException e) {
+                if (e.getErrorCode() == MYSQL_DUPLICATE_KEY_ERROR) {
+                    String msg = e.getMessage() == null ? "" : e.getMessage().toUpperCase();
+                    if (msg.contains("PRIMARY")) {
+                        continue; // random ID collided, try another one
+                    }
+                    return OperationResult.DUPLICATE_ENTRY; // username collision (race condition)
+                }
+                System.err.println("UserDAO.register: DB Error - " + e.getMessage());
+                return OperationResult.DATABASE_ERROR;
+            } catch (SQLException e) {
+                System.err.println("UserDAO.register: DB Error - " + e.getMessage());
+                return OperationResult.DATABASE_ERROR;
             }
-        } catch (SQLIntegrityConstraintViolationException e) {
-            if (e.getErrorCode() == MYSQL_DUPLICATE_KEY_ERROR) {
-                return OperationResult.DUPLICATE_ENTRY;
-            }
-        } catch (SQLException e) {
-            System.err.println("UserDAO.register: DB Error - " + e.getMessage());
         }
         return OperationResult.DATABASE_ERROR;
+    }
+
+    private int generateRandomUserId() {
+        return USER_ID_MIN + RANDOM.nextInt(USER_ID_MAX - USER_ID_MIN + 1);
     }
 
     // RESET PASSWORD
@@ -222,11 +247,9 @@ public class UserDAO {
                 LocalDateTime lastLogin = rs.getTimestamp("last_login") != null ?
                         rs.getTimestamp("last_login").toLocalDateTime() : null;
 
-                // Converted to LocalDate to match your AccountRow model
                 java.time.LocalDate createdAt = rs.getTimestamp("created_at") != null ?
                         rs.getTimestamp("created_at").toLocalDateTime().toLocalDate() : null;
 
-                // Passed an empty string ("") for the email parameter to satisfy the compiler
                 accounts.add(new AccountRow(id, fullName, username, role, status, lastLogin, createdAt));
             }
         } catch (SQLException e) {
@@ -245,7 +268,7 @@ public class UserDAO {
             sql = "UPDATE users SET full_name = ?, username = ?, role = ?, is_active = ? WHERE user_id = ?";
         }
 
-        try (Connection conn = com.kainanresto.config.DatabaseConfig.getConnection();
+        try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, fullName);
@@ -254,8 +277,7 @@ public class UserDAO {
             int paramIndex = 3;
 
             if (updatePassword) {
-                String hashedPassword = com.kainanresto.util.PasswordHasher.hash(newPassword);
-                pstmt.setString(paramIndex++, hashedPassword);
+                pstmt.setString(paramIndex++, PasswordHasher.hash(newPassword));
             }
 
             pstmt.setString(paramIndex++, role.name());

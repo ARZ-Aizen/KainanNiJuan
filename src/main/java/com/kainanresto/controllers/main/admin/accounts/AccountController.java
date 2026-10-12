@@ -4,6 +4,7 @@ import com.kainanresto.dao.UserDAO;
 import com.kainanresto.model.account.AccountRole;
 import com.kainanresto.model.account.AccountRow;
 import com.kainanresto.model.account.AccountStatus;
+import com.kainanresto.model.account.User;
 import com.kainanresto.model.util.Icons;
 import com.kainanresto.util.AlertUtil;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -39,10 +40,11 @@ public class AccountController {
     /* ============================== VIEWS ============================== */
     @FXML private VBox accountsView;
     @FXML private ScrollPane editAccountView;
+    @FXML private ScrollPane addAccountView;
 
     /* ============================== ACCOUNTS LIST ============================== */
     @FXML private HBox accountsSearchBox, accountsRolePill, accountsStatusPill, accountsLastLoginPill;
-    @FXML private SVGPath accountsSearchIcon;
+    @FXML private SVGPath accountsSearchIcon, addAccountBtnIcon;
     @FXML private TextField accountsSearchField;
     @FXML private Label accountsRoleValueLabel, accountsStatusValueLabel, accountsLastLoginValueLabel;
 
@@ -53,9 +55,19 @@ public class AccountController {
     /* ============================== EDIT ACCOUNT FORM ============================== */
     @FXML private TextField editAccountNameField, editAccountUsernameField, editAccountVisiblePasswordField;
     @FXML private PasswordField editAccountPasswordField;
+    @FXML private TextField editAccountVisibleConfirmPasswordField;
+    @FXML private PasswordField editAccountConfirmPasswordField;
     @FXML private ComboBox<AccountRole> editAccountRoleCombo;
-    @FXML private ComboBox<AccountStatus> editAccountStatusCombo;
     @FXML private Label editAccountCreatedLabel, editAccountLastLoginLabel, editAccountErrorLabel;
+
+    /* ============================== ADD ACCOUNT FORM ============================== */
+    @FXML private SVGPath addAccountEyeIcon;
+    @FXML private TextField addAccountNameField, addAccountUsernameField, addAccountVisiblePasswordField;
+    @FXML private PasswordField addAccountPasswordField;
+    @FXML private TextField addAccountVisibleConfirmPasswordField;
+    @FXML private PasswordField addAccountConfirmPasswordField;
+    @FXML private ComboBox<AccountRole> addAccountRoleCombo;
+    @FXML private Label addAccountErrorLabel;
 
     private static final PseudoClass FIELD_FOCUSED = PseudoClass.getPseudoClass("field-focused");
     private static final String ACCOUNTS_ALL_ROLES = "All Roles";
@@ -63,6 +75,14 @@ public class AccountController {
     private static final DateTimeFormatter ACCOUNTS_TIME_FMT = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH);
     private static final DateTimeFormatter ACCOUNTS_DATE_FMT = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH);
     private static final DateTimeFormatter EDIT_ACCOUNT_DATE_FMT = DateTimeFormatter.ofPattern("MMMM d, yyyy", Locale.ENGLISH);
+
+    private static final String ICON_PLUS = "M5 12h14 M12 5v14";
+    private static final String ICON_EYE = "M12 5C7.3 5 3.1 8.3 1.2 12c1.9 3.7 6.1 7 10.8 7s8.9-3.3 10.8-7C20.9 8.3 16.7 5 12 5z m0 10c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3z";
+
+    // At least 8 chars, 1 capital letter, 1 digit, 1 special (non-alphanumeric) character
+    private static final String PASSWORD_REGEX = "^(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$";
+    private static final String PASSWORD_RULE_MSG =
+            "Password must be at least 8 characters long and contain at least 1 capital letter, 1 number, and 1 special character.";
 
     private enum AccountsLastLoginFilter {
         ANYTIME("Anytime"), TODAY("Today"), LAST_7_DAYS("Last 7 days"), LAST_30_DAYS("Last 30 days"), NEVER("Never");
@@ -87,6 +107,7 @@ public class AccountController {
         setupIcons();
         setupAccountsPage();
         setupEditAccountPage();
+        setupAddAccountPage();
         loadAccountManagementData();
         showAccountsList();
     }
@@ -95,6 +116,14 @@ public class AccountController {
         if (accountsSearchIcon != null) {
             accountsSearchIcon.setContent(Icons.SEARCH);
             setIconScale(accountsSearchIcon, 14.0);
+        }
+        if (addAccountBtnIcon != null) {
+            addAccountBtnIcon.setContent(ICON_PLUS);
+            setIconScale(addAccountBtnIcon, 16.0);
+        }
+        if (addAccountEyeIcon != null) {
+            addAccountEyeIcon.setContent(ICON_EYE);
+            setIconScale(addAccountEyeIcon, 16.0);
         }
         if (accountsView != null) {
             for (Node n : accountsView.lookupAll(".accounts-pill-chevron")) {
@@ -114,21 +143,48 @@ public class AccountController {
 
     /* ============================== VIEW TOGGLING ============================== */
 
-    private void showAccountsList() {
-        editAccountView.setVisible(false); editAccountView.setManaged(false);
-        accountsView.setVisible(true); accountsView.setManaged(true);
+    private void showView(Node target) {
+        for (Node n : new Node[]{accountsView, editAccountView, addAccountView}) {
+            boolean on = n == target;
+            n.setVisible(on);
+            n.setManaged(on);
+        }
     }
 
-    private void showEditAccountForm() {
-        accountsView.setVisible(false); accountsView.setManaged(false);
-        editAccountView.setVisible(true); editAccountView.setManaged(true);
-    }
+    private void showAccountsList()    { showView(accountsView); }
+    private void showEditAccountForm() { showView(editAccountView); }
+    private void showAddAccountForm()  { showView(addAccountView); }
 
     /* ============================== DATA LOADING ============================== */
 
     private void loadAccountManagementData() {
         accountsMaster.setAll(userDAO.getAllAccounts());
         applyAccountsFilter();
+    }
+
+    /* ============================== PASSWORD HELPERS ============================== */
+
+    private boolean isStrongPassword(String p) {
+        return p != null && p.matches(PASSWORD_REGEX);
+    }
+
+    private String readField(PasswordField hidden, TextField visible) {
+        String p = visible.isVisible() ? visible.getText() : hidden.getText();
+        return p == null ? "" : p;
+    }
+
+    private void togglePasswordVisibility(PasswordField pw, TextField pwVisible, PasswordField cf, TextField cfVisible) {
+        boolean showing = pwVisible.isVisible();
+        if (showing) { pw.setText(pwVisible.getText()); cf.setText(cfVisible.getText()); }
+        else { pwVisible.setText(pw.getText()); cfVisible.setText(cf.getText()); }
+        pw.setVisible(showing); cf.setVisible(showing);
+        pwVisible.setVisible(!showing); cfVisible.setVisible(!showing);
+    }
+
+    private void resetPasswordFields(PasswordField pw, TextField pwVisible, PasswordField cf, TextField cfVisible) {
+        pw.clear(); pwVisible.clear(); cf.clear(); cfVisible.clear();
+        pw.setVisible(true); cf.setVisible(true);
+        pwVisible.setVisible(false); cfVisible.setVisible(false);
     }
 
     /* ============================== ACCOUNTS LIST LOGIC ============================== */
@@ -229,10 +285,9 @@ public class AccountController {
         editingAccount = selectedAccount;
         editAccountNameField.setText(selectedAccount.fullName() == null ? "" : selectedAccount.fullName());
         editAccountUsernameField.setText(selectedAccount.username() == null ? "" : selectedAccount.username());
-        editAccountPasswordField.setText(""); editAccountVisiblePasswordField.setText("");
-        editAccountPasswordField.setVisible(true); editAccountVisiblePasswordField.setVisible(false);
+        resetPasswordFields(editAccountPasswordField, editAccountVisiblePasswordField,
+                editAccountConfirmPasswordField, editAccountVisibleConfirmPasswordField);
         editAccountRoleCombo.setValue(selectedAccount.role());
-        editAccountStatusCombo.setValue(selectedAccount.status());
         editAccountCreatedLabel.setText(selectedAccount.createdDate() == null ? "—" : selectedAccount.createdDate().format(EDIT_ACCOUNT_DATE_FMT));
         editAccountLastLoginLabel.setText(formatAccountLastLogin(selectedAccount.lastLogin()));
 
@@ -255,6 +310,124 @@ public class AccountController {
         }
     }
 
+    /* ============================== ADD ACCOUNT FORM ============================== */
+
+    private void setupAddAccountPage() {
+        List<AccountRole> allowableRoles = new ArrayList<>();
+        for (AccountRole r : AccountRole.values()) if (r != AccountRole.ADMIN) allowableRoles.add(r);
+
+        addAccountRoleCombo.getItems().setAll(allowableRoles);
+        addAccountRoleCombo.setConverter(new StringConverter<>() {
+            @Override public String toString(AccountRole r) { return r == null ? "" : r.getDisplayName(); }
+            @Override public AccountRole fromString(String s) { return null; }
+        });
+
+        addAccountVisiblePasswordField.managedProperty().bind(addAccountVisiblePasswordField.visibleProperty());
+        addAccountPasswordField.managedProperty().bind(addAccountPasswordField.visibleProperty());
+        addAccountVisibleConfirmPasswordField.managedProperty().bind(addAccountVisibleConfirmPasswordField.visibleProperty());
+        addAccountConfirmPasswordField.managedProperty().bind(addAccountConfirmPasswordField.visibleProperty());
+
+        addAccountNameField.setOnAction(e -> addAccountUsernameField.requestFocus());
+        addAccountUsernameField.setOnAction(e -> { if (addAccountVisiblePasswordField.isVisible()) addAccountVisiblePasswordField.requestFocus(); else addAccountPasswordField.requestFocus(); });
+        addAccountPasswordField.setOnAction(e -> addAccountConfirmPasswordField.requestFocus());
+        addAccountVisiblePasswordField.setOnAction(e -> addAccountVisibleConfirmPasswordField.requestFocus());
+        addAccountConfirmPasswordField.setOnAction(e -> addAccountRoleCombo.requestFocus());
+        addAccountVisibleConfirmPasswordField.setOnAction(e -> addAccountRoleCombo.requestFocus());
+    }
+
+    @FXML
+    private void onAddAccount() {
+        addAccountNameField.clear();
+        addAccountUsernameField.clear();
+        resetPasswordFields(addAccountPasswordField, addAccountVisiblePasswordField,
+                addAccountConfirmPasswordField, addAccountVisibleConfirmPasswordField);
+        addAccountRoleCombo.setValue(null);
+        setAddAccountError(null);
+        showAddAccountForm();
+        addAccountNameField.requestFocus();
+    }
+
+    @FXML
+    private void onToggleAddAccountPasswordVisibility() {
+        togglePasswordVisibility(addAccountPasswordField, addAccountVisiblePasswordField,
+                addAccountConfirmPasswordField, addAccountVisibleConfirmPasswordField);
+    }
+
+    @FXML
+    private void onAddAccountCancel() {
+        boolean dirty = !addAccountNameField.getText().isBlank()
+                || !addAccountUsernameField.getText().isBlank()
+                || !addAccountPasswordField.getText().isEmpty()
+                || !addAccountVisiblePasswordField.getText().isEmpty()
+                || !addAccountConfirmPasswordField.getText().isEmpty()
+                || !addAccountVisibleConfirmPasswordField.getText().isEmpty();
+        if (!dirty || AlertUtil.showYesNoConfirmation("Cancel", "Discard new account?", "Anything you entered will be lost.")) {
+            showAccountsList();
+        }
+    }
+
+    @FXML
+    private void onAddAccountSave() {
+        setAddAccountError(null);
+
+        String name = addAccountNameField.getText() == null ? "" : addAccountNameField.getText().trim();
+        String username = addAccountUsernameField.getText() == null ? "" : addAccountUsernameField.getText().trim();
+        if (username.startsWith("@")) username = username.substring(1);
+
+        String password = readField(addAccountPasswordField, addAccountVisiblePasswordField);
+        String confirm = readField(addAccountConfirmPasswordField, addAccountVisibleConfirmPasswordField);
+        AccountRole role = addAccountRoleCombo.getValue();
+
+        if (name.isEmpty() || username.isEmpty() || password.isEmpty() || confirm.isEmpty() || role == null) {
+            setAddAccountError("Please fill in all required fields.");
+            return;
+        }
+        if (!name.matches("^[a-zA-Z\\s\\.]+$")) {
+            AlertUtil.showWarning("Invalid Full Name", "Full name can only contain letters, spaces, and periods.");
+            addAccountNameField.requestFocus();
+            return;
+        }
+        if (!username.matches("^[a-zA-Z0-9_-]{3,}$")) {
+            AlertUtil.showWarning("Invalid Username", "Username must be at least 3 characters long.");
+            addAccountUsernameField.requestFocus();
+            return;
+        }
+        if (!isStrongPassword(password)) {
+            AlertUtil.showWarning("Weak Password", PASSWORD_RULE_MSG);
+            if (addAccountVisiblePasswordField.isVisible()) addAccountVisiblePasswordField.requestFocus(); else addAccountPasswordField.requestFocus();
+            return;
+        }
+        if (!password.equals(confirm)) {
+            setAddAccountError("Passwords do not match.");
+            if (addAccountVisibleConfirmPasswordField.isVisible()) addAccountVisibleConfirmPasswordField.requestFocus(); else addAccountConfirmPasswordField.requestFocus();
+            return;
+        }
+
+        // New accounts start inactive (is_active = 0); login() sets it to 1.
+        // The user ID (0 here) is replaced by a random unique ID inside register().
+        User newUser = new User(0, username, password, role, name, false);
+        UserDAO.OperationResult result = userDAO.register(newUser);
+
+        switch (result) {
+            case SUCCESS -> {
+                AlertUtil.showInfo("Account Created", "The new account was successfully added.");
+                loadAccountManagementData();
+                showAccountsList();
+            }
+            case DUPLICATE_ENTRY -> {
+                setAddAccountError("That username already exists.");
+                addAccountUsernameField.requestFocus();
+            }
+            default -> setAddAccountError("Failed to create account. Please try again.");
+        }
+    }
+
+    private void setAddAccountError(String message) {
+        boolean has = message != null && !message.isBlank();
+        addAccountErrorLabel.setText(has ? message : "");
+        addAccountErrorLabel.setVisible(has); addAccountErrorLabel.setManaged(has);
+    }
+
     /* ============================== EDIT ACCOUNT FORM ============================== */
 
     private void setupEditAccountPage() {
@@ -267,30 +440,23 @@ public class AccountController {
             @Override public AccountRole fromString(String s) { return null; }
         });
 
-        editAccountStatusCombo.getItems().setAll(AccountStatus.values());
-        editAccountStatusCombo.setConverter(new StringConverter<>() {
-            @Override public String toString(AccountStatus s) { return s == null ? "" : s.getDisplayName(); }
-            @Override public AccountStatus fromString(String s) { return null; }
-        });
-
         editAccountVisiblePasswordField.managedProperty().bind(editAccountVisiblePasswordField.visibleProperty());
         editAccountPasswordField.managedProperty().bind(editAccountPasswordField.visibleProperty());
+        editAccountVisibleConfirmPasswordField.managedProperty().bind(editAccountVisibleConfirmPasswordField.visibleProperty());
+        editAccountConfirmPasswordField.managedProperty().bind(editAccountConfirmPasswordField.visibleProperty());
 
         editAccountNameField.setOnAction(e -> editAccountUsernameField.requestFocus());
         editAccountUsernameField.setOnAction(e -> { if (editAccountVisiblePasswordField.isVisible()) editAccountVisiblePasswordField.requestFocus(); else editAccountPasswordField.requestFocus(); });
-        editAccountPasswordField.setOnAction(e -> editAccountRoleCombo.requestFocus());
-        editAccountVisiblePasswordField.setOnAction(e -> editAccountRoleCombo.requestFocus());
+        editAccountPasswordField.setOnAction(e -> editAccountConfirmPasswordField.requestFocus());
+        editAccountVisiblePasswordField.setOnAction(e -> editAccountVisibleConfirmPasswordField.requestFocus());
+        editAccountConfirmPasswordField.setOnAction(e -> editAccountRoleCombo.requestFocus());
+        editAccountVisibleConfirmPasswordField.setOnAction(e -> editAccountRoleCombo.requestFocus());
     }
 
     @FXML
     private void onToggleEditAccountPasswordVisibility() {
-        if (editAccountVisiblePasswordField.isVisible()) {
-            editAccountPasswordField.setText(editAccountVisiblePasswordField.getText());
-            editAccountPasswordField.setVisible(true); editAccountVisiblePasswordField.setVisible(false);
-        } else {
-            editAccountVisiblePasswordField.setText(editAccountPasswordField.getText());
-            editAccountVisiblePasswordField.setVisible(true); editAccountPasswordField.setVisible(false);
-        }
+        togglePasswordVisibility(editAccountPasswordField, editAccountVisiblePasswordField,
+                editAccountConfirmPasswordField, editAccountVisibleConfirmPasswordField);
     }
 
     @FXML
@@ -310,26 +476,33 @@ public class AccountController {
         String username = editAccountUsernameField.getText() == null ? "" : editAccountUsernameField.getText().trim();
         if (username.startsWith("@")) username = username.substring(1);
 
-        String newPassword = editAccountVisiblePasswordField.isVisible() ? editAccountVisiblePasswordField.getText() : editAccountPasswordField.getText();
-        newPassword = newPassword == null ? "" : newPassword;
-
+        String newPassword = readField(editAccountPasswordField, editAccountVisiblePasswordField);
+        String confirm = readField(editAccountConfirmPasswordField, editAccountVisibleConfirmPasswordField);
         AccountRole role = editAccountRoleCombo.getValue();
-        AccountStatus status = editAccountStatusCombo.getValue();
 
-        if (name.isEmpty() || username.isEmpty() || role == null || status == null) { setEditAccountError("Please fill in all required fields."); return; }
+        if (name.isEmpty() || username.isEmpty() || role == null) { setEditAccountError("Please fill in all required fields."); return; }
         if (!name.matches("^[a-zA-Z\\s\\.]+$")) { AlertUtil.showWarning("Invalid Full Name", "Full name can only contain letters, spaces, and periods."); editAccountNameField.requestFocus(); return; }
         if (!username.matches("^[a-zA-Z0-9_-]{3,}$")) { AlertUtil.showWarning("Invalid Username", "Username must be at least 3 characters long."); editAccountUsernameField.requestFocus(); return; }
 
-        if (!newPassword.isEmpty() && (newPassword.length() < 8 || !newPassword.matches("^(?=.*[A-Za-z])(?=.*\\d).+$"))) {
-            AlertUtil.showWarning("Weak Password", "Password must be at least 8 characters long and contain both letters and numbers.");
-            if (editAccountVisiblePasswordField.isVisible()) editAccountVisiblePasswordField.requestFocus(); else editAccountPasswordField.requestFocus();
-            return;
+        // Password is optional on edit; only validate if the user typed something
+        if (!newPassword.isEmpty() || !confirm.isEmpty()) {
+            if (!isStrongPassword(newPassword)) {
+                AlertUtil.showWarning("Weak Password", PASSWORD_RULE_MSG);
+                if (editAccountVisiblePasswordField.isVisible()) editAccountVisiblePasswordField.requestFocus(); else editAccountPasswordField.requestFocus();
+                return;
+            }
+            if (!newPassword.equals(confirm)) {
+                setEditAccountError("Passwords do not match.");
+                if (editAccountVisibleConfirmPasswordField.isVisible()) editAccountVisibleConfirmPasswordField.requestFocus(); else editAccountConfirmPasswordField.requestFocus();
+                return;
+            }
         }
 
         if (!AlertUtil.showYesNoConfirmation("Save Changes", "Update account details?", "Save these changes to the database?")) return;
 
         String finalPassword = newPassword.isEmpty() ? null : newPassword;
-        if (userDAO.updateAccount((int) editingAccount.id(), name, username, finalPassword, role, status)) {
+        // Status is no longer editable; keep whatever it currently is
+        if (userDAO.updateAccount((int) editingAccount.id(), name, username, finalPassword, role, editingAccount.status())) {
             editingAccount = null;
             AlertUtil.showInfo("Account Updated", "The account details were successfully saved.");
             loadAccountManagementData();

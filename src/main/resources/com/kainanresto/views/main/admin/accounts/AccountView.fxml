@@ -16,7 +16,7 @@
                     <StackPane styleClass="accounts-icon-14">
                         <SVGPath fx:id="accountsSearchIcon" styleClass="phosphor-icon, icon-muted"/>
                     </StackPane>
-                    <TextField fx:id="accountsSearchField" promptText="Search accounts by name or email..." styleClass="accounts-search-field" HBox.hgrow="ALWAYS"/>
+                    <TextField fx:id="accountsSearchField" promptText="Search accounts by name or username..." styleClass="accounts-search-field" HBox.hgrow="ALWAYS"/>
                 </HBox>
 
                 <HBox alignment="CENTER_LEFT" spacing="10">
@@ -36,6 +36,13 @@
                         <StackPane styleClass="accounts-icon-12"><SVGPath styleClass="phosphor-icon, icon-muted, accounts-pill-chevron"/></StackPane>
                     </HBox>
                     <Button text="Clear Filters" styleClass="accounts-clear-btn" onAction="#onAccountsClearFilters"/>
+                    <Button fx:id="addAccountBtn" text="Add Account" styleClass="accounts-add-btn" onAction="#onAddAccount" mnemonicParsing="false">
+                        <graphic>
+                            <StackPane styleClass="icon-host-16">
+                                <SVGPath fx:id="addAccountBtnIcon" styleClass="phosphor-icon, icon-on-primary"/>
+                            </StackPane>
+                        </graphic>
+                    </Button>
                 </HBox>
             </HBox>
         </VBox>
@@ -91,25 +98,27 @@
                                         <StackPane.margin><Insets right="4"/></StackPane.margin>
                                     </Button>
                                 </StackPane>
+                                <Label text="At least 8 characters, with 1 capital letter, 1 number and 1 special character." styleClass="edit-card-subtitle" wrapText="true"/>
+                            </VBox>
+                            <VBox spacing="8">
+                                <Label text="Confirm Password" styleClass="edit-field-label"/>
+                                <StackPane alignment="CENTER_RIGHT">
+                                    <TextField fx:id="editAccountVisibleConfirmPasswordField" promptText="Re-enter new password" styleClass="edit-input" visible="false" managed="false"/>
+                                    <PasswordField fx:id="editAccountConfirmPasswordField" promptText="Re-enter new password" styleClass="edit-input"/>
+                                </StackPane>
                             </VBox>
                         </VBox>
 
-                        <!-- Access & Status -->
+                        <!-- Access -->
                         <VBox styleClass="edit-card" spacing="16">
                             <VBox spacing="4">
-                                <Label text="Access &amp; Status" styleClass="edit-card-title"/>
-                                <Label text="Set platform authorization role levels and login availability status." styleClass="edit-card-subtitle" wrapText="true"/>
+                                <Label text="Access" styleClass="edit-card-title"/>
+                                <Label text="Set the platform authorization role level." styleClass="edit-card-subtitle" wrapText="true"/>
                             </VBox>
-                            <HBox spacing="20">
-                                <VBox spacing="8" HBox.hgrow="ALWAYS" prefWidth="0">
-                                    <HBox spacing="4" alignment="CENTER_LEFT"><Label text="Assigned Role" styleClass="edit-field-label"/><Label text="*" styleClass="edit-required"/></HBox>
-                                    <ComboBox fx:id="editAccountRoleCombo" maxWidth="Infinity" styleClass="edit-combo"/>
-                                </VBox>
-                                <VBox spacing="8" HBox.hgrow="ALWAYS" prefWidth="0">
-                                    <HBox spacing="4" alignment="CENTER_LEFT"><Label text="Account Status" styleClass="edit-field-label"/><Label text="*" styleClass="edit-required"/></HBox>
-                                    <ComboBox fx:id="editAccountStatusCombo" maxWidth="Infinity" styleClass="edit-combo"/>
-                                </VBox>
-                            </HBox>
+                            <VBox spacing="8">
+                                <HBox spacing="4" alignment="CENTER_LEFT"><Label text="Assigned Role" styleClass="edit-field-label"/><Label text="*" styleClass="edit-required"/></HBox>
+                                <ComboBox fx:id="editAccountRoleCombo" maxWidth="Infinity" styleClass="edit-combo"/>
+                            </VBox>
                         </VBox>
 
                         <!-- System Meta Details -->
@@ -126,6 +135,78 @@
                             <Label fx:id="editAccountErrorLabel" styleClass="settings-error" visible="false" managed="false"/>
                             <Button text="Cancel" onAction="#onEditAccountCancel" styleClass="edit-cancel-btn" mnemonicParsing="false"/>
                             <Button text="Save Changes" onAction="#onEditAccountSave" styleClass="edit-save-btn" mnemonicParsing="false"/>
+                        </HBox>
+
+                    </VBox>
+                </VBox>
+            </StackPane>
+        </content>
+    </ScrollPane>
+
+    <!-- ============================== ADD ACCOUNT FORM ============================== -->
+    <ScrollPane fx:id="addAccountView" visible="false" managed="false" fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" styleClass="edit-account-scroll">
+        <content>
+            <StackPane alignment="CENTER" styleClass="edit-account-page">
+                <VBox alignment="CENTER" styleClass="edit-account-column">
+                    <VBox spacing="24" maxWidth="600" prefWidth="600">
+
+                        <!-- Account Information -->
+                        <VBox styleClass="edit-card" spacing="16">
+                            <VBox spacing="4">
+                                <Label text="New Account" styleClass="edit-card-title"/>
+                                <Label text="Enter the user's personal details and platform login credentials." styleClass="edit-card-subtitle" wrapText="true"/>
+                            </VBox>
+                            <VBox spacing="8">
+                                <HBox spacing="4" alignment="CENTER_LEFT"><Label text="Full Name" styleClass="edit-field-label"/><Label text="*" styleClass="edit-required"/></HBox>
+                                <TextField fx:id="addAccountNameField" styleClass="edit-input"/>
+                            </VBox>
+                            <VBox spacing="8">
+                                <HBox spacing="4" alignment="CENTER_LEFT"><Label text="Username" styleClass="edit-field-label"/><Label text="*" styleClass="edit-required"/></HBox>
+                                <TextField fx:id="addAccountUsernameField" styleClass="edit-input"/>
+                            </VBox>
+                            <VBox spacing="8">
+                                <HBox spacing="4" alignment="CENTER_LEFT"><Label text="Password" styleClass="edit-field-label"/><Label text="*" styleClass="edit-required"/></HBox>
+                                <StackPane alignment="CENTER_RIGHT">
+                                    <TextField fx:id="addAccountVisiblePasswordField" styleClass="edit-input, edit-input-pw" visible="false" managed="false"/>
+                                    <PasswordField fx:id="addAccountPasswordField" styleClass="edit-input, edit-input-pw"/>
+                                    <Button onAction="#onToggleAddAccountPasswordVisibility" styleClass="pw-toggle-btn" mnemonicParsing="false" focusTraversable="false">
+                                        <graphic>
+                                            <StackPane styleClass="icon-host-16">
+                                                <SVGPath fx:id="addAccountEyeIcon" styleClass="phosphor-icon, icon-muted"/>
+                                            </StackPane>
+                                        </graphic>
+                                        <StackPane.margin><Insets right="4"/></StackPane.margin>
+                                    </Button>
+                                </StackPane>
+                                <Label text="At least 8 characters, with 1 capital letter, 1 number and 1 special character." styleClass="edit-card-subtitle" wrapText="true"/>
+                            </VBox>
+                            <VBox spacing="8">
+                                <HBox spacing="4" alignment="CENTER_LEFT"><Label text="Confirm Password" styleClass="edit-field-label"/><Label text="*" styleClass="edit-required"/></HBox>
+                                <StackPane alignment="CENTER_RIGHT">
+                                    <TextField fx:id="addAccountVisibleConfirmPasswordField" styleClass="edit-input" visible="false" managed="false"/>
+                                    <PasswordField fx:id="addAccountConfirmPasswordField" styleClass="edit-input"/>
+                                </StackPane>
+                            </VBox>
+                        </VBox>
+
+                        <!-- Access -->
+                        <VBox styleClass="edit-card" spacing="16">
+                            <VBox spacing="4">
+                                <Label text="Access" styleClass="edit-card-title"/>
+                                <Label text="Set the platform authorization role level." styleClass="edit-card-subtitle" wrapText="true"/>
+                            </VBox>
+                            <VBox spacing="8">
+                                <HBox spacing="4" alignment="CENTER_LEFT"><Label text="Assigned Role" styleClass="edit-field-label"/><Label text="*" styleClass="edit-required"/></HBox>
+                                <ComboBox fx:id="addAccountRoleCombo" promptText="Select a role" maxWidth="Infinity" styleClass="edit-combo"/>
+                            </VBox>
+                        </VBox>
+
+                        <!-- Footer -->
+                        <Region styleClass="edit-footer-divider"/>
+                        <HBox alignment="CENTER_RIGHT" spacing="16">
+                            <Label fx:id="addAccountErrorLabel" styleClass="settings-error" visible="false" managed="false"/>
+                            <Button text="Cancel" onAction="#onAddAccountCancel" styleClass="edit-cancel-btn" mnemonicParsing="false"/>
+                            <Button text="Create Account" onAction="#onAddAccountSave" styleClass="edit-save-btn" mnemonicParsing="false"/>
                         </HBox>
 
                     </VBox>
