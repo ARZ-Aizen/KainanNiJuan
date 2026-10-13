@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.kainanresto.controllers.main.admin.sales.ReceiptModalController"
+      style="-fx-background-color: #F9F4EC; -fx-background-radius: 20; -fx-border-color: #8C6343; -fx-border-width: 1.5; -fx-border-radius: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 18, 0, 0, 6);"
+      spacing="0" prefHeight="650" prefWidth="440">
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                style="-fx-background: transparent; -fx-background-color: transparent; -fx-padding: 0;
+                       -fx-border-color: transparent;">
+        <style>
+            .scroll-bar:vertical {
+            -fx-background-color: transparent;
+            -fx-pref-width: 6px;
+            }
+            .scroll-bar:vertical .track,
+            .scroll-bar:vertical .track-background {
+            -fx-background-color: transparent;
+            -fx-border-color: transparent;
+            }
+            .scroll-bar:vertical .thumb {
+            -fx-background-color: #D5B392;
+            -fx-background-radius: 6px;
+            }
+            .scroll-bar:vertical .thumb:hover {
+            -fx-background-color: #B9926D;
+            }
+            .scroll-bar:vertical .increment-button,
+            .scroll-bar:vertical .decrement-button {
+            -fx-pref-height: 0;
+            -fx-padding: 0;
+            -fx-opacity: 0;
+            }
+        </style>
+        <VBox alignment="TOP_CENTER" style="-fx-padding: 24 24 16 24;">
+            <VBox spacing="12" maxWidth="380"
+                  style="-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 24; -fx-border-color: #EAE1D4; -fx-border-width: 1; -fx-border-radius: 12; -fx-effect: dropshadow(gaussian, rgba(140,99,67,0.08), 10, 0, 0, 3);">
+
+                <!-- Header -->
+                <VBox alignment="CENTER" spacing="3">
+                    <Label text="KAINAN NI JUAN" style="-fx-font-family: 'Roboto'; -fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #8C6343;"/>
+                    <Label text="Order Receipt" style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: #B9926D;"/>
+                </VBox>
+
+                <Region style="-fx-min-height: 1; -fx-background-color: #EAE1D4;"/>
+
+                <!-- Meta Information -->
+                <GridPane hgap="12" vgap="7">
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="NEVER" minWidth="80"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                    </columnConstraints>
+
+                    <Label text="Order No:" style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-text-fill: #6E625C;" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                    <Label fx:id="orderNoLabel" style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #2E2520;" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.halignment="RIGHT"/>
+
+                    <Label text="Date:" style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-text-fill: #6E625C;" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                    <Label fx:id="dateLabel" style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #2E2520;" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.halignment="RIGHT"/>
+
+                    <Label text="Cashier:" style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-text-fill: #6E625C;" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                    <Label fx:id="cashierLabel" style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #2E2520;" GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.halignment="RIGHT"/>
+                </GridPane>
+
+                <Region style="-fx-min-height: 1; -fx-background-color: #EAE1D4;"/>
+
+                <!-- Items Header -->
+                <HBox spacing="8">
+                    <Label text="Item" style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #8C6343;" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                    <Label text="Qty" style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #8C6343;" prefWidth="40" alignment="CENTER"/>
+                    <Label text="Amount" style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #8C6343;" prefWidth="80" alignment="CENTER_RIGHT"/>
+                </HBox>
+
+                <!-- Dynamic Items Container -->
+                <VBox fx:id="itemsContainer" spacing="10"/>
+
+                <Region style="-fx-min-height: 1; -fx-background-color: #EAE1D4;"/>
+
+                <!-- Totals -->
+                <VBox spacing="7">
+                    <HBox alignment="CENTER_LEFT">
+                        <Label text="Subtotal" style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-text-fill: #2E2520;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="subtotalLabel" style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #2E2520;"/>
+                    </HBox>
+                    <HBox fx:id="discountRow" alignment="CENTER_LEFT" managed="false" visible="false">
+                        <Label fx:id="discountNameLabel" text="Discount" style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-text-fill: #2E2520;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="discountValueLabel" style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #E74C3C;"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT">
+                        <Label fx:id="serviceChargeNameLabel" text="Service Charge" style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-text-fill: #2E2520;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="serviceChargeValueLabel" style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #2E2520;"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT">
+                        <Label fx:id="vatNameLabel" text="VAT" style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-text-fill: #2E2520;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="vatValueLabel" style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #2E2520;"/>
+                    </HBox>
+                </VBox>
+
+                <Region style="-fx-min-height: 1.5; -fx-background-color: #8C6343;"/>
+
+                <HBox alignment="CENTER_LEFT">
+                    <Label text="TOTAL" style="-fx-font-family: 'Inter'; -fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: #2E2520;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="totalLabel" style="-fx-font-family: 'Inter'; -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #8C6343;"/>
+                </HBox>
+
+                <Label text="Thank you! Please come again." style="-fx-font-family: 'Inter'; -fx-font-size: 12px; -fx-font-style: italic; -fx-text-fill: #B9926D; -fx-padding: 6 0 0 0;" maxWidth="Infinity" alignment="CENTER"/>
+            </VBox>
+        </VBox>
+    </ScrollPane>
+
+    <HBox alignment="CENTER"
+          style="-fx-background-color: #F9F4EC; -fx-background-radius: 0 0 20 20; -fx-border-color: #EAE1D4; -fx-border-width: 1 0 0 0; -fx-padding: 14 0 18 0;">
+        <Button text="Close Receipt" onAction="#onClose"
+                style="-fx-background-color: #8C6343; -fx-text-fill: white; -fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-font-weight: 700; -fx-padding: 10 36; -fx-background-radius: 8; -fx-cursor: hand;"/>
+    </HBox>
+</VBox>

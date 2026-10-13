@@ -15,6 +15,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
@@ -246,97 +247,29 @@ public class SalesController {
     }
 
     private void showReceiptModal(Transaction order, OrderReceipt receipt, PaymentResult pay) {
-        Stage stage = new Stage();
-        stage.setTitle("Receipt - " + receipt.orderNumber());
-        stage.initModality(Modality.APPLICATION_MODAL);
-        if (salesRoot.getScene() != null) stage.initOwner(salesRoot.getScene().getWindow());
-        stage.setResizable(false);
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/kainanresto/views/main/admin/sales/ReceiptModalView.fxml"));
+            VBox root = loader.load();
 
-        ReceiptTotals t = receipt.totals();
-        VBox card = new VBox(8.0);
-        card.getStyleClass().add("receipt-card");
-        card.setPadding(new Insets(20.0));
+            ReceiptModalController controller = loader.getController();
+            controller.setReceiptData(order, receipt, pay);
+            Stage stage = new Stage();
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.initStyle(javafx.stage.StageStyle.TRANSPARENT);
 
-        Label shop = new Label("KAINAN NI JUAN");
-        shop.getStyleClass().add("receipt-title");
-        Label sub = new Label("Order Receipt");
-        sub.getStyleClass().add("receipt-subtitle");
-        VBox header = new VBox(2.0, shop, sub);
-        header.setAlignment(Pos.CENTER);
-        card.getChildren().addAll(header, new Separator());
-
-        String type = valueOrDash(receipt.orderType());
-        if (receipt.orderTypeDetail() != null && !receipt.orderTypeDetail().isBlank()) {
-            type += " - " + receipt.orderTypeDetail().trim();
-        }
-        card.getChildren().addAll(
-                receiptRow("Order No.", valueOrDash(receipt.orderNumber()), false),
-                receiptRow("Date", receipt.createdAt() == null ? "—" : receipt.createdAt().format(ORDER_DATE_TIME_FORMAT), false),
-                receiptRow("Cashier", valueOrDash(receipt.cashierName()), false),
-                receiptRow("Order type", type, false),
-                receiptRow("Status", valueOrDash(order.status()), false),
-                new Separator());
-
-        card.getChildren().add(itemHeaderRow());
-        if (receipt.lines() != null) {
-            for (ReceiptLine line : receipt.lines()) card.getChildren().add(itemRow(line));
-        }
-        card.getChildren().add(new Separator());
-
-            if (t != null) {
-            card.getChildren().add(receiptRow("Subtotal", formatPesoCompact(t.subtotal()), false));
-
-            if (t.subtotal() != null && t.serviceCharge() != null && t.vat() != null && t.total() != null) {
-                BigDecimal discount = t.subtotal().add(t.serviceCharge()).add(t.vat()).subtract(t.total());
-                if (discount.signum() > 0) {
-                    String label = receipt.discountName() == null ? "Discount" : "Discount - " + receipt.discountName();
-                    card.getChildren().add(receiptRow(label, "-" + formatPesoCompact(discount), false));
-                }
+            if (salesRoot.getScene() != null) {
+                stage.initOwner(salesRoot.getScene().getWindow());
+                root.getStylesheets().addAll(salesRoot.getScene().getStylesheets());
             }
-            card.getChildren().add(receiptRow("Service charge" + rateSuffix(t.serviceChargeRate()),
-                    formatPesoCompact(t.serviceCharge()), false));
-            card.getChildren().add(receiptRow("VAT" + rateSuffix(t.vatRate()),
-                    formatPesoCompact(t.vat()), false));
-            card.getChildren().add(new Separator());
-            card.getChildren().add(receiptRow("TOTAL", formatPesoCompact(t.total()), true));
+            Scene scene = new Scene(root);
+            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+            stage.setScene(scene);
+            stage.show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            AlertUtil.showError("Error", "Could not load the receipt view.");
         }
-
-        // ---- Payment ----
-        if (pay != null) {
-            card.getChildren().add(new Separator());
-            card.getChildren().add(receiptRow("Cash", formatPesoCompact(pay.cashTendered()), false));
-            card.getChildren().add(receiptRow("Change", formatPesoCompact(pay.change()), false));
-        }
-
-        Label thanks = new Label("Thank you! Please come again.");
-        thanks.getStyleClass().add("receipt-footer");
-        thanks.setMaxWidth(Double.MAX_VALUE);
-        thanks.setAlignment(Pos.CENTER);
-        thanks.setPadding(new Insets(8.0, 0.0, 0.0, 0.0));
-        card.getChildren().add(thanks);
-
-        ScrollPane scroll = new ScrollPane(card);
-        scroll.setFitToWidth(true);
-        scroll.setPrefViewportWidth(380.0);
-        scroll.setPrefViewportHeight(480.0);
-
-        Button closeBtn = new Button("Close");
-        closeBtn.setOnAction(e -> stage.close());
-
-        Button printBtn = new Button("Print Receipt");
-        printBtn.getStyleClass().add("primary-btn");
-        printBtn.setDefaultButton(true);
-        printBtn.setOnAction(e -> printReceipt(receipt, pay, printBtn));
-
-        HBox actions = new HBox(10.0, closeBtn, printBtn);
-        actions.setAlignment(Pos.CENTER_RIGHT);
-        actions.setPadding(new Insets(12.0, 20.0, 16.0, 20.0));
-
-        VBox root = new VBox(scroll, actions);
-        Scene scene = new Scene(root);
-        if (salesRoot.getScene() != null) scene.getStylesheets().addAll(salesRoot.getScene().getStylesheets());
-        stage.setScene(scene);
-        stage.show();
     }
 
     private static HBox receiptRow(String label, String value, boolean emphasized) {
