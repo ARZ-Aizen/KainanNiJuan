@@ -16,7 +16,6 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 4, 0, 4, 4);
 }
 
-/* Fixed sizes are required: a VBox would otherwise stretch children to 93px */
 .logo-shell {
     -fx-min-width: 68px;  -fx-pref-width: 68px;  -fx-max-width: 68px;
     -fx-min-height: 68px; -fx-pref-height: 68px; -fx-max-height: 68px;
@@ -26,10 +25,9 @@
 
 .primary-nav {
     -fx-alignment: TOP_CENTER;
-    -fx-min-height: 468px;              /* 6 x 58 + 5 x 24 */
+    -fx-min-height: 468px;
 }
 
-/* Nav button: 58 x 58, padding 12 -> 34 x 34 icon area */
 .nav-item {
     -fx-min-width: 58px;  -fx-pref-width: 58px;  -fx-max-width: 58px;
     -fx-min-height: 58px; -fx-pref-height: 58px; -fx-max-height: 58px;
@@ -47,7 +45,6 @@
 .nav-item:hover   { -fx-background-color: rgba(255,255,255,0.12); }
 .nav-item:pressed { -fx-background-color: rgba(255,255,255,0.18); }
 
-/* Active is listed after hover and repeats :hover so hovering can't dim it */
 .nav-item-active,
 .nav-item-active:hover,
 .nav-item-active:pressed {
@@ -60,7 +57,6 @@
     -fx-min-height: 34px; -fx-pref-height: 34px; -fx-max-height: 34px;
 }
 
-/* Stroke icons on a 24-unit grid. Scale and stroke width are set in the controller. */
 .phosphor-icon {
     -fx-fill: transparent;
     -fx-stroke: #E2D3C7;
@@ -73,7 +69,6 @@
     -fx-stroke: white;
 }
 
-/* Bottom section: divider + logout, 49px wide */
 .sidebar-bottom {
     -fx-min-width: 49px; -fx-pref-width: 49px; -fx-max-width: 49px;
     -fx-alignment: CENTER;
@@ -84,7 +79,6 @@
     -fx-background-color: #A27D60;
 }
 
-/* 49 x 54, radius 8, 30px icon: (49 - 30) / 2 = 9.5 side padding */
 .logout-item {
     -fx-min-width: 49px;  -fx-pref-width: 49px;  -fx-max-width: 49px;
     -fx-min-height: 54px; -fx-pref-height: 54px; -fx-max-height: 54px;
@@ -100,10 +94,8 @@
 
 /* ============================== SIDEBAR: EXPAND FEATURE ============================== */
 
-/* Hint that the compact sidebar background is clickable */
 .sidebar { -fx-cursor: hand; }
 
-/* Logo placeholder (shown when no logo is loaded from the DB) */
 .logo-placeholder {
     -fx-text-fill: #8C6343;
     -fx-font-family: 'Inter';
@@ -111,12 +103,10 @@
     -fx-font-weight: 700;
 }
 
-/* 80% black overlay over everything to the right of the expanded sidebar */
 .sidebar-scrim {
     -fx-background-color: rgba(0,0,0,0.8);
 }
 
-/* Expanded sidebar: 256 content + 24 padding each side = 304 */
 .sidebar-expanded {
     -fx-min-width: 304px;  -fx-pref-width: 304px;  -fx-max-width: 304px;
     -fx-padding: 24px;
@@ -127,7 +117,7 @@
 }
 
 .exp-brand-name {
-    -fx-max-width: 176px;                 /* 256 - 68 logo - 12 gap */
+    -fx-max-width: 176px;
     -fx-text-overrun: ellipsis;
     -fx-text-fill: white;
     -fx-font-family: 'Inter';
@@ -142,7 +132,6 @@
     -fx-font-weight: 400;
 }
 
-/* Nav row: padding 12/16, gap 12, radius 8 */
 .exp-nav-item {
     -fx-padding: 12px 16px;
     -fx-alignment: CENTER_LEFT;
@@ -627,7 +616,6 @@
     -fx-text-fill: #2E2520;
 }
 
-/* Backend/data placeholders used until server/database values are supplied. */
 .dashboard-placeholder {
     -fx-padding: 10px 8px;
     -fx-text-fill: #6E625C;
@@ -641,7 +629,6 @@
 .icon-host-16 { -fx-alignment: CENTER; -fx-min-width: 16px; -fx-pref-width: 16px; -fx-max-width: 16px;
     -fx-min-height: 16px; -fx-pref-height: 16px; -fx-max-height: 16px; }
 
-/* Phosphor paths are FILLED outlines (256 grid): fill, no stroke */
 .phosphor-fill  { -fx-fill: #6E625C; -fx-stroke: transparent; }
 .on-primary-icon { -fx-fill: white; }
 
@@ -698,7 +685,6 @@
 
 .toolbar-divider { -fx-min-height: 1px; -fx-pref-height: 1px; -fx-max-height: 1px; -fx-background-color: #F2EAE0; }
 
-/* Category chips (ToggleButton) */
 .category-chip {
     -fx-padding: 7px 15px;
     -fx-background-color: #FCF7F0;
@@ -723,13 +709,11 @@
     -fx-font-weight: 600;
 }
 
-/* Grid */
 .menu-grid-scroll { -fx-background-color: transparent; -fx-background-insets: 0; -fx-padding: 0; -fx-border-width: 0; }
 .menu-grid-scroll > .viewport { -fx-background-color: transparent; }
 .menu-grid-holder { -fx-background-color: transparent; }
-.dish-grid { -fx-padding: 0 12px 12px 12px; }   /* room for the image shadow */
+.dish-grid { -fx-padding: 0 12px 12px 12px; }
 
-/* Dish card */
 .dish-card-wrapper {
     -fx-cursor: hand;
     -fx-min-width: 184.47px; -fx-pref-width: 184.47px; -fx-max-width: 184.47px;
@@ -738,7 +722,7 @@
 .dish-card {
     -fx-min-width: 184.47px; -fx-pref-width: 184.47px; -fx-max-width: 184.47px;
     -fx-min-height: 190.34px;
-    -fx-padding: 80.33px 16px 16px 16px;   /* Added more side padding */
+    -fx-padding: 80.33px 16px 16px 16px;
     -fx-spacing: 6px;
     -fx-alignment: TOP_CENTER;
 
@@ -751,7 +735,6 @@
     -fx-effect: dropshadow(gaussian, rgba(140,99,67,0.08), 12, 0, 0, 4);
 }
 
-/* shell carries the shadow; the ImageView inside is circle-clipped */
 .dish-image-shell {
     -fx-min-width: 144.66px; -fx-pref-width: 144.66px; -fx-max-width: 144.66px;
     -fx-min-height: 144.66px; -fx-pref-height: 144.66px; -fx-max-height: 144.66px;
@@ -761,12 +744,10 @@
 }
 
 .dish-name {
-    /* FIX: Use the brand dark brown/black color */
     -fx-text-fill: #2E2520;
     -fx-font-size: 16px;
     -fx-font-weight: 700;
 
-    /* FIX: Force truncation (ellipsis) */
     -fx-max-width: 145px;
     -fx-wrap-text: false;
     -fx-text-overrun: ellipsis;
@@ -774,7 +755,6 @@
 }
 
 .dish-price {
-    /* FIX: Make the price stand out using your primary brown instead of solid black */
     -fx-text-fill: #8C6343;
     -fx-font-size: 15px;
     -fx-font-weight: 700;
@@ -789,13 +769,12 @@
     -fx-font-weight: 700;
 }
 .dish-badge-available   { -fx-background-color: #F9F4EC; -fx-text-fill: #8C6343; }
-.dish-badge-unavailable { -fx-background-color: #FDF3F2; -fx-text-fill: #E74C3C; }  /* inferred */
+.dish-badge-unavailable { -fx-background-color: #FDF3F2; -fx-text-fill: #E74C3C; }
 
 /* ================= ADD MENU ITEM ================= */
 .add-dish-root { -fx-background-color: #F9F4EC; }
 .add-dish-page { -fx-padding: 32 32 24 32; -fx-background-color: #F9F4EC; }
 
-/* cards */
 .add-card {
     -fx-background-color: white;
     -fx-background-radius: 16;
@@ -820,7 +799,6 @@
 .add-host-32 { -fx-min-width: 32; -fx-pref-width: 32; -fx-max-width: 32;
     -fx-min-height: 32; -fx-pref-height: 32; -fx-max-height: 32; }
 
-/* photo upload + live preview */
 .add-upload-box {
     -fx-min-width: 150; -fx-pref-width: 150; -fx-max-width: 150;
     -fx-min-height: 150; -fx-pref-height: 150; -fx-max-height: 150;
@@ -842,7 +820,6 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.20), 6, 0, 0, 3);
 }
 
-/* inputs */
 .add-input,
 .add-price-field {
     -fx-background-color: #FCF7F0;
@@ -894,7 +871,6 @@
 .add-combo .arrow-button { -fx-background-color: transparent; }
 .add-combo .arrow { -fx-background-color: #6E625C; -fx-scale-x: 1.1; -fx-scale-y: 1.1; }
 
-/* price with peso prefix */
 .add-price-box {
     -fx-background-color: #FCF7F0;
     -fx-background-radius: 10;
@@ -919,7 +895,6 @@
     -fx-background-radius: 0;
 }
 
-/* quantity stepper (44px tall to match the other inputs) */
 .add-stepper {
     -fx-background-color: #FCF7F0;
     -fx-background-radius: 10;
@@ -953,7 +928,6 @@
     -fx-focus-color: transparent; -fx-faint-focus-color: transparent;
 }
 
-/* status segmented buttons */
 .add-status-btn {
     -fx-background-color: white;
     -fx-background-insets: 0;
@@ -977,7 +951,6 @@
     -fx-text-fill: white;
 }
 
-/* category creator */
 .add-primary-btn {
     -fx-background-color: #8C6343;
     -fx-background-insets: 0;
@@ -1033,7 +1006,6 @@
     -fx-text-fill: #6E625C;
 }
 
-/* fixed footer bar */
 .add-footer {
     -fx-padding: 16 32;
     -fx-background-color: transparent;
@@ -1079,7 +1051,6 @@
 /* ============================== SALES & ORDERS ============================== */
 .orders-page { -fx-padding: 32px; -fx-background-color: #F9F4EC; }
 
-/* 20px padding minus the 1px border, because JavaFX borders add to insets */
 .stat-card-outlined {
     -fx-padding: 19px;
     -fx-border-color: #EAE1D4;
@@ -1100,7 +1071,6 @@
 
 .search-box-tinted { -fx-background-color: #F9F4EC; }
 
-/* Filter pills */
 .filter-pill {
     -fx-padding: 7px 11px;
     -fx-background-color: white;
@@ -1115,7 +1085,6 @@
 .filter-pill-label { -fx-text-fill: #6E625C; -fx-font-size: 13px; -fx-font-weight: 500; }
 .filter-pill-value { -fx-text-fill: #2E2520; -fx-font-size: 13px; -fx-font-weight: 600; }
 
-/* Filter dropdown (ContextMenu) */
 .filter-menu {
     -fx-background-color: white;
     -fx-background-insets: 0;
@@ -1132,7 +1101,6 @@
 .filter-menu .menu-item:focused .label { -fx-text-fill: #2E2520; }
 .filter-menu .menu-item.filter-option-selected .label { -fx-font-weight: 700; -fx-text-fill: #8C6343; }
 
-/* Text button (Clear Filters) */
 .btn-text {
     -fx-padding: 8px 12px;
     -fx-background-color: transparent;
@@ -1146,7 +1114,6 @@
 }
 .btn-text:hover { -fx-background-color: rgba(140,99,67,0.08); }
 
-/* Table card: 24px padding minus the 1px border */
 .table-card {
     -fx-padding: 23px;
     -fx-spacing: 16px;
@@ -1158,7 +1125,6 @@
     -fx-effect: dropshadow(gaussian, rgba(140,99,67,0.02), 16, 0, 0, 4);
 }
 
-/* Orders TableView. Placed after the global .table-view rule so it overrides it. */
 .orders-table {
     -fx-background-color: transparent;
     -fx-background-insets: 0;
@@ -1225,11 +1191,9 @@
 .orders-table .table-cell.col-time   { -fx-text-fill: #6E625C; -fx-font-weight: 400; }
 .orders-table .table-cell.col-total  { -fx-text-fill: #8C6343; -fx-font-size: 14px; -fx-font-weight: 700; }
 
-/* Staff cell */
 .staff-name { -fx-text-fill: black; -fx-font-size: 13px; -fx-font-weight: 700; }
 .staff-role { -fx-text-fill: rgba(140,99,67,0.72); -fx-font-size: 11px; -fx-font-weight: 400; }
 
-/* Status / payment chips */
 .chip      { -fx-padding: 4px 10px; -fx-background-radius: 20px; }
 .chip-text { -fx-font-size: 11px; -fx-font-weight: 700; }
 .chip-dot  {
@@ -1257,7 +1221,6 @@
 .chip-neutral .chip-text { -fx-text-fill: #8C6343; }
 .chip-neutral .chip-dot  { -fx-background-color: #8C6343; }
 
-/* Row action button (28x28, radius 6) */
 .row-action-btn {
     -fx-min-width: 28px;  -fx-pref-width: 28px;  -fx-max-width: 28px;
     -fx-min-height: 28px; -fx-pref-height: 28px; -fx-max-height: 28px;
@@ -1284,25 +1247,23 @@
     -fx-border-radius: 16;
     -fx-effect: dropshadow(gaussian, rgba(140,99,67,0.01), 16, 0, 0, 4);
 }
-.accounts-filter-card { -fx-padding: 19; }                 /* 20 - 1px border */
-.accounts-table-card  { -fx-padding: 23; -fx-spacing: 16;  /* 24 - 1px border */
+.accounts-filter-card { -fx-padding: 19; }
+.accounts-table-card  { -fx-padding: 23; -fx-spacing: 16;
     -fx-effect: dropshadow(gaussian, rgba(140,99,67,0.02), 16, 0, 0, 4); }
 
-/* icon hosts */
 .accounts-icon-14 { -fx-min-width: 14; -fx-pref-width: 14; -fx-max-width: 14;
     -fx-min-height: 14; -fx-pref-height: 14; -fx-max-height: 14; }
 .accounts-icon-12 { -fx-min-width: 12; -fx-pref-width: 12; -fx-max-width: 12;
     -fx-min-height: 12; -fx-pref-height: 12; -fx-max-height: 12; }
 .icon-danger { -fx-stroke: #E74C3C; }
 
-/* search */
 .accounts-search-box {
     -fx-background-color: #F9F4EC;
     -fx-background-radius: 8;
     -fx-border-color: #E2D3C7;
     -fx-border-radius: 8;
     -fx-border-width: 1;
-    -fx-padding: 9 13;                                      /* 10/14 - 1px border */
+    -fx-padding: 9 13;
 }
 .accounts-search-box:focused { -fx-border-color: #B9926D; }
 .accounts-search-field {
@@ -1317,14 +1278,13 @@
     -fx-faint-focus-color: transparent;
 }
 
-/* filter pills */
 .accounts-pill {
     -fx-background-color: white;
     -fx-background-radius: 6;
     -fx-border-color: #E2D3C7;
     -fx-border-radius: 6;
     -fx-border-width: 1;
-    -fx-padding: 7 11;                                      /* 8/12 - 1px border */
+    -fx-padding: 7 11;
     -fx-cursor: hand;
 }
 .accounts-pill-label { -fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: #6E625C; }
@@ -1339,7 +1299,6 @@
 }
 .accounts-clear-btn:hover { -fx-text-fill: #7A5738; }
 
-/* table (scoped, placed after global .table-view rules) */
 .accounts-table {
     -fx-background-color: transparent;
     -fx-background-insets: 0;
@@ -1388,7 +1347,6 @@
 .accounts-table .table-cell.col-first  { -fx-padding: 0 8 0 16; }
 .accounts-table .table-cell.col-center { -fx-alignment: CENTER; }
 
-/* cell content */
 .accounts-name     { -fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #2E2520; }
 .accounts-username { -fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: #6E625C; }
 .accounts-meta     { -fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 400; -fx-text-fill: #6E625C; }
@@ -1418,8 +1376,6 @@
     -fx-font-size: 13px;
     -fx-text-fill: #6E625C;
 }
-
-
 
 /* ================= EDIT ACCOUNT ================= */
 .edit-account-scroll,
@@ -1530,12 +1486,10 @@
 .edit-save-btn:hover { -fx-background-color: #7A5738;
 }
 
-/* Add extra right padding so the text doesn't type underneath the eye icon */
 .edit-input-pw {
     -fx-padding: 12 40 12 16;
 }
 
-/* Eye toggle button styling */
 .pw-toggle-btn {
     -fx-background-color: transparent;
     -fx-background-insets: 0;
@@ -1566,14 +1520,13 @@
 /* ================= SETTINGS ================= */
 .settings-page { -fx-background-color: transparent; }
 
-/* left tab list */
 .settings-tabs {
     -fx-background-color: white;
     -fx-background-radius: 12;
     -fx-border-color: #EAE1D4;
     -fx-border-width: 1;
     -fx-border-radius: 12;
-    -fx-padding: 7;                                   /* 8 - 1px border */
+    -fx-padding: 7;
 }
 .settings-tab {
     -fx-background-color: transparent;
@@ -1602,7 +1555,6 @@
 }
 .settings-tab-active .phosphor-icon { -fx-stroke: #8C6343; }
 
-/* icon hosts */
 .settings-host-16 { -fx-min-width: 16; -fx-pref-width: 16; -fx-max-width: 16;
     -fx-min-height: 16; -fx-pref-height: 16; -fx-max-height: 16; }
 .settings-host-18 { -fx-min-width: 18; -fx-pref-width: 18; -fx-max-width: 18;
@@ -1610,7 +1562,6 @@
 .settings-host-32 { -fx-min-width: 32; -fx-pref-width: 32; -fx-max-width: 32;
     -fx-min-height: 32; -fx-pref-height: 32; -fx-max-height: 32; }
 
-/* scroll area */
 .settings-scroll,
 .settings-scroll > .viewport,
 .settings-content {
@@ -1619,14 +1570,13 @@
 }
 .settings-scroll { -fx-padding: 0; -fx-background-insets: 0; -fx-border-color: transparent; }
 
-/* cards */
 .settings-card {
     -fx-background-color: white;
     -fx-background-radius: 12;
     -fx-border-color: #EAE1D4;
     -fx-border-width: 1;
     -fx-border-radius: 12;
-    -fx-padding: 23;                                  /* 24 - 1px border */
+    -fx-padding: 23;
 }
 .settings-card-title    { -fx-font-family: 'Inter'; -fx-font-size: 18px; -fx-font-weight: 700; -fx-text-fill: #2E2520; }
 .settings-card-subtitle { -fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 400; -fx-text-fill: #6E625C; }
@@ -1638,7 +1588,6 @@
 .settings-row-title   { -fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #2E2520; }
 .settings-row-desc    { -fx-font-family: 'Inter'; -fx-font-size: 12px; -fx-font-weight: 400; -fx-text-fill: #6E625C; }
 
-/* inputs */
 .settings-input {
     -fx-background-color: #F9F4EC;
     -fx-background-insets: 0;
@@ -1646,7 +1595,7 @@
     -fx-border-color: #E2D3C7;
     -fx-border-width: 1;
     -fx-border-radius: 8;
-    -fx-padding: 9 13;                                /* 10/14 - 1px border */
+    -fx-padding: 9 13;
     -fx-font-family: 'Inter'; -fx-font-size: 14px;
     -fx-text-fill: #2E2520;
     -fx-prompt-text-fill: #6E625C;
@@ -1668,7 +1617,6 @@
 .settings-select:hover { -fx-border-color: #B9926D; }
 .settings-select-value { -fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-font-weight: 400; -fx-text-fill: #2E2520; }
 
-/* logo */
 .settings-logo-box {
     -fx-background-color: #F9F4EC;
     -fx-background-radius: 10;
@@ -1685,7 +1633,7 @@
     -fx-border-color: #E2D3C7;
     -fx-border-width: 1;
     -fx-border-radius: 6;
-    -fx-padding: 5 11;                                /* 6/12 - 1px border */
+    -fx-padding: 5 11;
     -fx-font-family: 'Inter'; -fx-font-size: 11px; -fx-font-weight: 600;
     -fx-text-fill: #8C6343;
     -fx-focus-color: transparent; -fx-faint-focus-color: transparent;
@@ -1693,7 +1641,6 @@
 }
 .settings-link-btn:hover { -fx-background-color: #F2EAE0; }
 
-/* segmented control */
 .settings-segment {
     -fx-background-color: #F9F4EC;
     -fx-background-radius: 8;
@@ -1706,7 +1653,7 @@
     -fx-border-color: transparent;
     -fx-border-width: 1;
     -fx-border-radius: 6;
-    -fx-padding: 7 15;                                /* 8/16 - 1px border */
+    -fx-padding: 7 15;
     -fx-alignment: CENTER;
     -fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 500;
     -fx-text-fill: #6E625C;
@@ -1720,7 +1667,6 @@
     -fx-text-fill: #8C6343;
 }
 
-/* switch: 48x26, 3px padding, 20px knob */
 .settings-switch {
     -fx-background-color: #E2D3C7;
     -fx-background-insets: 0;
@@ -1743,7 +1689,6 @@
     -fx-min-height: 20; -fx-pref-height: 20; -fx-max-height: 20;
 }
 
-/* action buttons */
 .settings-btn {
     -fx-background-insets: 0;
     -fx-background-radius: 6;
@@ -1775,14 +1720,13 @@
 .settings-btn-outline:hover { -fx-background-color: #FCF7F0; }
 .settings-btn-outline .phosphor-icon { -fx-stroke: #B9926D; }
 
-/* footer */
 .settings-footer { -fx-padding: 12 0 32 0; }
 .settings-footer-cancel {
     -fx-background-color: transparent;
     -fx-background-insets: 0;
     -fx-background-radius: 8;
     -fx-border-color: #E2D3C7; -fx-border-width: 1; -fx-border-radius: 8;
-    -fx-padding: 11 23;                               /* 12/24 - 1px border */
+    -fx-padding: 11 23;
     -fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-font-weight: 600;
     -fx-text-fill: #6E625C;
     -fx-focus-color: transparent; -fx-faint-focus-color: transparent;
@@ -1809,7 +1753,7 @@
     -fx-background-radius: 10;
     -fx-border-width: 0;
     -fx-min-width: 160;
-    -fx-padding: 13.5 28; /* Adjusted padding to match the Cancel button height without borders */
+    -fx-padding: 13.5 28;
     -fx-font-family: 'Inter';
     -fx-font-size: 14px;
     -fx-font-weight: 600;
@@ -1852,7 +1796,7 @@
     -fx-background-color: #C0392B;
 }
 
-//*HOME *//
+/* ================= HOME ================= */
 
 .delta-up   { -fx-text-fill: #2E7D32; }
 .delta-down { -fx-text-fill: #DE2C19; }

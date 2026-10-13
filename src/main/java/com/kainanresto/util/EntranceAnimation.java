@@ -7,16 +7,6 @@ import javafx.animation.TranslateTransition;
 import javafx.scene.Node;
 import javafx.util.Duration;
 
-/**
- * Staggered "page load" animation: sidebar slides in from the left,
- * top bar drops in from above, and the content rises up, each fading in.
- *
- * Usage:
- *   1. prepare(...) in initialize()   -> hides the nodes before the window is shown (no flash)
- *   2. play(...)    in Platform.runLater -> runs once the scene is on screen
- *
- * Any argument may be null (e.g. the client view has no top bar).
- */
 public final class EntranceAnimation {
 
     private static final Duration DURATION = Duration.millis(450);
@@ -30,14 +20,12 @@ public final class EntranceAnimation {
 
     private EntranceAnimation() {}
 
-    /** Puts the nodes in their hidden "start" state. */
     public static void prepare(Node sidebar, Node topbar, Node content) {
         hide(sidebar, SIDEBAR_OFFSET_X, 0);
         hide(topbar, 0, TOPBAR_OFFSET_Y);
         hide(content, 0, CONTENT_OFFSET_Y);
     }
 
-    /** Plays the staggered entrance. */
     public static void play(Node sidebar, Node topbar, Node content) {
         ParallelTransition all = new ParallelTransition();
 

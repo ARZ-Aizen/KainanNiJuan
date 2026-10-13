@@ -147,7 +147,7 @@ public final class PaymentDialog {
                             + "\nAmount received: " + ClientUIHelper.formatPeso(tendered)
                             + "\nChange: " + ClientUIHelper.formatPeso(change));
             if (!yes) {
-                field.requestFocus();   // back to the amount field so the cashier can correct it
+                field.requestFocus();
                 return;
             }
 

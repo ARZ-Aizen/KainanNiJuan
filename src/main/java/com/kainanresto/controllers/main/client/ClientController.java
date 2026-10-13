@@ -103,11 +103,10 @@
         private BigDecimal currentDiscountRate = BigDecimal.ZERO;
         private int discountCards = 1;
         private String currentDiscountName = "None";
-        private ReceiptTotals lastTotals;   // totals currently shown on the receipt panel
+        private ReceiptTotals lastTotals;
 
-        private static final BigDecimal VAT_RATE = new BigDecimal("0.12");            // 12% VAT
-        private static final BigDecimal SERVICE_CHARGE_RATE = new BigDecimal("0.05"); // 5% service charge
-
+        private static final BigDecimal VAT_RATE = new BigDecimal("0.12");
+        private static final BigDecimal SERVICE_CHARGE_RATE = new BigDecimal("0.05");
         private static final boolean VAT_EXEMPT_ON_DISCOUNTED = true;
 
         @FXML private Button navSwitchBtn;

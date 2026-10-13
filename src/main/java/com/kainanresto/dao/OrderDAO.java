@@ -34,7 +34,7 @@ public class OrderDAO {
                 String code = sb.toString();
                 ps.setString(1, code);
                 try (ResultSet rs = ps.executeQuery()) {
-                    if (!rs.next()) return code;   // not taken
+                    if (!rs.next()) return code;
                 }
             }
         } catch (SQLException e) {
@@ -102,7 +102,7 @@ public class OrderDAO {
                         stock.setInt(1, l.quantity());
                         stock.setLong(2, l.dishId());
                         stock.setInt(3, l.quantity());
-                        if (stock.executeUpdate() == 0) {   // someone else sold the last ones
+                        if (stock.executeUpdate() == 0) {
                             conn.rollback();
                             return false;
                         }
@@ -175,7 +175,6 @@ public class OrderDAO {
         WHERE o.created_at >= ? OR o.status = 'PREPARING'
     """;
 
-        // Updated: include today's orders OR any order currently PREPARING
         String ordersSql = """
         SELECT id, order_number, order_type, order_type_detail, status, created_at, cashier_name, discount_name,
                subtotal, service_charge_rate, service_charge, vat_rate, vat, total
@@ -251,7 +250,7 @@ public class OrderDAO {
                             OrderStatus.fromString(rs.getString("status")),
                             rs.getTimestamp("created_at").toLocalDateTime(),
                             rs.getString("cashier_name"),
-                            List.of(),                       // filled in below
+                            List.of(),
                             rs.getString("discount_name"), totals);
                 }
             }

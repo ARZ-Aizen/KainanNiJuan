@@ -68,7 +68,6 @@
 
         private final ToggleGroup omStatusGroup = new ToggleGroup();
         private final ObservableList<OrderCard> omOrders = FXCollections.observableArrayList();
-        /** Full receipt detail per order number (lines, totals, cashier, discount). */
         private final Map<String, OrderReceipt> omReceipts = new HashMap<>();
         private OrderStatus omSelectedStatus = null;
         private String omSelectedOrderNo = null;
@@ -131,7 +130,6 @@
             applyOmFilter();
         }
 
-        /** Loads saved orders from the database (expects newest first), keeping their full receipts. */
         public void setReceipts(List<OrderReceipt> receipts) {
             omReceipts.clear();
             List<OrderCard> cards = new ArrayList<>();
@@ -142,15 +140,10 @@
                     cards.add(toCard(r));
                 }
             }
-            // keep the open panel's detail in sync if the selected order is still there
             if (omSelectedOrderNo != null) omReceiptDetails = omReceipts.get(omSelectedOrderNo);
             setOrders(cards);
         }
 
-        /**
-         * Called by the POS right after a successful payment.
-         * Adds the order at the top of the list and keeps its full receipt for the right-hand panel.
-         */
         public void addOrder(OrderReceipt receipt) {
             if (receipt == null) return;
 
@@ -210,7 +203,6 @@
             updateOrderStatus(order.orderNumber(), OrderStatus.CANCELLED);
         }
 
-        /** Replaces the card (and stored receipt) with a copy carrying the new status, then refreshes the screen. */
         public void updateOrderStatus(String orderNumber, OrderStatus newStatus) {
             for (int i = 0; i < omOrders.size(); i++) {
                 OrderCard o = omOrders.get(i);

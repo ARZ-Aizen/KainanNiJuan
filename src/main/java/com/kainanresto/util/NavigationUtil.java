@@ -74,11 +74,11 @@ public final class NavigationUtil {
         boolean isDashboard = pathLower.contains("mainadminview") || pathLower.contains("clientview");
 
         if (isDashboard) {
-            stage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH); // ESC no longer exits
-            stage.setFullScreenExitHint("");                                // hides the "Press ESC to exit" popup
+            stage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);
+            stage.setFullScreenExitHint("");
             stage.setFullScreen(true);
         } else {
-            stage.setFullScreenExitKeyCombination(KeyCombination.keyCombination("ESC")); // restore default
+            stage.setFullScreenExitKeyCombination(KeyCombination.keyCombination("ESC"));
             stage.setFullScreen(false);
             stage.setMaximized(false);
             stage.setResizable(false);

@@ -21,7 +21,6 @@ public class UserDAO {
 
     private static final int MYSQL_DUPLICATE_KEY_ERROR = 1062;
 
-    // Random 8-digit user IDs (10,000,000 - 99,999,999)
     private static final int USER_ID_MIN = 10_000_000;
     private static final int USER_ID_MAX = 99_999_999;
     private static final int USER_ID_MAX_ATTEMPTS = 10;
@@ -85,9 +84,8 @@ public class UserDAO {
         }
     }
 
-    // REGISTER (assigns a random, unique user_id)
+    // REGISTER
     public OperationResult register(User user) {
-        // Check the username first so a duplicate username is never confused with an ID collision
         if (checkUserExists(user.getUsername())) {
             return OperationResult.DUPLICATE_ENTRY;
         }
@@ -119,9 +117,9 @@ public class UserDAO {
                 if (e.getErrorCode() == MYSQL_DUPLICATE_KEY_ERROR) {
                     String msg = e.getMessage() == null ? "" : e.getMessage().toUpperCase();
                     if (msg.contains("PRIMARY")) {
-                        continue; // random ID collided, try another one
+                        continue;
                     }
-                    return OperationResult.DUPLICATE_ENTRY; // username collision (race condition)
+                    return OperationResult.DUPLICATE_ENTRY;
                 }
                 System.err.println("UserDAO.register: DB Error - " + e.getMessage());
                 return OperationResult.DATABASE_ERROR;

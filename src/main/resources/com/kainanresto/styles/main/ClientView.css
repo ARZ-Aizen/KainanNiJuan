@@ -19,7 +19,6 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 4, 0, 4, 4);
 }
 
-/* Fixed sizes are required: a VBox would otherwise stretch children to 93px */
 .logo-shell {
     -fx-min-width: 68px;  -fx-pref-width: 68px;  -fx-max-width: 68px;
     -fx-min-height: 68px; -fx-pref-height: 68px; -fx-max-height: 68px;
@@ -27,15 +26,12 @@
     -fx-background-radius: 999px;
 }
 
-/* Base rule that the admin CSS has: centers the 58px buttons inside the 93px sidebar */
 .primary-nav {
     -fx-alignment: TOP_CENTER;
 }
 
-/* Client has only 2 nav buttons, so don't reserve the admin's 468px */
 .primary-nav.client-nav { -fx-min-height: 0; }
 
-/* Nav button: 58 x 58, padding 12 -> 34 x 34 icon area */
 .nav-item {
     -fx-min-width: 58px;  -fx-pref-width: 58px;  -fx-max-width: 58px;
     -fx-min-height: 58px; -fx-pref-height: 58px; -fx-max-height: 58px;
@@ -53,7 +49,6 @@
 .nav-item:hover   { -fx-background-color: rgba(255,255,255,0.12); }
 .nav-item:pressed { -fx-background-color: rgba(255,255,255,0.18); }
 
-/* Active is listed after hover and repeats :hover so hovering can't dim it */
 .nav-item-active,
 .nav-item-active:hover,
 .nav-item-active:pressed {
@@ -66,7 +61,6 @@
     -fx-min-height: 34px; -fx-pref-height: 34px; -fx-max-height: 34px;
 }
 
-/* Stroke icons on a 24-unit grid. Scale and stroke width are set in the controller. */
 .phosphor-icon {
     -fx-fill: transparent;
     -fx-stroke: #E2D3C7;
@@ -79,7 +73,6 @@
     -fx-stroke: white;
 }
 
-/* Bottom section: divider + logout, 49px wide */
 .sidebar-bottom {
     -fx-min-width: 49px; -fx-pref-width: 49px; -fx-max-width: 49px;
     -fx-alignment: CENTER;
@@ -90,7 +83,6 @@
     -fx-background-color: #A27D60;
 }
 
-/* 49 x 54, radius 8, 30px icon: (49 - 30) / 2 = 9.5 side padding */
 .logout-item {
     -fx-min-width: 49px;  -fx-pref-width: 49px;  -fx-max-width: 49px;
     -fx-min-height: 54px; -fx-pref-height: 54px; -fx-max-height: 54px;
@@ -385,7 +377,6 @@
 .om-subtitle { -fx-font-family: 'Inter'; -fx-font-size: 15px; -fx-font-weight: 500; -fx-text-fill: #666666; }
 .om-title-flow { -fx-min-height: 40; -fx-pref-height: 40; }
 
-/* status chips */
 .om-status-chip {
     -fx-background-color: white;
     -fx-background-insets: 0;
@@ -408,7 +399,6 @@
     -fx-text-fill: #F9F4EC;
 }
 
-/* scroll area */
 .om-scroll,
 .om-scroll > .viewport,
 .om-grid-host {
@@ -418,7 +408,6 @@
 .om-scroll { -fx-padding: 0; -fx-background-insets: 0; -fx-border-color: transparent; }
 .om-grid-host { -fx-padding: 4 4 24 4; }
 
-/* order card */
 .om-card {
     -fx-background-color: white;
     -fx-background-radius: 16;
@@ -447,7 +436,6 @@
 .om-total-label { -fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-font-weight: 400; -fx-text-fill: #666666; }
 .om-total-value { -fx-font-family: 'Inter'; -fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #8C6343; }
 
-/* status badge */
 .om-badge {
     -fx-background-color: #F0EAD6;
     -fx-background-radius: 20;
@@ -459,7 +447,6 @@
 .om-badge-completed { -fx-background-color: #E2ECE9; -fx-text-fill: #2E7D32; }
 .om-badge-neutral   { -fx-text-fill: #666666; }
 
-/* card buttons */
 .om-btn {
     -fx-background-insets: 0;
     -fx-background-radius: 8;
@@ -478,7 +465,6 @@
     -fx-text-fill: #666666;
 }
 .om-btn-outline:hover { -fx-background-color: #FCF7F0; }
-
 
 /* ================= ORDER MANAGEMENT RECEIPT (omr) ================= */
 .omr-panel {
@@ -725,10 +711,8 @@
 
 /* ============================== SIDEBAR: EXPAND FEATURE ============================== */
 
-/* Hint that the compact sidebar background is clickable */
 .sidebar { -fx-cursor: hand; }
 
-/* Logo placeholder (shown when no logo is loaded) */
 .logo-placeholder {
     -fx-text-fill: #8C6343;
     -fx-font-family: 'Inter';
@@ -736,12 +720,10 @@
     -fx-font-weight: 700;
 }
 
-/* 80% black overlay over everything to the right of the compact sidebar */
 .sidebar-scrim {
     -fx-background-color: rgba(0,0,0,0.8);
 }
 
-/* Expanded sidebar: 256 content + 24 padding each side = 304 */
 .sidebar-expanded {
     -fx-min-width: 304px;  -fx-pref-width: 304px;  -fx-max-width: 304px;
     -fx-padding: 24px;
@@ -752,7 +734,7 @@
 }
 
 .exp-brand-name {
-    -fx-max-width: 176px;                 /* 256 - 68 logo - 12 gap */
+    -fx-max-width: 176px;
     -fx-text-overrun: ellipsis;
     -fx-text-fill: white;
     -fx-font-family: 'Inter';
@@ -767,7 +749,6 @@
     -fx-font-weight: 400;
 }
 
-/* Nav row: padding 12/16, gap 12, radius 8 */
 .exp-nav-item {
     -fx-padding: 12px 16px;
     -fx-alignment: CENTER_LEFT;

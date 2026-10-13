@@ -26,20 +26,16 @@ public class ProductDAO {
 
     /* ============================== IMAGE SETTINGS ============================== */
 
-    // Change the host without editing code:  -Dkainan.server=192.168.1.20
     private static final String IMAGE_HOST   = System.getProperty("kainan.server", "192.168.1.15");
     private static final String IMAGE_SERVER = "http://" + IMAGE_HOST + "/kainan_images/";
     private static final String UPLOAD_URL   = "http://" + IMAGE_HOST + "/upload.php";
-
-    // Optional folder on disk, same layout:  <folder>/<Category>/<filename>
-    // Default: <user home>/kainan_images   (override with -Dkainan.localImages=D:/images)
     private static final Path LOCAL_IMAGE_DIR = Paths.get(
             System.getProperty("kainan.localImages", System.getProperty("user.home") + "/kainan_images"));
 
     private static final String RESOURCE_BASE = "/com/kainanresto/images/main/PreloadDish/";
 
-    private static final long RETRY_AFTER_MS = 30_000;   // retry the server after 30s if it was down
-    private static volatile long serverDownUntil = 0;    // skip server checks until this time
+    private static final long RETRY_AFTER_MS = 30_000;
+    private static volatile long serverDownUntil = 0;
     private static final Map<String, String> serverHits = new ConcurrentHashMap<>();
 
     private static boolean debugged = false;
@@ -224,7 +220,6 @@ public class ProductDAO {
             Path exact = dir.resolve(fileName);
             if (Files.isRegularFile(exact)) return exact.toUri().toString();
 
-            // case-insensitive match (Banana Shake.png vs banana shake.png)
             if (Files.isDirectory(dir)) {
                 try (var stream = Files.list(dir)) {
                     return stream.filter(p -> p.getFileName().toString().equalsIgnoreCase(fileName))
@@ -237,7 +232,6 @@ public class ProductDAO {
         return null;
     }
 
-    /** Last resort: the path stored in the DB, only if it really exists on this machine. */
     private String findStoredPath(String raw) {
         try {
             File f;
