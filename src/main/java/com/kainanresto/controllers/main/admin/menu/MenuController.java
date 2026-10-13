@@ -125,6 +125,7 @@
     
         @FXML
         private void onAddDish() {
+            refreshCategories();
             resetAddDishForm();
             setFormEditable(true);
             menuGridView.setVisible(false);
@@ -144,6 +145,10 @@
             setMenuCategories(productDAO.getAllCategories());
             setDishes(productDAO.getAllDishes());
         }
+
+        private void refreshCategories() {
+            setMenuCategories(productDAO.getAllCategories());
+        }
     
         /* ============================== MENU GRID LOGIC ============================== */
     
@@ -161,29 +166,39 @@
                 applyMenuFilter();
             });
         }
-    
+
         private void setMenuCategories(List<String> categories) {
             List<String> safeCategories = categories == null ? new ArrayList<>() : categories;
+
+            String previousChip = selectedCategory;
+            String previousComboValue = addDishCategoryCombo != null ? addDishCategoryCombo.getValue() : null;
+
             categoryNames.clear();
             categoryNames.addAll(safeCategories);
-    
+
             rebuildingChips = true;
             categoryToggleGroup.getToggles().clear();
             menuCategoryChips.getChildren().clear();
-    
+
             ToggleButton all = createCategoryChip("All", null);
+            ToggleButton toSelect = all;
             menuCategoryChips.getChildren().add(all);
             for (String c : categoryNames) {
-                menuCategoryChips.getChildren().add(createCategoryChip(c, c));
+                ToggleButton chip = createCategoryChip(c, c);
+                menuCategoryChips.getChildren().add(chip);
+                if (previousChip != null && c.equalsIgnoreCase(previousChip)) toSelect = chip;
             }
             rebuildingChips = false;
-    
-            selectedCategory = null;
-            all.setSelected(true);
+
+            selectedCategory = (String) toSelect.getUserData();
+            toSelect.setSelected(true);
             applyMenuFilter();
-    
+
             if (addDishCategoryCombo != null) {
                 addDishCategoryCombo.getItems().setAll(categoryNames);
+                if (previousComboValue != null && categoryNames.contains(previousComboValue)) {
+                    addDishCategoryCombo.setValue(previousComboValue);
+                }
             }
             rebuildCategoryList();
         }
@@ -278,7 +293,6 @@
             return wrapper;
         }
     
-        /** Debug helper: JavaFX never throws for background-loaded images, so log errors and successes here. */
         private void watchImage(Image image, String label, String url) {
             image.errorProperty().addListener((obs, was, isErr) -> {
                 if (isErr) System.out.println("[IMG ERROR] " + label + " | " + url + " -> " + image.getException());
@@ -301,13 +315,11 @@
                     c.getControlNewText().length() <= MAX_DESCRIPTION_LENGTH ? c : null));
             addCategoryNameField.setTextFormatter(textFilter(CATEGORY_ALLOWED, MAX_CATEGORY_LENGTH));
     
-            // Price: no leading zeros, max 5 whole digits, max 2 decimals
             addDishPriceField.setTextFormatter(new TextFormatter<>(c ->
                     c.getControlNewText().matches("(0|[1-9]\\d{0,4})?(\\.\\d{0,2})?") ? c : null));
             addDishQuantityField.setTextFormatter(new TextFormatter<>(c ->
                     c.getControlNewText().matches("\\d{0,5}") ? c : null));
     
-            // Tidy up when the user leaves a field
             addDishPriceField.focusedProperty().addListener((obs, was, is) -> {
                 String t = addDishPriceField.getText();
                 if (!is && t != null && !t.isEmpty() && !t.equals(".")) {
@@ -318,7 +330,6 @@
                 if (!is && addDishQuantityField.getText().isBlank()) addDishQuantityField.setText("0");
             });
     
-            // Remove the red border as soon as the user edits the field again
             addDishNameField.textProperty().addListener((o, a, b) -> setInvalid(addDishNameField, false));
             addCategoryNameField.textProperty().addListener((o, a, b) -> setInvalid(addCategoryNameField, false));
             addDishPriceField.textProperty().addListener((o, a, b) -> setInvalid(addDishPriceField.getParent(), false));
@@ -375,6 +386,7 @@
         }
     
         private void openViewDishForm(Dishes dish) {
+            refreshCategories();
             resetAddDishForm();
             currentEditingDish = dish;
             isViewMode = true; // Lock the form
@@ -455,8 +467,8 @@
     
         @FXML
         private void onAddDishSave() {
-    
-            // Handle Edit Button Click
+
+            //PAG MAG EEDIT
             if (isViewMode) {
                 isViewMode = false;
                 setFormEditable(true);
@@ -473,7 +485,7 @@
                 return;
             }
     
-            // Handle Save/Update Logic
+            //LOGIC SAVE
             setAddDishError(null);
             clearInvalidStates();
     
@@ -527,8 +539,6 @@
                 if (cleanImageUri.contains("\\")) {
                     cleanImageUri = cleanImageUri.substring(cleanImageUri.lastIndexOf("\\") + 1);
                 }
-                // The existing image came from a URL (spaces shown as %20). Decode it so the DB keeps the real
-                // filename. Skipped for a freshly chosen file, whose name is already plain text.
                 if (addDishImageFile == null) {
                     cleanImageUri = URLDecoder.decode(cleanImageUri.replace("+", "%2B"), StandardCharsets.UTF_8);
                 }
@@ -536,7 +546,6 @@
     
             String desc = addDishDescriptionField.getText() == null ? "" : addDishDescriptionField.getText().trim();
     
-            // Upload a newly chosen photo to the image server before saving the dish
             if (addDishImageFile != null && !productDAO.uploadImage(addDishImageFile, category)) {
                 setAddDishError("Could not upload the image to the server. Check the connection and try again.");
                 return;
@@ -670,7 +679,6 @@
             addCategoryErrorLabel.setVisible(has); addCategoryErrorLabel.setManaged(has);
         }
     
-        /** Blocks disallowed characters, leading spaces, double spaces, and text over maxLen. */
         private static TextFormatter<String> textFilter(String allowedRegex, int maxLen) {
             return new TextFormatter<>(c -> {
                 String t = c.getControlNewText();

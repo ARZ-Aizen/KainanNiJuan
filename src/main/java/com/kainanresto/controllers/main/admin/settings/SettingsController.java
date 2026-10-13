@@ -49,7 +49,6 @@ public class SettingsController {
     private static final DateTimeFormatter SETTINGS_DATE_FMT = new DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern("MMMM d, yyyy").toFormatter(Locale.ENGLISH);
     private static final DateTimeFormatter SETTINGS_TIME_FMT = new DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern("h:mm a").toFormatter(Locale.ENGLISH);
 
-    // File to store app settings
     private static final String CONFIG_FILE = "config.properties";
     private Properties appProperties = new Properties();
 
@@ -106,10 +105,8 @@ public class SettingsController {
         try (InputStream input = new FileInputStream(CONFIG_FILE)) {
             appProperties.load(input);
         } catch (IOException ex) {
-            // File might not exist yet, ignore
         }
 
-        // Apply Time Settings
         boolean isAuto = Boolean.parseBoolean(appProperties.getProperty("timeSyncAuto", "true"));
         if (isAuto) {
             settingsSyncAutoBtn.setSelected(true);
@@ -119,7 +116,6 @@ public class SettingsController {
             settingsTimeField.setText(appProperties.getProperty("manualTime", LocalTime.now().format(SETTINGS_TIME_FMT)));
         }
 
-        // Apply Security Settings
         boolean requirePin = Boolean.parseBoolean(appProperties.getProperty("requirePinForVoid", "false"));
         settingsRequirePinToggle.setSelected(requirePin);
     }
@@ -151,7 +147,6 @@ public class SettingsController {
             }
         }
 
-        // Save to properties
         appProperties.setProperty("timeSyncAuto", String.valueOf(isAuto));
         appProperties.setProperty("manualDate", settingsDateField.getText().trim());
         appProperties.setProperty("manualTime", settingsTimeField.getText().trim());
@@ -197,7 +192,6 @@ public class SettingsController {
                             String date = tx.lastActivityAt() != null ?
                                     tx.lastActivityAt().format(DateTimeFormatter.ofPattern("MMM d yyyy h:mm a", Locale.ENGLISH)) : "";
 
-                            // Using quotes around strings ensures Excel doesn't break if a name has a comma in it
                             writer.printf("\"%s\",\"%s\",\"%s\",%.2f,\"%s\",\"%s\"%n",
                                     tx.orderId(),
                                     date,

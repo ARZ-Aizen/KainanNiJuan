@@ -124,7 +124,6 @@ public class SalesController {
         t.start();
     }
 
-    /** Call this when the admin opens the Sales tab so it shows fresh data. */
     public void refresh() { loadSalesData(); }
 
     private static LocalDateTime[] dateRange(String option) {
@@ -148,12 +147,8 @@ public class SalesController {
         orderDateFilter    = new FilterPill(orderDatePill, orderDateValueLabel, this::onOrderDateChanged);
         orderStatusFilter  = new FilterPill(orderStatusPill, orderStatusValueLabel, this::applyOrderFilters);
         orderPaymentFilter = new FilterPill(orderPaymentPill, orderPaymentValueLabel, this::applyOrderFilters);
-
-        // The first option in each list is the "no filter" default
         orderDateFilter.setOptions(List.of("Today", "Yesterday", "Last 7 Days", "This Month", "All Time"));
         orderStatusFilter.setOptions(List.of("All States", "Preparing", "Completed", "Cancelled"));
-
-        // Updated to only show Paid and Refunded
         orderPaymentFilter.setOptions(List.of("All", "Paid", "Refunded"));
 
         setupOrdersTable();
@@ -204,7 +199,6 @@ public class SalesController {
                 || (order.staffName() != null && order.staffName().toLowerCase(Locale.ENGLISH).contains(query));
     }
 
-    /** The date range is applied in the database query, so reload. */
     private void onOrderDateChanged() { loadSalesData(); }
 
     @FXML
@@ -230,8 +224,6 @@ public class SalesController {
         menu.show(anchor, Side.BOTTOM, 0.0, 4.0);
     }
 
-    /** Placeholder: will generate the receipt PDF and open it once PDF conversion is built. */
-    /** Loads the receipt data, then shows it in a modal. PDF is only produced via the Print button. */
     private void viewReceipt(Transaction order) {
         Thread worker = new Thread(() -> {
             try {
@@ -265,7 +257,6 @@ public class SalesController {
         card.getStyleClass().add("receipt-card");
         card.setPadding(new Insets(20.0));
 
-        // ---- Header ----
         Label shop = new Label("KAINAN NI JUAN");
         shop.getStyleClass().add("receipt-title");
         Label sub = new Label("Order Receipt");
@@ -274,7 +265,6 @@ public class SalesController {
         header.setAlignment(Pos.CENTER);
         card.getChildren().addAll(header, new Separator());
 
-        // ---- Order info ----
         String type = valueOrDash(receipt.orderType());
         if (receipt.orderTypeDetail() != null && !receipt.orderTypeDetail().isBlank()) {
             type += " - " + receipt.orderTypeDetail().trim();
@@ -287,15 +277,13 @@ public class SalesController {
                 receiptRow("Status", valueOrDash(order.status()), false),
                 new Separator());
 
-        // ---- Items ----
         card.getChildren().add(itemHeaderRow());
         if (receipt.lines() != null) {
             for (ReceiptLine line : receipt.lines()) card.getChildren().add(itemRow(line));
         }
         card.getChildren().add(new Separator());
 
-        // ---- Totals ----
-        if (t != null) {
+            if (t != null) {
             card.getChildren().add(receiptRow("Subtotal", formatPesoCompact(t.subtotal()), false));
 
             if (t.subtotal() != null && t.serviceCharge() != null && t.vat() != null && t.total() != null) {
@@ -332,12 +320,11 @@ public class SalesController {
         scroll.setPrefViewportWidth(380.0);
         scroll.setPrefViewportHeight(480.0);
 
-        // ---- Buttons ----
         Button closeBtn = new Button("Close");
         closeBtn.setOnAction(e -> stage.close());
 
         Button printBtn = new Button("Print Receipt");
-        printBtn.getStyleClass().add("primary-btn"); // swap for your primary button class
+        printBtn.getStyleClass().add("primary-btn");
         printBtn.setDefaultButton(true);
         printBtn.setOnAction(e -> printReceipt(receipt, pay, printBtn));
 
@@ -404,7 +391,6 @@ public class SalesController {
         return rate == null ? "" : " (" + rate.stripTrailingZeros().toPlainString() + "%)";
     }
 
-    /** Generates the PDF and opens it. This is the old viewReceipt behaviour, now behind the Print button. */
     private void printReceipt(OrderReceipt receipt, PaymentResult pay, Button trigger) {
         trigger.setDisable(true);
         Thread worker = new Thread(() -> {

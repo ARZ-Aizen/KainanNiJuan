@@ -12,7 +12,7 @@ public class DashboardService {
     private final TransactionDAO transactionDAO = new TransactionDAO();
 
     public DashboardData fetchDashboardSnapshot(Range range) {
-        // Stat cards
+        //STAT CARD
         BigDecimal todaysSales = transactionDAO.getTodaysSales();
         BigDecimal salesDelta = transactionDAO.getSalesDeltaPercent();
         int transactionsToday = transactionDAO.getTransactionsCountToday();
@@ -22,17 +22,17 @@ public class DashboardService {
         int totalMenuItems = transactionDAO.getTotalMenuItemsCount();
         int availableMenuItems = transactionDAO.getAvailableMenuItemsCount();
 
-        // Chart & range analytics
+        //SA ANALYTICS
         List<ChartPoint> chartPoints = transactionDAO.getChartPoints(range);
         BigDecimal rangeTotalSales = chartPoints.stream()
                 .map(ChartPoint::sales)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         int rangeOrdersCount = transactionDAO.getRangeOrderCount(range);
 
-        // Lower section cards
+        //BEST SELLER
         var bestSellers = transactionDAO.getTopBestSellers(5);
 
-        // Periodic sales summary (Replacing Inventory Alerts)
+        //SALES SUMMARY
         BigDecimal weeklySales = transactionDAO.getWeeklySales();
         BigDecimal monthlySales = transactionDAO.getMonthlySales();
         BigDecimal yearlySales = transactionDAO.getYearlySales();

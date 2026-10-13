@@ -102,8 +102,7 @@ public class AccountController {
     private AccountRow editingAccount;
     private final UserDAO userDAO = new UserDAO();
 
-    @FXML
-    public void initialize() {
+    @FXML public void initialize() {
         setupIcons();
         setupAccountsPage();
         setupEditAccountPage();
@@ -335,8 +334,7 @@ public class AccountController {
         addAccountVisibleConfirmPasswordField.setOnAction(e -> addAccountRoleCombo.requestFocus());
     }
 
-    @FXML
-    private void onAddAccount() {
+    @FXML private void onAddAccount() {
         addAccountNameField.clear();
         addAccountUsernameField.clear();
         resetPasswordFields(addAccountPasswordField, addAccountVisiblePasswordField,
@@ -347,14 +345,12 @@ public class AccountController {
         addAccountNameField.requestFocus();
     }
 
-    @FXML
-    private void onToggleAddAccountPasswordVisibility() {
+    @FXML private void onToggleAddAccountPasswordVisibility() {
         togglePasswordVisibility(addAccountPasswordField, addAccountVisiblePasswordField,
                 addAccountConfirmPasswordField, addAccountVisibleConfirmPasswordField);
     }
 
-    @FXML
-    private void onAddAccountCancel() {
+    @FXML private void onAddAccountCancel() {
         boolean dirty = !addAccountNameField.getText().isBlank()
                 || !addAccountUsernameField.getText().isBlank()
                 || !addAccountPasswordField.getText().isEmpty()
@@ -366,8 +362,7 @@ public class AccountController {
         }
     }
 
-    @FXML
-    private void onAddAccountSave() {
+    @FXML private void onAddAccountSave() {
         setAddAccountError(null);
 
         String name = addAccountNameField.getText() == null ? "" : addAccountNameField.getText().trim();
@@ -452,22 +447,19 @@ public class AccountController {
         editAccountVisibleConfirmPasswordField.setOnAction(e -> editAccountRoleCombo.requestFocus());
     }
 
-    @FXML
-    private void onToggleEditAccountPasswordVisibility() {
+    @FXML private void onToggleEditAccountPasswordVisibility() {
         togglePasswordVisibility(editAccountPasswordField, editAccountVisiblePasswordField,
                 editAccountConfirmPasswordField, editAccountVisibleConfirmPasswordField);
     }
 
-    @FXML
-    private void onEditAccountCancel() {
+    @FXML private void onEditAccountCancel() {
         if (AlertUtil.showYesNoConfirmation("Cancel Edit", "Discard changes?", "Any unsaved changes will be lost.")) {
             editingAccount = null;
             showAccountsList();
         }
     }
 
-    @FXML
-    private void onEditAccountSave() {
+    @FXML private void onEditAccountSave() {
         setEditAccountError(null);
         if (editingAccount == null) return;
 
@@ -483,7 +475,6 @@ public class AccountController {
         if (!name.matches("^[a-zA-Z\\s\\.]+$")) { AlertUtil.showWarning("Invalid Full Name", "Full name can only contain letters, spaces, and periods."); editAccountNameField.requestFocus(); return; }
         if (!username.matches("^[a-zA-Z0-9_-]{3,}$")) { AlertUtil.showWarning("Invalid Username", "Username must be at least 3 characters long."); editAccountUsernameField.requestFocus(); return; }
 
-        // Password is optional on edit; only validate if the user typed something
         if (!newPassword.isEmpty() || !confirm.isEmpty()) {
             if (!isStrongPassword(newPassword)) {
                 AlertUtil.showWarning("Weak Password", PASSWORD_RULE_MSG);
@@ -500,7 +491,6 @@ public class AccountController {
         if (!AlertUtil.showYesNoConfirmation("Save Changes", "Update account details?", "Save these changes to the database?")) return;
 
         String finalPassword = newPassword.isEmpty() ? null : newPassword;
-        // Status is no longer editable; keep whatever it currently is
         if (userDAO.updateAccount((int) editingAccount.id(), name, username, finalPassword, role, editingAccount.status())) {
             editingAccount = null;
             AlertUtil.showInfo("Account Updated", "The account details were successfully saved.");

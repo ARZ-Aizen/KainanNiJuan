@@ -39,14 +39,14 @@ import java.util.Map;
 
 public class MainAdminController {
 
-    /* ROOT / LAYERS */
+    //ROOT
     @FXML private StackPane appRoot;
     @FXML private BorderPane mainLayout;
     @FXML private VBox sidebarRoot;
     @FXML private Region sidebarScrim;
     @FXML private VBox expandedSidebar;
 
-    /* BRANDING */
+    //BRAND
     @FXML private ImageView restaurantLogoImage, expandedLogoImage;
     @FXML private Label expandedRestaurantNameLabel, expandedPortalLabel;
 
@@ -55,7 +55,7 @@ public class MainAdminController {
     @FXML private Label currentDateLabel;
     @FXML private StackPane contentArea;
 
-    /* COMPACT NAV BUTTONS */
+    //NAV BUTTONS
     @FXML private Button navDashboardBtn;
     @FXML private Button navMenuBtn;
     @FXML private Button navSalesOrdersBtn;
@@ -63,14 +63,14 @@ public class MainAdminController {
     @FXML private Button navSettingsBtn;
     @FXML private HBox topbar;
 
-    /* EXPANDED NAV BUTTONS */
+    //NAV BUTTONS
     @FXML private Button expNavDashboardBtn;
     @FXML private Button expNavMenuBtn;
     @FXML private Button expNavSalesOrdersBtn;
     @FXML private Button expNavAccountManagementBtn;
     @FXML private Button expNavSettingsBtn;
 
-    /* ICONS - COMPACT */
+    //ICONS
     @FXML private SVGPath dashboardIcon;
     @FXML private SVGPath menuIcon;
     @FXML private SVGPath salesOrdersIcon;
@@ -78,8 +78,6 @@ public class MainAdminController {
     @FXML private SVGPath settingsIcon;
     @FXML private SVGPath logoutIcon;
     @FXML private SVGPath calendarIcon;
-
-    /* ICONS - EXPANDED */
     @FXML private SVGPath expDashboardIcon;
     @FXML private SVGPath expMenuIcon;
     @FXML private SVGPath expSalesOrdersIcon;
@@ -99,8 +97,6 @@ public class MainAdminController {
     private static final double COMPACT_WIDTH = 93.0;
     private static final double EXPANDED_WIDTH = 304.0;
     private static final Duration ANIM_DURATION = Duration.millis(260);
-
-    /* VIEW CACHE */
     private final Map<String, Node> viewCache = new HashMap<>();
 
     private Button[] compactNav;
@@ -134,7 +130,6 @@ public class MainAdminController {
             );
         }
 
-        /* KEEP LOGO CIRCLE CLIPS */
         restaurantLogoImage.setClip(
                 new Circle(34, 34, 34)
         );
@@ -161,7 +156,6 @@ public class MainAdminController {
 
         initializeIcons();
 
-        /* START COLLAPSED */
         sidebarClip.heightProperty()
                 .bind(expandedSidebar.heightProperty());
 
@@ -169,7 +163,6 @@ public class MainAdminController {
         expandedSidebar.setOpacity(0);
         sidebarScrim.setOpacity(0);
 
-        /* DEFAULT PAGE */
         onNavDashboard();
 
         Platform.runLater(() -> {
@@ -180,7 +173,6 @@ public class MainAdminController {
                 return;
             }
 
-            /* ESC closes expanded sidebar */
             appRoot.getScene().addEventFilter(
                     KeyEvent.KEY_PRESSED,
                     e -> {
@@ -353,8 +345,7 @@ public class MainAdminController {
         expandSidebar();
     }
 
-    @FXML
-    private void onExpandedSidebarClicked(MouseEvent event) {
+    @FXML private void onExpandedSidebarClicked(MouseEvent event) {
 
         if (isInsideButton(
                 event.getTarget(),
@@ -366,8 +357,7 @@ public class MainAdminController {
         collapseSidebar();
     }
 
-    @FXML
-    private void onScrimClicked(MouseEvent event) {
+    @FXML private void onScrimClicked(MouseEvent event) {
         collapseSidebar();
     }
 

@@ -44,6 +44,8 @@ public class ProductDAO {
 
     private static boolean debugged = false;
 
+    private List<String> categoryCache = null;
+
 
     private void debugClasspath(String category, String fileName) {
         if (debugged) return;
@@ -125,12 +127,10 @@ public class ProductDAO {
         return i >= 0 ? f.substring(i + 1) : f;
     }
 
-    /** Order: server -> classpath -> local folder -> stored path (if it exists on this PC). */
     private String resolveImageUrl(String rawImageUri, String categoryName) {
         if (rawImageUri == null || rawImageUri.isBlank()) return null;
         String raw = rawImageUri.trim();
 
-        // Already an http(s) URL? Use as is.
         if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
 
         String fileName = fileNameOf(raw);
@@ -140,6 +140,20 @@ public class ProductDAO {
         if (url == null) url = findInClasspath(cat, fileName);
         if (url == null) url = findInLocalFolder(cat, fileName);
         if (url == null) url = findStoredPath(raw);
+
+        if (url == null) {
+            List<String> others = categoryCache != null ? categoryCache : getAllCategories();
+            for (String other : others) {
+                if (other.equals(cat)) continue;
+                url = findOnServer(other, fileName);
+                if (url == null) url = findInClasspath(other, fileName);
+                if (url == null) url = findInLocalFolder(other, fileName);
+                if (url != null) {
+                    System.out.println("[IMAGE] found '" + fileName + "' in old category folder '" + other + "'");
+                    break;
+                }
+            }
+        }
 
         if (url == null) {
             System.out.println("[IMAGE] NOT FOUND: category='" + cat + "', file='" + fileName
@@ -303,6 +317,7 @@ public class ProductDAO {
 
     public List<Dishes> getAllDishes() {
         List<Dishes> dishesList = new ArrayList<>();
+        categoryCache = getAllCategories();
         String query = """
             SELECT d.id, d.name, c.name AS category_name, d.price, d.image_url, d.available, d.description, d.quantity
             FROM dishes d
@@ -334,6 +349,8 @@ public class ProductDAO {
             }
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            categoryCache = null;
         }
         return dishesList;
     }

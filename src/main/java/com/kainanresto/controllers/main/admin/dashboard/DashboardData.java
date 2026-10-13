@@ -6,11 +6,11 @@ import java.util.List;
 public record DashboardData(
         //DASHBOARD MAIN
         BigDecimal todaysSales,
-        BigDecimal salesDeltaPercent,      // vs yesterday, e.g. 12.5 or -3.2 (null = unknown)
+        BigDecimal salesDeltaPercent,
         int transactionsToday,
-        int preparingOrders,               // shown under Transactions
+        int preparingOrders,
         int completedToday,
-        int cancelledToday,                // shown under Completed Orders
+        int cancelledToday,
         int totalMenuItems,
         int availableMenuItems,
 
@@ -20,7 +20,7 @@ public record DashboardData(
         int rangeOrdersCount,
 
         //BEST SELLER
-        List<BestSeller> bestSellers,      // volume ranked
+        List<BestSeller> bestSellers,
 
         //SALES TO
         BigDecimal weeklySales,
