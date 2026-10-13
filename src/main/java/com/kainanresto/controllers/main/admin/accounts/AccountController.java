@@ -403,8 +403,7 @@ public class AccountController {
             return;
         }
 
-        // New accounts start inactive (is_active = 0); login() sets it to 1.
-        // The user ID (0 here) is replaced by a random unique ID inside register().
+
         User newUser = new User(0, username, password, role, name, false);
         UserDAO.OperationResult result = userDAO.register(newUser);
 
