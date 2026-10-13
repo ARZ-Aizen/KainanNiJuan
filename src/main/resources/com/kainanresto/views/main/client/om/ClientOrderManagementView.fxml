@@ -9,44 +9,37 @@
           fx:controller="com.kainanresto.controllers.main.client.om.ClientOrderManagementController">
 
     <!-- Left Column (Grid) -->
-    <VBox spacing="24" HBox.hgrow="ALWAYS">
-        <padding>
-            <Insets top="32" right="32" bottom="32" left="32"/>
-        </padding>
+      <HBox alignment="CENTER_LEFT">
+                <VBox spacing="4">
+                    <TextFlow styleClass="om-title-flow">
+                        <Text text="KAINAN NI " styleClass="om-brand-main"/>
+                        <Text text="JUAN" styleClass="om-brand-accent"/>
+                    </TextFlow>
+                    <Label fx:id="omSubtitleLabel" styleClass="om-subtitle"/>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox fx:id="omSearchBox" styleClass="om-search-box" alignment="CENTER_LEFT" spacing="12">
+                    <StackPane styleClass="om-host-20">
+                        <SVGPath fx:id="omSearchIcon" styleClass="phosphor-icon, pos-search-icon"/>
+                    </StackPane>
+                    <TextField fx:id="omSearchField" promptText="Search order..."
+                               styleClass="pos-search-field" HBox.hgrow="ALWAYS"/>
+                </HBox>
 
-        <HBox alignment="CENTER_LEFT">
-            <VBox spacing="4">
-                <TextFlow styleClass="om-title-flow">
-                    <Text text="KAINAN NI " styleClass="om-brand-main"/>
-                    <Text text="JUAN" styleClass="om-brand-accent"/>
-                </TextFlow>
-                <Label fx:id="omSubtitleLabel" styleClass="om-subtitle"/>
-            </VBox>
-
-            <Region HBox.hgrow="ALWAYS"/>
-
-            <HBox fx:id="omSearchBox" styleClass="om-search-box" alignment="CENTER_LEFT" spacing="12">
-                <StackPane styleClass="om-host-20">
-                    <SVGPath fx:id="omSearchIcon" styleClass="phosphor-icon, pos-search-icon"/>
-                </StackPane>
-                <TextField fx:id="omSearchField" promptText="Search order..."
-                           styleClass="pos-search-field" HBox.hgrow="ALWAYS"/>
             </HBox>
 
-            <Region fx:id="omSearchReserve" minWidth="432" prefWidth="432" maxWidth="432"/>
-        </HBox>
+            <FlowPane fx:id="omStatusChips" hgap="8" vgap="8"/>
 
-        <FlowPane fx:id="omStatusChips" hgap="8" vgap="8"/>
 
-        <ScrollPane fx:id="omScroll" styleClass="om-scroll" fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
-            <content>
-                <VBox styleClass="om-grid-host">
-                    <Label fx:id="omGridPlaceholder" styleClass="pos-empty-label"/>
-                    <GridPane fx:id="omGrid" hgap="20" vgap="20"/>
-                </VBox>
-            </content>
-        </ScrollPane>
-    </VBox>
+            <ScrollPane fx:id="omScroll" styleClass="om-scroll" fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+                <content>
+                    <VBox styleClass="om-grid-host">
+                        <Label fx:id="omGridPlaceholder" styleClass="pos-empty-label"/>
+                        <GridPane fx:id="omGrid" hgap="20" vgap="20"/>
+                    </VBox>
+                </content>
+            </ScrollPane>
+        </VBox>
 
         <!-- Right Column (Receipt) -->
         <VBox fx:id="omReceiptPanel" styleClass="omr-panel" visible="false" managed="false">
