@@ -8,13 +8,8 @@
     <HBox styleClass="om-page" visible="false" managed="false" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
           fx:controller="com.kainanresto.controllers.main.client.om.ClientOrderManagementController">
 
-        <!-- Left Column (Grid) -->
-        <VBox spacing="24" HBox.hgrow="ALWAYS">
-            <padding>
-                <Insets top="32" right="32" bottom="32" left="32"/>
-            </padding>
-
-            <HBox alignment="CENTER_LEFT">
+    <!-- Left Column (Grid) -->
+      <HBox alignment="CENTER_LEFT">
                 <VBox spacing="4">
                     <TextFlow styleClass="om-title-flow">
                         <Text text="KAINAN NI " styleClass="om-brand-main"/>
@@ -30,9 +25,11 @@
                     <TextField fx:id="omSearchField" promptText="Search order..."
                                styleClass="pos-search-field" HBox.hgrow="ALWAYS"/>
                 </HBox>
+
             </HBox>
 
             <FlowPane fx:id="omStatusChips" hgap="8" vgap="8"/>
+
 
             <ScrollPane fx:id="omScroll" styleClass="om-scroll" fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
                 <content>
