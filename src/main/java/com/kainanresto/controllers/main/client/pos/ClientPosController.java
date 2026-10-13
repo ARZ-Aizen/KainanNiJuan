@@ -5,6 +5,7 @@ import com.kainanresto.model.dish.Dishes;
 import com.kainanresto.model.transac.ReceiptLine;
 import com.kainanresto.model.transac.ReceiptTotals;
 import com.kainanresto.model.util.Icons;
+import com.kainanresto.util.DishImageLoader;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
@@ -14,8 +15,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.SVGPath;
@@ -71,8 +70,15 @@ public class ClientPosController {
     private Map<String, Integer> discountedUnits = Map.of();
     private BigDecimal discountRate = BigDecimal.ZERO;
 
+    private final ProgressIndicator loadingSpinner = new ProgressIndicator();
+    private boolean loading = false;
+
     @FXML
     public void initialize() {
+        loadingSpinner.setPrefSize(48, 48);
+        loadingSpinner.setMaxSize(48, 48);
+        loadingSpinner.setStyle("-fx-progress-color: #6E625C;");
+
         currentDateLabel.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale.ENGLISH)));
 
         posSearchIcon.setContent(Icons.SEARCH);
@@ -102,17 +108,41 @@ public class ClientPosController {
         setDiscountSummary(false, 1, null);
     }
 
-    /* ============================== PUBLIC API ============================== */
-
     public void setCategories(List<String> categories) {
         suppliedCategories = categories == null ? new ArrayList<>() : new ArrayList<>(categories);
         rebuildCategoryChips();
     }
 
     public void setDishes(List<Dishes> dishes) {
+        clearLoading();
         dishItems.setAll(dishes == null ? List.<Dishes>of() : dishes);
         if (suppliedCategories.isEmpty()) rebuildCategoryChips();
         else applyPosFilter();
+    }
+
+    public void setLoading(boolean value) {
+        if (value) {
+            loading = true;
+            posDishGrid.getChildren().clear();
+            posGridPlaceholder.setText("Loading dishes...");
+            posGridPlaceholder.setGraphic(loadingSpinner);
+            posGridPlaceholder.setContentDisplay(ContentDisplay.TOP);
+            posGridPlaceholder.setGraphicTextGap(12);
+            posGridPlaceholder.setMaxWidth(Double.MAX_VALUE);
+            posGridPlaceholder.setMaxHeight(Double.MAX_VALUE);
+            posGridPlaceholder.setAlignment(Pos.CENTER);
+            posGridPlaceholder.setVisible(true);
+            posGridPlaceholder.setManaged(true);
+        } else {
+            clearLoading();
+            applyPosFilter();
+        }
+    }
+
+    private void clearLoading() {
+        loading = false;
+        posGridPlaceholder.setGraphic(null);
+        posGridPlaceholder.setContentDisplay(ContentDisplay.LEFT);
     }
 
     public void setDiscountOptions(List<String> options) {
@@ -184,8 +214,6 @@ public class ClientPosController {
     public void setOnReceiptDiscountCardsChange(Consumer<Integer> handler) { this.onReceiptDiscountCardsChange = handler; }
     public void setOnProceedToPayment(Runnable handler) { this.proceedToPaymentHandler = handler; }
 
-    /* ============================== CATEGORY / FILTER ============================== */
-
     private void rebuildCategoryChips() {
         List<String> names = new ArrayList<>();
         if (!suppliedCategories.isEmpty()) {
@@ -230,6 +258,7 @@ public class ClientPosController {
     }
 
     private void applyPosFilter() {
+        if (loading) return;
         String query = posSearchField.getText() == null ? "" : posSearchField.getText().trim().toLowerCase(Locale.ENGLISH);
         List<Node> cards = new ArrayList<>();
         for (Dishes dish : dishItems) {
@@ -245,31 +274,16 @@ public class ClientPosController {
         posGridPlaceholder.setManaged(empty);
     }
 
-    /* ============================== DISH CARD (matches admin menu card) ============================== */
-
     private Node createDishCard(Dishes dish) {
         boolean inStock = dish.quantity() > 0;
 
-        //IMAGE
         StackPane imageShell = new StackPane();
         imageShell.getStyleClass().add("pos-dish-image-shell");
         ClientUIHelper.fixSize(imageShell, DISH_IMAGE_SIZE, DISH_IMAGE_SIZE);
 
-        if (dish.imageUrl() != null && !dish.imageUrl().isBlank()) {
-            try {
-                Image image = new Image(dish.imageUrl(), DISH_IMAGE_SIZE * 2, DISH_IMAGE_SIZE * 2, true, true, true);
-                ImageView imageView = new ImageView(image);
-                imageView.setFitWidth(DISH_IMAGE_SIZE);
-                imageView.setFitHeight(DISH_IMAGE_SIZE);
-                imageView.setPreserveRatio(true);
-                ClientUIHelper.applyCoverCrop(imageView, image);
-                double r = DISH_IMAGE_SIZE / 2.0;
-                imageView.setClip(new Circle(r, r, r));
-                imageShell.getChildren().add(imageView);
-            } catch (IllegalArgumentException ignored) {}
-        }
+        Node imageView = DishImageLoader.circleView(dish.imageUrl(), DISH_IMAGE_SIZE);
+        if (imageView != null) imageShell.getChildren().add(imageView);
 
-        //TEXT
         Label name = new Label(dish.name() == null ? "\u2014" : dish.name());
         name.getStyleClass().add("pos-dish-name");
         name.setWrapText(false);
@@ -289,7 +303,6 @@ public class ClientPosController {
         VBox badgeBox = new VBox(6, qtyLabel, statusBadge);
         badgeBox.setAlignment(Pos.CENTER);
 
-        //CARD
         VBox card = new VBox(name, price, badgeBox);
         card.getStyleClass().add("pos-dish-card");
         card.setMinWidth(CARD_WIDTH);
@@ -306,7 +319,6 @@ public class ClientPosController {
         wrapper.setMaxWidth(CARD_WIDTH);
         wrapper.setAlignment(Pos.TOP_CENTER);
 
-        //STOCK
         if (inStock) {
             wrapper.setCursor(Cursor.HAND);
             wrapper.setOnMouseClicked(e -> { if (onAddToOrder != null) onAddToOrder.accept(dish); });
@@ -316,26 +328,14 @@ public class ClientPosController {
         return wrapper;
     }
 
-    /* ============================== RECEIPT ROWS ============================== */
-
     private Node createReceiptRow(ReceiptLine line) {
         StackPane thumb = new StackPane();
         ClientUIHelper.fixSize(thumb, RECEIPT_THUMB, RECEIPT_THUMB);
         thumb.setClip(new Circle(RECEIPT_THUMB / 2.0, RECEIPT_THUMB / 2.0, RECEIPT_THUMB / 2.0));
 
-        if (line.imageUrl() != null && !line.imageUrl().isBlank()) {
-            try {
-                Image image = new Image(line.imageUrl(), RECEIPT_THUMB * 2, RECEIPT_THUMB * 2, true, true, true);
-                ImageView imageView = new ImageView(image);
-                imageView.setFitWidth(RECEIPT_THUMB);
-                imageView.setFitHeight(RECEIPT_THUMB);
-                imageView.setPreserveRatio(true);
-                ClientUIHelper.applyCoverCrop(imageView, image);
-                thumb.getChildren().add(imageView);
-            } catch (IllegalArgumentException ignored) {}
-        }
+        Node thumbView = DishImageLoader.circleView(line.imageUrl(), RECEIPT_THUMB);
+        if (thumbView != null) thumb.getChildren().add(thumbView);
 
-        //DISCOUNT INFO
         int discQty = Math.min(discountedUnits.getOrDefault(line.name(), 0), line.quantity());
         boolean discounted = discQty > 0 && discountRate.signum() > 0;
         BigDecimal off = discounted
@@ -344,7 +344,6 @@ public class ClientPosController {
         BigDecimal discountedTotal = line.lineTotal().subtract(off);
         boolean wholeLine = discQty == line.quantity();
 
-        //NAME AND PRICE
         Label name = new Label(ClientUIHelper.valueOrDash(line.name()));
         name.getStyleClass().add("receipt-line-name");
         name.setWrapText(true);
@@ -355,7 +354,6 @@ public class ClientPosController {
         HBox.setHgrow(info, Priority.ALWAYS);
 
         if (discounted && wholeLine) {
-            //DISCOUNT
             BigDecimal unitOff = line.unitPrice().multiply(discountRate).setScale(2, RoundingMode.HALF_UP);
             Text oldUnit = new Text(ClientUIHelper.formatPeso(line.unitPrice()));
             oldUnit.setStrikethrough(true);
@@ -381,7 +379,6 @@ public class ClientPosController {
             info.getChildren().add(badge);
         }
 
-        //QTY
         Button minus = createStepButton(Icons.MINUS, "Decrease quantity", () -> requestQuantity(line, line.quantity() - 1));
         Label qty = new Label(String.valueOf(line.quantity()));
         qty.getStyleClass().add("receipt-qty");
@@ -390,7 +387,6 @@ public class ClientPosController {
         stepper.setAlignment(Pos.CENTER);
         stepper.getStyleClass().add("receipt-col-qty");
 
-        //LINE PRICE
         VBox priceBox = new VBox(2.0);
         priceBox.getStyleClass().add("receipt-col-price");
         priceBox.setAlignment(Pos.CENTER_RIGHT);
@@ -433,8 +429,6 @@ public class ClientPosController {
     private void requestQuantity(ReceiptLine line, int newQuantity) {
         if (onReceiptQuantityChange != null) onReceiptQuantityChange.accept(line, newQuantity);
     }
-
-    /* ============================== FXML HANDLERS ============================== */
 
     @FXML
     private void onProceedToPayment() {

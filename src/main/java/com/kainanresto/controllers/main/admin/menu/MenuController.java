@@ -4,19 +4,19 @@ import com.kainanresto.dao.ProductDAO;
 import com.kainanresto.model.dish.Dishes;
 import com.kainanresto.model.util.Icons;
 import com.kainanresto.util.AlertUtil;
+import com.kainanresto.util.DishImageLoader;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
@@ -57,6 +57,7 @@ public class MenuController {
 
     private static final PseudoClass FIELD_FOCUSED = PseudoClass.getPseudoClass("field-focused");
     private static final double DISH_IMAGE_SIZE = 144.66;
+    private static final double PREVIEW_IMAGE_SIZE = 150.0;
     private static final int MAX_QUANTITY = 99999;
     private static final int MAX_CATEGORY_LENGTH = 40;
 
@@ -67,6 +68,7 @@ public class MenuController {
 
     private String selectedCategory = null;
     private boolean rebuildingChips = false;
+    private boolean loading = false;
     private String addDishImageUri;
     private File addDishImageFile;
 
@@ -131,8 +133,51 @@ public class MenuController {
     }
 
     private void loadMenuManagementData() {
-        setMenuCategories(productDAO.getAllCategories());
-        setDishes(productDAO.getAllDishes());
+        loadMenuManagementData(null);
+    }
+
+    private void loadMenuManagementData(Runnable afterLoad) {
+        loading = true;
+        dishGrid.getChildren().clear();
+        dishGridPlaceholder.setText("Loading dishes...");
+        ProgressIndicator spinner = new ProgressIndicator();
+        spinner.setPrefSize(48, 48);
+        spinner.setMaxSize(48, 48);
+
+        spinner.setStyle("-fx-progress-color: #6E625C;");
+
+        dishGridPlaceholder.setMaxWidth(Double.MAX_VALUE);
+        dishGridPlaceholder.setMaxHeight(Double.MAX_VALUE);
+        dishGridPlaceholder.setAlignment(Pos.CENTER);
+
+        dishGridPlaceholder.setGraphic(spinner);
+        dishGridPlaceholder.setContentDisplay(ContentDisplay.TOP);
+        dishGridPlaceholder.setGraphicTextGap(12);
+        dishGridPlaceholder.setVisible(true);
+        dishGridPlaceholder.setManaged(true);
+
+        Thread t = new Thread(() -> {
+            List<String> cats = null;
+            List<Dishes> dishes = null;
+            try {
+                cats = productDAO.getAllCategories();
+                dishes = productDAO.getAllDishes();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            List<String> fc = cats;
+            List<Dishes> fd = dishes;
+            Platform.runLater(() -> {
+                loading = false;
+                dishGridPlaceholder.setGraphic(null);
+                dishGridPlaceholder.setContentDisplay(ContentDisplay.LEFT);
+                setMenuCategories(fc);
+                setDishes(fd);
+                if (afterLoad != null) afterLoad.run();
+            });
+        });
+        t.setDaemon(true);
+        t.start();
     }
 
     private void refreshCategories() {
@@ -205,6 +250,7 @@ public class MenuController {
     }
 
     private void applyMenuFilter() {
+        if (loading) return;
         String query = menuSearchField.getText() == null ? "" : menuSearchField.getText().trim().toLowerCase(Locale.ENGLISH);
 
         List<Node> cards = new ArrayList<>();
@@ -227,21 +273,8 @@ public class MenuController {
         StackPane imageShell = new StackPane();
         imageShell.getStyleClass().add("dish-image-shell");
 
-        if (dish.imageUrl() != null && !dish.imageUrl().isBlank()) {
-            try {
-                Image image = new Image(dish.imageUrl(), DISH_IMAGE_SIZE * 2, DISH_IMAGE_SIZE * 2, true, true, true);
-
-                ImageView imageView = new ImageView(image);
-                imageView.setFitWidth(DISH_IMAGE_SIZE);
-                imageView.setFitHeight(DISH_IMAGE_SIZE);
-                imageView.setPreserveRatio(true);
-                applyCoverCrop(imageView, image);
-                double r = DISH_IMAGE_SIZE / 2.0;
-                imageView.setClip(new Circle(r, r, r));
-                imageShell.getChildren().add(imageView);
-            } catch (Exception ignored) {
-            }
-        }
+        Node imageView = DishImageLoader.circleView(dish.imageUrl(), DISH_IMAGE_SIZE);
+        if (imageView != null) imageShell.getChildren().add(imageView);
 
         Label name = new Label(dish.name());
         name.getStyleClass().add("dish-name");
@@ -394,12 +427,8 @@ public class MenuController {
 
         if (dish.imageUrl() != null && !dish.imageUrl().isBlank()) {
             addDishImageUri = dish.imageUrl();
-            try {
-                Image image = new Image(addDishImageUri, 300.0, 300.0, true, true, true);
-                addDishPreviewImage.setImage(image);
-                applyCoverCrop(addDishPreviewImage, image);
-            } catch (Exception ignored) {
-            }
+            Image image = DishImageLoader.load(addDishImageUri, PREVIEW_IMAGE_SIZE);
+            if (image != null) DishImageLoader.fadeInWhenLoaded(addDishPreviewImage, image);
         }
 
         menuGridView.setVisible(false);
@@ -420,9 +449,7 @@ public class MenuController {
 
             String previewUri = file.toURI().toString();
             Image image = new Image(previewUri, 300.0, 300.0, true, true, true);
-
-            addDishPreviewImage.setImage(image);
-            applyCoverCrop(addDishPreviewImage, image);
+            DishImageLoader.fadeInWhenLoaded(addDishPreviewImage, image);
         }
     }
 
@@ -508,9 +535,12 @@ public class MenuController {
 
         String desc = addDishDescriptionField.getText() == null ? "" : addDishDescriptionField.getText().trim();
 
-        if (addDishImageFile != null && !productDAO.uploadImage(addDishImageFile, category)) {
-            setAddDishError("Could not upload the image to the server. Check the connection and try again.");
-            return;
+        if (addDishImageFile != null) {
+            if (!productDAO.uploadImage(addDishImageFile, category)) {
+                setAddDishError("Could not upload the image to the server. Check the connection and try again.");
+                return;
+            }
+            DishImageLoader.clearCache();
         }
 
         NewDishForm form = new NewDishForm(name, category, price, desc.isEmpty() ? null : desc,
@@ -569,8 +599,7 @@ public class MenuController {
 
         if (productDAO.addCategory(name)) {
             addCategoryNameField.clear();
-            loadMenuManagementData();
-            addDishCategoryCombo.setValue(name);
+            loadMenuManagementData(() -> addDishCategoryCombo.setValue(name));
         } else {
             setAddCategoryError("Database error creating category.");
         }
@@ -612,17 +641,6 @@ public class MenuController {
         addCategoryCountLabel.setText(categoryNames.size() + (categoryNames.size() == 1 ? " category" : " categories"));
         addCategoryEmptyLabel.setVisible(categoryNames.isEmpty());
         addCategoryEmptyLabel.setManaged(categoryNames.isEmpty());
-    }
-
-    private void applyCoverCrop(ImageView view, Image image) {
-        Runnable crop = () -> {
-            double w = image.getWidth(); double h = image.getHeight();
-            if (w <= 0.0 || h <= 0.0) return;
-            double side = Math.min(w, h);
-            view.setViewport(new Rectangle2D((w - side) / 2.0, (h - side) / 2.0, side, side));
-        };
-        if (image.getProgress() >= 1.0) crop.run();
-        else image.progressProperty().addListener((obs, o, n) -> { if (n.doubleValue() >= 1.0) crop.run(); });
     }
 
     private void setAddDishError(String msg) {

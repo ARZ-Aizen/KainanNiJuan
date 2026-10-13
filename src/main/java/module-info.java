@@ -69,4 +69,5 @@ module com.kainanresto {
     exports com.kainanresto.controllers.main.admin.settings;
     opens com.kainanresto.controllers.main.admin.settings to javafx.fxml;
     opens com.kainanresto.controllers.util to javafx.base, javafx.fxml;
+    opens com.kainanresto.util to javafx.base;
 }
