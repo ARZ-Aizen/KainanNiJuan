@@ -24,11 +24,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ProductDAO {
 
-    /* ============================== IMAGE SETTINGS ============================== */
-
     private static final String IMAGE_HOST   = System.getProperty("kainan.server", "192.168.1.15");
     private static final String IMAGE_SERVER = "http://" + IMAGE_HOST + "/kainan_images/";
     private static final String UPLOAD_URL   = "http://" + IMAGE_HOST + "/upload.php";
+
     private static final Path LOCAL_IMAGE_DIR = Paths.get(
             System.getProperty("kainan.localImages", System.getProperty("user.home") + "/kainan_images"));
 
@@ -38,22 +37,7 @@ public class ProductDAO {
     private static volatile long serverDownUntil = 0;
     private static final Map<String, String> serverHits = new ConcurrentHashMap<>();
 
-    private static boolean debugged = false;
-
     private List<String> categoryCache = null;
-
-
-    private void debugClasspath(String category, String fileName) {
-        if (debugged) return;
-        debugged = true;
-        String path = RESOURCE_BASE + category + "/" + fileName;
-        System.out.println("[DEBUG] looking for: " + path);
-        System.out.println("[DEBUG] found: " + getClass().getResource(path));
-        System.out.println("[DEBUG] base folder: " + getClass().getResource(RESOURCE_BASE));
-        System.out.println("[DEBUG] classes root: " + getClass().getResource("/"));
-    }
-
-    /* ============================== CATEGORIES ============================== */
 
     public List<String> getAllCategories() {
         List<String> categories = new ArrayList<>();
@@ -111,8 +95,6 @@ public class ProductDAO {
         return -1;
     }
 
-    /* ============================== IMAGE URL RESOLVER ============================== */
-
     private static String encodePath(String s) {
         return URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20");
     }
@@ -144,19 +126,11 @@ public class ProductDAO {
                 url = findOnServer(other, fileName);
                 if (url == null) url = findInClasspath(other, fileName);
                 if (url == null) url = findInLocalFolder(other, fileName);
-                if (url != null) {
-                    System.out.println("[IMAGE] found '" + fileName + "' in old category folder '" + other + "'");
-                    break;
-                }
+                if (url != null) break;
             }
         }
 
-        if (url == null) {
-            System.out.println("[IMAGE] NOT FOUND: category='" + cat + "', file='" + fileName
-                    + "' (tried server, " + RESOURCE_BASE + cat + "/, " + LOCAL_IMAGE_DIR + ")");
-            return raw;
-        }
-        return url;
+        return url == null ? raw : url;
     }
 
     private String findOnServer(String category, String fileName) {
@@ -166,10 +140,7 @@ public class ProductDAO {
         String cached = serverHits.get(key);
         if (cached != null) return cached;
 
-        if (System.currentTimeMillis() < serverDownUntil) {
-            System.out.println("[SERVER] skipped (marked down): " + key);
-            return null;
-        }
+        if (System.currentTimeMillis() < serverDownUntil) return null;
 
         String serverUrl = IMAGE_SERVER + encodePath(category) + "/" + encodePath(fileName);
 
@@ -186,10 +157,8 @@ public class ProductDAO {
                     serverHits.put(key, serverUrl);
                     return serverUrl;
                 }
-                System.out.println("[SERVER] " + method + " " + code + " -> " + serverUrl);
-                if (code != 405 && code != 501 && code != 403) return null; // real answer, no need to retry with GET
+                if (code != 405 && code != 501 && code != 403) return null;
             } catch (IOException e) {
-                System.out.println("[SERVER] unreachable (" + e + ") -> " + serverUrl);
                 serverDownUntil = System.currentTimeMillis() + RETRY_AFTER_MS;
                 return null;
             } finally {
@@ -200,8 +169,6 @@ public class ProductDAO {
     }
 
     private String findInClasspath(String category, String fileName) {
-        debugClasspath(category, fileName);
-
         String[] candidates = {
                 RESOURCE_BASE + category + "/" + fileName,
                 RESOURCE_BASE + category + "/" + fileName.toLowerCase(),
@@ -245,12 +212,8 @@ public class ProductDAO {
         return null;
     }
 
-    /* ============================== IMAGE UPLOAD ============================== */
-
     public boolean uploadImage(File file, String categoryName) {
         if (uploadToServer(file, categoryName)) return true;
-
-        System.out.println("[UPLOAD] server failed, saving locally instead");
         return saveToLocalFolder(file, categoryName);
     }
 
@@ -274,14 +237,12 @@ public class ProductDAO {
             }
 
             int code = conn.getResponseCode();
-            System.out.println("[UPLOAD] " + file.getName() + " -> HTTP " + code);
             if (code == 200) {
                 serverHits.clear();
                 return true;
             }
             return false;
         } catch (IOException e) {
-            System.out.println("[UPLOAD] server unreachable: " + e);
             serverDownUntil = System.currentTimeMillis() + RETRY_AFTER_MS;
             return false;
         } finally {
@@ -299,15 +260,11 @@ public class ProductDAO {
                 return true;
             }
             Files.copy(file.toPath(), target, StandardCopyOption.REPLACE_EXISTING);
-            System.out.println("[UPLOAD] saved locally -> " + target);
             return true;
         } catch (Exception e) {
-            System.out.println("[UPLOAD] local save failed: " + e);
             return false;
         }
     }
-
-    /* ============================== DISHES ============================== */
 
     public List<Dishes> getAllDishes() {
         List<Dishes> dishesList = new ArrayList<>();
