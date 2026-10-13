@@ -22,6 +22,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -40,6 +41,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Function;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.layout.Priority;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import com.kainanresto.model.transac.ReceiptLine;
+import com.kainanresto.model.transac.ReceiptTotals;
 
 public class SalesController {
 
@@ -223,6 +231,7 @@ public class SalesController {
     }
 
     /** Placeholder: will generate the receipt PDF and open it once PDF conversion is built. */
+    /** Loads the receipt data, then shows it in a modal. PDF is only produced via the Print button. */
     private void viewReceipt(Transaction order) {
         Thread worker = new Thread(() -> {
             try {
@@ -232,20 +241,187 @@ public class SalesController {
                             "Could not find the details for order " + order.orderId() + "."));
                     return;
                 }
-
                 PaymentResult pay = orderDAO.findPayment(order.orderId());
-                File pdf = ReceiptPdfGenerator.generate(receipt, pay);
+                Platform.runLater(() -> showReceiptModal(order, receipt, pay));
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                Platform.runLater(() -> AlertUtil.showError("View Receipt",
+                        "The receipt could not be loaded."));
+            }
+        });
+        worker.setDaemon(true);
+        worker.start();
+    }
 
+    private void showReceiptModal(Transaction order, OrderReceipt receipt, PaymentResult pay) {
+        Stage stage = new Stage();
+        stage.setTitle("Receipt - " + receipt.orderNumber());
+        stage.initModality(Modality.APPLICATION_MODAL);
+        if (salesRoot.getScene() != null) stage.initOwner(salesRoot.getScene().getWindow());
+        stage.setResizable(false);
+
+        ReceiptTotals t = receipt.totals();
+        VBox card = new VBox(8.0);
+        card.getStyleClass().add("receipt-card");
+        card.setPadding(new Insets(20.0));
+
+        // ---- Header ----
+        Label shop = new Label("KAINAN NI JUAN");
+        shop.getStyleClass().add("receipt-title");
+        Label sub = new Label("Order Receipt");
+        sub.getStyleClass().add("receipt-subtitle");
+        VBox header = new VBox(2.0, shop, sub);
+        header.setAlignment(Pos.CENTER);
+        card.getChildren().addAll(header, new Separator());
+
+        // ---- Order info ----
+        String type = valueOrDash(receipt.orderType());
+        if (receipt.orderTypeDetail() != null && !receipt.orderTypeDetail().isBlank()) {
+            type += " - " + receipt.orderTypeDetail().trim();
+        }
+        card.getChildren().addAll(
+                receiptRow("Order No.", valueOrDash(receipt.orderNumber()), false),
+                receiptRow("Date", receipt.createdAt() == null ? "—" : receipt.createdAt().format(ORDER_DATE_TIME_FORMAT), false),
+                receiptRow("Cashier", valueOrDash(receipt.cashierName()), false),
+                receiptRow("Order type", type, false),
+                receiptRow("Status", valueOrDash(order.status()), false),
+                new Separator());
+
+        // ---- Items ----
+        card.getChildren().add(itemHeaderRow());
+        if (receipt.lines() != null) {
+            for (ReceiptLine line : receipt.lines()) card.getChildren().add(itemRow(line));
+        }
+        card.getChildren().add(new Separator());
+
+        // ---- Totals ----
+        if (t != null) {
+            card.getChildren().add(receiptRow("Subtotal", formatPesoCompact(t.subtotal()), false));
+
+            if (t.subtotal() != null && t.serviceCharge() != null && t.vat() != null && t.total() != null) {
+                BigDecimal discount = t.subtotal().add(t.serviceCharge()).add(t.vat()).subtract(t.total());
+                if (discount.signum() > 0) {
+                    String label = receipt.discountName() == null ? "Discount" : "Discount - " + receipt.discountName();
+                    card.getChildren().add(receiptRow(label, "-" + formatPesoCompact(discount), false));
+                }
+            }
+            card.getChildren().add(receiptRow("Service charge" + rateSuffix(t.serviceChargeRate()),
+                    formatPesoCompact(t.serviceCharge()), false));
+            card.getChildren().add(receiptRow("VAT" + rateSuffix(t.vatRate()),
+                    formatPesoCompact(t.vat()), false));
+            card.getChildren().add(new Separator());
+            card.getChildren().add(receiptRow("TOTAL", formatPesoCompact(t.total()), true));
+        }
+
+        // ---- Payment ----
+        if (pay != null) {
+            card.getChildren().add(new Separator());
+            card.getChildren().add(receiptRow("Cash", formatPesoCompact(pay.cashTendered()), false));
+            card.getChildren().add(receiptRow("Change", formatPesoCompact(pay.change()), false));
+        }
+
+        Label thanks = new Label("Thank you! Please come again.");
+        thanks.getStyleClass().add("receipt-footer");
+        thanks.setMaxWidth(Double.MAX_VALUE);
+        thanks.setAlignment(Pos.CENTER);
+        thanks.setPadding(new Insets(8.0, 0.0, 0.0, 0.0));
+        card.getChildren().add(thanks);
+
+        ScrollPane scroll = new ScrollPane(card);
+        scroll.setFitToWidth(true);
+        scroll.setPrefViewportWidth(380.0);
+        scroll.setPrefViewportHeight(480.0);
+
+        // ---- Buttons ----
+        Button closeBtn = new Button("Close");
+        closeBtn.setOnAction(e -> stage.close());
+
+        Button printBtn = new Button("Print Receipt");
+        printBtn.getStyleClass().add("primary-btn"); // swap for your primary button class
+        printBtn.setDefaultButton(true);
+        printBtn.setOnAction(e -> printReceipt(receipt, pay, printBtn));
+
+        HBox actions = new HBox(10.0, closeBtn, printBtn);
+        actions.setAlignment(Pos.CENTER_RIGHT);
+        actions.setPadding(new Insets(12.0, 20.0, 16.0, 20.0));
+
+        VBox root = new VBox(scroll, actions);
+        Scene scene = new Scene(root);
+        if (salesRoot.getScene() != null) scene.getStylesheets().addAll(salesRoot.getScene().getStylesheets());
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    private static HBox receiptRow(String label, String value, boolean emphasized) {
+        Label l = new Label(label);
+        Label v = new Label(value);
+        l.getStyleClass().add(emphasized ? "receipt-total-label" : "receipt-row-label");
+        v.getStyleClass().add(emphasized ? "receipt-total-value" : "receipt-row-value");
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        HBox row = new HBox(8.0, l, spacer, v);
+        row.setAlignment(Pos.CENTER_LEFT);
+        return row;
+    }
+
+    private static final double QTY_COL_W = 36.0, AMT_COL_W = 90.0;
+
+    private static HBox itemHeaderRow() {
+        Label item = new Label("Item");
+        Label qty = new Label("Qty");
+        Label amt = new Label("Amount");
+        for (Label l : List.of(item, qty, amt)) l.getStyleClass().add("receipt-item-header");
+        HBox.setHgrow(item, Priority.ALWAYS);
+        item.setMaxWidth(Double.MAX_VALUE);
+        qty.setMinWidth(QTY_COL_W); qty.setPrefWidth(QTY_COL_W); qty.setAlignment(Pos.CENTER);
+        amt.setMinWidth(AMT_COL_W); amt.setPrefWidth(AMT_COL_W); amt.setAlignment(Pos.CENTER_RIGHT);
+        return new HBox(6.0, item, qty, amt);
+    }
+
+    private static HBox itemRow(ReceiptLine line) {
+        Label name = new Label(valueOrDash(line.name()));
+        name.setWrapText(true);
+        name.getStyleClass().add("receipt-row-value");
+        Label unit = new Label(formatPesoCompact(line.unitPrice()));
+        unit.getStyleClass().add("receipt-unit-price");
+        VBox nameBox = new VBox(1.0, name, unit);
+        HBox.setHgrow(nameBox, Priority.ALWAYS);
+
+        Label qty = new Label(String.valueOf(line.quantity()));
+        qty.setMinWidth(QTY_COL_W); qty.setPrefWidth(QTY_COL_W); qty.setAlignment(Pos.CENTER);
+        qty.getStyleClass().add("receipt-row-value");
+
+        Label amt = new Label(formatPesoCompact(line.lineTotal()));
+        amt.setMinWidth(AMT_COL_W); amt.setPrefWidth(AMT_COL_W); amt.setAlignment(Pos.CENTER_RIGHT);
+        amt.getStyleClass().add("receipt-row-value");
+
+        HBox row = new HBox(6.0, nameBox, qty, amt);
+        row.setAlignment(Pos.TOP_LEFT);
+        return row;
+    }
+
+    private static String rateSuffix(BigDecimal rate) {
+        return rate == null ? "" : " (" + rate.stripTrailingZeros().toPlainString() + "%)";
+    }
+
+    /** Generates the PDF and opens it. This is the old viewReceipt behaviour, now behind the Print button. */
+    private void printReceipt(OrderReceipt receipt, PaymentResult pay, Button trigger) {
+        trigger.setDisable(true);
+        Thread worker = new Thread(() -> {
+            try {
+                File pdf = ReceiptPdfGenerator.generate(receipt, pay);
                 if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
                     Desktop.getDesktop().open(pdf);
                 } else {
-                    Platform.runLater(() -> AlertUtil.showInfo("View Receipt",
+                    Platform.runLater(() -> AlertUtil.showInfo("Print Receipt",
                             "Receipt saved to:\n" + pdf.getAbsolutePath()));
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
-                Platform.runLater(() -> AlertUtil.showError("View Receipt",
+                Platform.runLater(() -> AlertUtil.showError("Print Receipt",
                         "The receipt PDF could not be created."));
+            } finally {
+                Platform.runLater(() -> trigger.setDisable(false));
             }
         });
         worker.setDaemon(true);
