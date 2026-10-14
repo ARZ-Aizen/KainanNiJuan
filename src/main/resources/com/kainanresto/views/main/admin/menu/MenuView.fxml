@@ -13,13 +13,13 @@
         <!-- Toolbar: search, add button, category chips -->
         <VBox styleClass="menu-toolbar-card" spacing="14.0">
             <HBox alignment="CENTER_LEFT" spacing="16.0">
-                <HBox fx:id="menuSearchBox" styleClass="search-box" alignment="CENTER_LEFT" spacing="10.0">
+                <HBox fx:id="menuSearchBox" styleClass="search-box, menu-search-box" alignment="CENTER_LEFT" spacing="10.0" HBox.hgrow="ALWAYS">
                     <StackPane styleClass="icon-host-14">
                         <SVGPath fx:id="menuSearchIcon" styleClass="phosphor-icon, icon-muted" />
                     </StackPane>
                     <TextField fx:id="menuSearchField" promptText="Search dishes..." styleClass="search-input" HBox.hgrow="ALWAYS" />
                 </HBox>
-                <Region HBox.hgrow="ALWAYS" />
+                <!-- removed: <Region HBox.hgrow="ALWAYS" /> -->
                 <Button fx:id="addDishBtn" text="Add New Dish" onAction="#onAddDish" styleClass="btn-primary" mnemonicParsing="false" contentDisplay="LEFT" graphicTextGap="8.0">
                     <graphic>
                         <StackPane styleClass="icon-host-16">

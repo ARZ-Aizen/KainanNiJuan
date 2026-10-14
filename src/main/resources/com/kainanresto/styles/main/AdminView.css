@@ -670,6 +670,19 @@
     -fx-border-color: #8C6343;
 }
 
+.menu-search-box {
+    -fx-min-width: 0;
+    -fx-pref-width: 0;
+    -fx-max-width: 99999px;
+    -fx-background-color: #F9F4EC;
+    -fx-background-radius: 8;
+    -fx-border-color: #E2D3C7;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 9 13;
+}
+.menu-search-box:focused { -fx-border-color: #B9926D; }
+
 .search-input,
 .search-input:focused {
     -fx-background-color: transparent;
@@ -1070,6 +1083,12 @@
 }
 
 .search-box-tinted { -fx-background-color: #F9F4EC; }
+
+.search-box-fluid {
+    -fx-min-width: 0;
+    -fx-pref-width: 0;
+    -fx-max-width: 99999px;
+}
 
 .filter-pill {
     -fx-padding: 7px 11px;

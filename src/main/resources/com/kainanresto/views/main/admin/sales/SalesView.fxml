@@ -68,14 +68,13 @@
 
     <!-- Search + filters -->
     <HBox styleClass="orders-toolbar-card" alignment="CENTER_LEFT" spacing="16.0">
-        <HBox fx:id="ordersSearchBox" styleClass="search-box, search-box-tinted" alignment="CENTER_LEFT" spacing="10.0">
+        <!-- Fluid search box: grows to fill the space (spacer Region removed) -->
+        <HBox fx:id="ordersSearchBox" styleClass="search-box, search-box-tinted, search-box-fluid" alignment="CENTER_LEFT" spacing="10.0" HBox.hgrow="ALWAYS">
             <StackPane styleClass="icon-host-14">
                 <SVGPath fx:id="ordersSearchIcon" styleClass="phosphor-icon, icon-muted" />
             </StackPane>
             <TextField fx:id="ordersSearchField" promptText="Search Order ID or customer..." styleClass="search-input" HBox.hgrow="ALWAYS" />
         </HBox>
-
-        <Region HBox.hgrow="ALWAYS" />
 
         <HBox alignment="CENTER_RIGHT" spacing="10.0">
             <HBox fx:id="orderDatePill" styleClass="filter-pill" alignment="CENTER_LEFT" spacing="8.0">
@@ -105,7 +104,8 @@
             </placeholder>
             <columns>
                 <TableColumn fx:id="orderIdColumn" text="ORDER ID" prefWidth="100.0" minWidth="90.0" sortable="false" reorderable="false" styleClass="col-first, col-id" />
-                <TableColumn fx:id="orderTypeColumn" text="TYPE" prefWidth="100.0" minWidth="80.0" sortable="false" reorderable="false" styleClass="col-type" />                <TableColumn fx:id="orderStaffColumn" text="STAFF" prefWidth="180.0" minWidth="120.0" sortable="false" reorderable="false" />
+                <TableColumn fx:id="orderTypeColumn" text="TYPE" prefWidth="100.0" minWidth="80.0" sortable="false" reorderable="false" styleClass="col-type" />
+                <TableColumn fx:id="orderStaffColumn" text="STAFF" prefWidth="180.0" minWidth="120.0" sortable="false" reorderable="false" />
                 <TableColumn fx:id="orderCreatedColumn" text="CREATED / LAST EDIT" prefWidth="180.0" minWidth="150.0" sortable="false" reorderable="false" styleClass="col-time" />
                 <TableColumn fx:id="orderTotalColumn" text="TOTAL" prefWidth="100.0" minWidth="80.0" sortable="false" reorderable="false" styleClass="col-total" />
                 <TableColumn fx:id="orderStatusColumn" text="STATUS" prefWidth="120.0" minWidth="110.0" sortable="false" reorderable="false" />

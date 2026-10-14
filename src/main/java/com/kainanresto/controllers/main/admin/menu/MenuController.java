@@ -127,7 +127,36 @@ public class MenuController {
 
     @FXML
     private void onAddDishCancel() {
-        showMenuGrid();
+        if (isViewMode) {
+            showMenuGrid();
+            return;
+        }
+
+        if (currentEditingDish == null && !hasUnsavedInput()) {
+            showMenuGrid();
+            return;
+        }
+
+        boolean discard = AlertUtil.showYesNoConfirmation(
+                "Discard Changes",
+                "Discard changes?",
+                currentEditingDish == null
+                        ? "The menu item you're adding will not be saved."
+                        : "Your edits to \"" + currentEditingDish.name() + "\" will not be saved."
+        );
+
+        if (discard) {
+            showMenuGrid();
+        }
+    }
+
+    private boolean hasUnsavedInput() {
+        return !normalize(addDishNameField.getText()).isEmpty()
+                || addDishCategoryCombo.getValue() != null
+                || !(addDishPriceField.getText() == null || addDishPriceField.getText().isBlank())
+                || !(addDishDescriptionField.getText() == null || addDishDescriptionField.getText().isBlank())
+                || !"0".equals(addDishQuantityField.getText())
+                || addDishImageFile != null;
     }
 
     private void loadMenuManagementData() {
@@ -455,8 +484,7 @@ public class MenuController {
     @FXML private void onAddDishQtyPlus() { addDishQuantityField.setText(String.valueOf(Math.min(MAX_QUANTITY, currentQuantity() + 1))); }
     private int currentQuantity() { String t = addDishQuantityField.getText(); return (t == null || t.isBlank()) ? 0 : Integer.parseInt(t); }
 
-    @FXML
-    private void onAddDishSave() {
+    @FXML private void onAddDishSave() {
 
         if (isViewMode) {
             isViewMode = false;
@@ -516,11 +544,22 @@ public class MenuController {
             return;
         }
 
+        boolean isEdit = currentEditingDish != null;
+        boolean confirmed = AlertUtil.showYesNoConfirmation(
+                isEdit ? "Update Dish" : "Add Dish",
+                isEdit ? "Update this menu item?" : "Add this menu item?",
+                isEdit
+                        ? "Save your changes to \"" + name + "\"?"
+                        : "\"" + name + "\" will be added to " + category + "."
+        );
+        if (!confirmed) {
+            return;
+        }
+
         boolean finalAvailable = currentQuantity() > 0;
 
-        // Path stored in DB: "<Category>/<file>", e.g. "Silog Meals/adobosilog.png"
-        String imagePath = addDishImageUri;          // editing without a new photo: keep the stored path as is
-        if (addDishImageFile != null) {              // new photo picked: build "<Category>/<filename>"
+        String imagePath = addDishImageUri;
+        if (addDishImageFile != null) {
             imagePath = categoryFolder(category) + "/" + addDishImageFile.getName();
         }
 
@@ -528,7 +567,8 @@ public class MenuController {
 
         if (addDishImageFile != null) {
             if (!productDAO.uploadImage(addDishImageFile, category)) {
-                setAddDishError("Could not upload the image to the server. Check the connection and try again.");
+                AlertUtil.showError("Upload Failed",
+                        "Could not upload the image to the server. Check the connection and try again.");
                 return;
             }
             DishImageLoader.clearCache();
@@ -537,13 +577,13 @@ public class MenuController {
         NewDishForm form = new NewDishForm(name, category, price, desc.isEmpty() ? null : desc,
                 finalAvailable, imagePath, currentQuantity());
 
-        if (currentEditingDish == null) {
+        if (!isEdit) {
             if (productDAO.addDish(form)) {
                 AlertUtil.showInfo("Success", form.name() + " was added to the menu.");
                 loadMenuManagementData();
                 showMenuGrid();
             } else {
-                setAddDishError("Failed to save the menu item to the database.");
+                AlertUtil.showError("Save Failed", "Failed to save the menu item to the database.");
             }
         } else {
             if (productDAO.updateDish(currentEditingDish, form)) {
@@ -551,7 +591,7 @@ public class MenuController {
                 loadMenuManagementData();
                 showMenuGrid();
             } else {
-                setAddDishError("Failed to update the menu item in the database.");
+                AlertUtil.showError("Update Failed", "Failed to update the menu item in the database.");
             }
         }
     }

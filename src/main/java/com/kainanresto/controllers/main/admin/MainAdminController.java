@@ -2,10 +2,7 @@ package com.kainanresto.controllers.main.admin;
 
 import com.kainanresto.model.account.User;
 import com.kainanresto.model.util.Icons;
-import com.kainanresto.util.EntranceAnimation;
-import com.kainanresto.util.NavigationUtil;
-import com.kainanresto.util.RoleAccess;
-import com.kainanresto.util.SessionManager;
+import com.kainanresto.util.*;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -619,18 +616,23 @@ public class MainAdminController {
 
     /* ================= LOGOUT ================= */
 
-    @FXML
-    private void onLogout(ActionEvent event) {
+    @FXML private void onLogout(ActionEvent event) {
 
-        User currentUser =
-                SessionManager.getCurrentUser();
+        boolean confirmed = AlertUtil.showYesNoConfirmation(
+                "",
+                "Log Out",
+                "Are you sure you want to log out?"
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        User currentUser = SessionManager.getCurrentUser();
 
         if (currentUser != null) {
-
             new com.kainanresto.dao.UserDAO()
-                    .setAccountInactive(
-                            currentUser.getUserId()
-                    );
+                    .setAccountInactive(currentUser.getUserId());
         }
 
         SessionManager.clearSession();

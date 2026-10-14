@@ -403,8 +403,18 @@ public class ClientController {
                 "Kainan Ni Juan POS - " + u.getFullName() + " (" + u.getRole() + ")");
     }
 
-    @FXML
-    private void onLogout(ActionEvent event) {
+    @FXML private void onLogout(ActionEvent event) {
+
+        boolean confirmed = AlertUtil.showYesNoConfirmation(
+                "",
+                "Log Out",
+                "Are you sure you want to log out?"
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
         User currentUser = SessionManager.getCurrentUser();
         if (currentUser != null) {
             com.kainanresto.dao.UserDAO userDAO = new com.kainanresto.dao.UserDAO();
