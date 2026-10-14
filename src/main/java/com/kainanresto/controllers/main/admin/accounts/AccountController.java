@@ -39,6 +39,7 @@ public class AccountController {
 
     /* ============================== VIEWS ============================== */
     @FXML private VBox accountsView;
+    @FXML private VBox archiveAccountsView;
     @FXML private ScrollPane editAccountView;
     @FXML private ScrollPane addAccountView;
 
@@ -51,6 +52,10 @@ public class AccountController {
     @FXML private TableView<AccountRow> accountsTable;
     @FXML private TableColumn<AccountRow, AccountRow> accountsColName, accountsColUsername, accountsColRole;
     @FXML private TableColumn<AccountRow, AccountRow> accountsColStatus, accountsColLastLogin, accountsColCreated, accountsColActions;
+
+    /* ============================== ARCHIVE LIST ============================== */
+    @FXML private TableView<AccountRow> archiveTable;
+    @FXML private TableColumn<AccountRow, AccountRow> archiveColName, archiveColUsername, archiveColRole, archiveColActions;
 
     /* ============================== EDIT ACCOUNT FORM ============================== */
     @FXML private TextField editAccountNameField, editAccountUsernameField, editAccountVisiblePasswordField;
@@ -79,7 +84,6 @@ public class AccountController {
     private static final String ICON_PLUS = "M5 12h14 M12 5v14";
     private static final String ICON_EYE = "M12 5C7.3 5 3.1 8.3 1.2 12c1.9 3.7 6.1 7 10.8 7s8.9-3.3 10.8-7C20.9 8.3 16.7 5 12 5z m0 10c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3z";
 
-    // At least 8 chars, 1 capital letter, 1 digit, 1 special (non-alphanumeric) character
     private static final String PASSWORD_REGEX = "^(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$";
     private static final String PASSWORD_RULE_MSG =
             "Password must be at least 8 characters long and contain at least 1 capital letter, 1 number, and 1 special character.";
@@ -93,6 +97,7 @@ public class AccountController {
 
     private final Label accountsEmptyLabel = new Label("No accounts loaded.");
     private final ObservableList<AccountRow> accountsMaster = FXCollections.observableArrayList();
+    private final ObservableList<AccountRow> archiveMaster = FXCollections.observableArrayList();
     private FilteredList<AccountRow> accountsFiltered;
 
     private AccountRole accountsRoleFilter = null;
@@ -105,6 +110,7 @@ public class AccountController {
     @FXML public void initialize() {
         setupIcons();
         setupAccountsPage();
+        setupArchivePage();
         setupEditAccountPage();
         setupAddAccountPage();
         loadAccountManagementData();
@@ -112,24 +118,12 @@ public class AccountController {
     }
 
     private void setupIcons() {
-        if (accountsSearchIcon != null) {
-            accountsSearchIcon.setContent(Icons.SEARCH);
-            setIconScale(accountsSearchIcon, 14.0);
-        }
-        if (addAccountBtnIcon != null) {
-            addAccountBtnIcon.setContent(ICON_PLUS);
-            setIconScale(addAccountBtnIcon, 16.0);
-        }
-        if (addAccountEyeIcon != null) {
-            addAccountEyeIcon.setContent(ICON_EYE);
-            setIconScale(addAccountEyeIcon, 16.0);
-        }
+        if (accountsSearchIcon != null) { accountsSearchIcon.setContent(Icons.SEARCH); setIconScale(accountsSearchIcon, 14.0); }
+        if (addAccountBtnIcon != null) { addAccountBtnIcon.setContent(ICON_PLUS); setIconScale(addAccountBtnIcon, 16.0); }
+        if (addAccountEyeIcon != null) { addAccountEyeIcon.setContent(ICON_EYE); setIconScale(addAccountEyeIcon, 16.0); }
         if (accountsView != null) {
             for (Node n : accountsView.lookupAll(".accounts-pill-chevron")) {
-                if (n instanceof SVGPath p) {
-                    p.setContent(Icons.CHEVRON_DOWN);
-                    setIconScale(p, 12.0);
-                }
+                if (n instanceof SVGPath p) { p.setContent(Icons.CHEVRON_DOWN); setIconScale(p, 12.0); }
             }
         }
     }
@@ -143,7 +137,8 @@ public class AccountController {
     /* ============================== VIEW TOGGLING ============================== */
 
     private void showView(Node target) {
-        for (Node n : new Node[]{accountsView, editAccountView, addAccountView}) {
+        for (Node n : new Node[]{accountsView, editAccountView, addAccountView, archiveAccountsView}) {
+            if (n == null) continue;
             boolean on = n == target;
             n.setVisible(on);
             n.setManaged(on);
@@ -161,11 +156,52 @@ public class AccountController {
         applyAccountsFilter();
     }
 
+    /* ============================== ARCHIVE LOGIC ============================== */
+
+    @FXML private void onShowArchive() {
+        archiveMaster.setAll(userDAO.getArchivedAccounts());
+
+        if (archiveTable.getItems().isEmpty() && archiveMaster.isEmpty()) {
+            Label emptyLabel = new Label("No archived accounts.");
+            emptyLabel.getStyleClass().add("accounts-empty-label");
+            archiveTable.setPlaceholder(emptyLabel);
+            archiveTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+            archiveTable.setFixedCellSize(57.0);
+
+            bindAccountColumn(archiveColName, () -> accountTextCell(a -> a.fullName() == null || a.fullName().isBlank() ? "—" : a.fullName(), "accounts-name"));
+            bindAccountColumn(archiveColUsername, () -> accountTextCell(a -> (a.username() == null || a.username().isBlank()) ? "—" : "@" + a.username(), "accounts-username"));
+            bindAccountColumn(archiveColRole, this::accountRoleCell);
+            bindAccountColumn(archiveColActions, this::archiveActionsCell);
+        }
+
+        archiveTable.setItems(archiveMaster);
+        showView(archiveAccountsView);
+    }
+
+    @FXML private void onShowActiveAccounts() {
+        loadAccountManagementData();
+        showAccountsList();
+    }
+
+    private void setupArchivePage() {
+        Label emptyLabel = new Label("No archived accounts.");
+        emptyLabel.getStyleClass().add("accounts-empty-label");
+        archiveTable.setPlaceholder(emptyLabel);
+        archiveTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        archiveTable.setFixedCellSize(57.0);
+
+        bindAccountColumn(archiveColName, () -> accountTextCell(a -> a.fullName() == null || a.fullName().isBlank() ? "—" : a.fullName(), "accounts-name"));
+        bindAccountColumn(archiveColUsername, () -> accountTextCell(a -> (a.username() == null || a.username().isBlank()) ? "—" : "@" + a.username(), "accounts-username"));
+        bindAccountColumn(archiveColRole, this::accountRoleCell);
+        bindAccountColumn(archiveColActions, this::archiveActionsCell);
+
+        // I-bind agad ang ObservableList sa table
+        archiveTable.setItems(archiveMaster);
+    }
+
     /* ============================== PASSWORD HELPERS ============================== */
 
-    private boolean isStrongPassword(String p) {
-        return p != null && p.matches(PASSWORD_REGEX);
-    }
+    private boolean isStrongPassword(String p) { return p != null && p.matches(PASSWORD_REGEX); }
 
     private String readField(PasswordField hidden, TextField visible) {
         String p = visible.isVisible() ? visible.getText() : hidden.getText();
@@ -236,8 +272,7 @@ public class AccountController {
         pill.setOnMouseClicked(e -> { if (menu.isShowing()) menu.hide(); else menu.show(pill, Side.BOTTOM, 0.0, 4.0); });
     }
 
-    @FXML
-    private void onAccountsClearFilters() {
+    @FXML private void onAccountsClearFilters() {
         accountsRoleFilter = null; accountsStatusFilter = null; accountsLastLoginFilter = AccountsLastLoginFilter.ANYTIME;
         accountsRoleValueLabel.setText(ACCOUNTS_ALL_ROLES);
         accountsStatusValueLabel.setText(ACCOUNTS_ALL_STATUSES);
@@ -296,15 +331,15 @@ public class AccountController {
 
     private void deleteAccount(AccountRow selectedAccount) {
         if (selectedAccount.role() == AccountRole.ADMIN || "admin".equalsIgnoreCase(selectedAccount.username())) {
-            AlertUtil.showError("Action Denied", "The primary administrator account cannot be deleted.");
+            AlertUtil.showError("Action Denied", "The primary administrator account cannot be archived.");
             return;
         }
-        if (AlertUtil.showYesNoConfirmation("Delete Account", "Delete account: " + selectedAccount.username() + "?", "This action cannot be undone.")) {
-            if (userDAO.permanentDeleteUser((int) selectedAccount.id()) == UserDAO.OperationResult.SUCCESS) {
-                AlertUtil.showInfo("Success", "Account has been permanently deleted.");
+        if (AlertUtil.showYesNoConfirmation("Archive Account", "Archive account: " + selectedAccount.username() + "?", "This user will be moved to the archive and can no longer log in.")) {
+            if (userDAO.archiveUser((int) selectedAccount.id()) == UserDAO.OperationResult.SUCCESS) {
+                AlertUtil.showInfo("Success", "Account has been archived.");
                 loadAccountManagementData();
             } else {
-                AlertUtil.showError("Database Error", "Failed to delete the account from the database.");
+                AlertUtil.showError("Database Error", "Failed to archive the account.");
             }
         }
     }
@@ -374,50 +409,21 @@ public class AccountController {
         AccountRole role = addAccountRoleCombo.getValue();
 
         if (name.isEmpty() || username.isEmpty() || password.isEmpty() || confirm.isEmpty() || role == null) {
-            setAddAccountError("Please fill in all required fields.");
-            return;
+            setAddAccountError("Please fill in all required fields."); return;
         }
-        if (!name.matches("^[a-zA-Z\\s\\.]+$")) {
-            AlertUtil.showWarning("Invalid Full Name", "Full name can only contain letters, spaces, and periods.");
-            addAccountNameField.requestFocus();
-            return;
-        }
-        if (!username.matches("^[a-zA-Z0-9_-]{3,}$")) {
-            AlertUtil.showWarning("Invalid Username", "Username must be at least 3 characters long.");
-            addAccountUsernameField.requestFocus();
-            return;
-        }
-        if (!isStrongPassword(password)) {
-            AlertUtil.showWarning("Weak Password", PASSWORD_RULE_MSG);
-            if (addAccountVisiblePasswordField.isVisible()) addAccountVisiblePasswordField.requestFocus(); else addAccountPasswordField.requestFocus();
-            return;
-        }
-        if (!password.equals(confirm)) {
-            AlertUtil.showWarning("Passwords Do Not Match", "The password and confirmation must be the same.");
-            if (addAccountVisibleConfirmPasswordField.isVisible()) addAccountVisibleConfirmPasswordField.requestFocus(); else addAccountConfirmPasswordField.requestFocus();
-            return;
-        }
+        if (!name.matches("^[a-zA-Z\\s\\.]+$")) { AlertUtil.showWarning("Invalid Full Name", "Full name can only contain letters, spaces, and periods."); addAccountNameField.requestFocus(); return; }
+        if (!username.matches("^[a-zA-Z0-9_-]{3,}$")) { AlertUtil.showWarning("Invalid Username", "Username must be at least 3 characters long."); addAccountUsernameField.requestFocus(); return; }
+        if (!isStrongPassword(password)) { AlertUtil.showWarning("Weak Password", PASSWORD_RULE_MSG); if (addAccountVisiblePasswordField.isVisible()) addAccountVisiblePasswordField.requestFocus(); else addAccountPasswordField.requestFocus(); return; }
+        if (!password.equals(confirm)) { AlertUtil.showWarning("Passwords Do Not Match", "The password and confirmation must be the same."); if (addAccountVisibleConfirmPasswordField.isVisible()) addAccountVisibleConfirmPasswordField.requestFocus(); else addAccountConfirmPasswordField.requestFocus(); return; }
 
-        if (!AlertUtil.showYesNoConfirmation(
-                "Create Account",
-                "Create this account?",
-                "A " + role.getDisplayName() + " account will be created for \"" + name + "\" (@" + username + ").")) {
-            return;
-        }
+        if (!AlertUtil.showYesNoConfirmation("Create Account", "Create this account?", "A " + role.getDisplayName() + " account will be created for \"" + name + "\" (@" + username + ").")) return;
 
         User newUser = new User(0, username, password, role, name, false);
         UserDAO.OperationResult result = userDAO.register(newUser);
 
         switch (result) {
-            case SUCCESS -> {
-                AlertUtil.showInfo("Account Created", "The new account was successfully added.");
-                loadAccountManagementData();
-                showAccountsList();
-            }
-            case DUPLICATE_ENTRY -> {
-                AlertUtil.showWarning("Username Taken", "The username \"" + username + "\" already exists. Please choose another.");
-                addAccountUsernameField.requestFocus();
-            }
+            case SUCCESS -> { AlertUtil.showInfo("Account Created", "The new account was successfully added."); loadAccountManagementData(); showAccountsList(); }
+            case DUPLICATE_ENTRY -> { AlertUtil.showWarning("Username Taken", "The username \"" + username + "\" already exists. Please choose another."); addAccountUsernameField.requestFocus(); }
             default -> AlertUtil.showError("Database Error", "Failed to create the account. Please try again.");
         }
     }
@@ -459,8 +465,7 @@ public class AccountController {
     }
 
     @FXML private void onEditAccountCancel() {
-        if (!editFormChanged() || AlertUtil.showYesNoConfirmation(
-                "Cancel Edit", "Discard changes?", "Any unsaved changes will be lost.")) {
+        if (!editFormChanged() || AlertUtil.showYesNoConfirmation("Cancel Edit", "Discard changes?", "Any unsaved changes will be lost.")) {
             editingAccount = null;
             showAccountsList();
         }
@@ -468,7 +473,6 @@ public class AccountController {
 
     private boolean editFormChanged() {
         if (editingAccount == null) return false;
-
         String name = editAccountNameField.getText() == null ? "" : editAccountNameField.getText().trim();
         String username = editAccountUsernameField.getText() == null ? "" : editAccountUsernameField.getText().trim();
         if (username.startsWith("@")) username = username.substring(1);
@@ -500,24 +504,11 @@ public class AccountController {
         if (!username.matches("^[a-zA-Z0-9_-]{3,}$")) { AlertUtil.showWarning("Invalid Username", "Username must be at least 3 characters long."); editAccountUsernameField.requestFocus(); return; }
 
         if (!newPassword.isEmpty() || !confirm.isEmpty()) {
-            if (!isStrongPassword(newPassword)) {
-                AlertUtil.showWarning("Weak Password", PASSWORD_RULE_MSG);
-                if (editAccountVisiblePasswordField.isVisible()) editAccountVisiblePasswordField.requestFocus(); else editAccountPasswordField.requestFocus();
-                return;
-            }
-            if (!newPassword.equals(confirm)) {
-                AlertUtil.showWarning("Passwords Do Not Match", "The password and confirmation must be the same.");
-                if (editAccountVisibleConfirmPasswordField.isVisible()) editAccountVisibleConfirmPasswordField.requestFocus(); else editAccountConfirmPasswordField.requestFocus();
-                return;
-            }
+            if (!isStrongPassword(newPassword)) { AlertUtil.showWarning("Weak Password", PASSWORD_RULE_MSG); if (editAccountVisiblePasswordField.isVisible()) editAccountVisiblePasswordField.requestFocus(); else editAccountPasswordField.requestFocus(); return; }
+            if (!newPassword.equals(confirm)) { AlertUtil.showWarning("Passwords Do Not Match", "The password and confirmation must be the same."); if (editAccountVisibleConfirmPasswordField.isVisible()) editAccountVisibleConfirmPasswordField.requestFocus(); else editAccountConfirmPasswordField.requestFocus(); return; }
         }
 
-        // Nothing changed -> no need to hit the database
-        if (!editFormChanged()) {
-            AlertUtil.showInfo("No Changes", "You haven't changed anything.");
-            return;
-        }
-
+        if (!editFormChanged()) { AlertUtil.showInfo("No Changes", "You haven't changed anything."); return; }
         if (!AlertUtil.showYesNoConfirmation("Save Changes", "Update account details?", "Save these changes to the database?")) return;
 
         String finalPassword = newPassword.isEmpty() ? null : newPassword;
@@ -597,12 +588,37 @@ public class AccountController {
         return new AccountCell() {
             private AccountRow current;
             private final Button editBtn = accountsIconButton(Icons.SQUARE_PEN, "icon-brand", "Edit account");
-            private final Button deleteBtn = accountsIconButton(Icons.TRASH_2, "icon-danger", "Delete account");
+            private final Button deleteBtn = accountsIconButton(Icons.TRASH_2, "icon-danger", "Archive account");
             private final HBox box = new HBox(8.0, editBtn, deleteBtn);
             {
                 box.setAlignment(Pos.CENTER);
                 editBtn.setOnAction(e -> { if (current != null) editAccount(current); });
                 deleteBtn.setOnAction(e -> { if (current != null) deleteAccount(current); });
+            }
+            @Override protected void render(AccountRow r) { current = r; setGraphic(box); }
+        };
+    }
+
+    private TableCell<AccountRow, AccountRow> archiveActionsCell() {
+        return new AccountCell() {
+            private AccountRow current;
+            private final Button restoreBtn = accountsIconButton(Icons.ARROWS_CLOCKWISE, "icon-brand", "Restore account");
+            private final Button deleteBtn = accountsIconButton(Icons.TRASH_2, "icon-danger", "Permanently delete");
+            private final HBox box = new HBox(8.0, restoreBtn, deleteBtn);
+            {
+                box.setAlignment(Pos.CENTER);
+                restoreBtn.setOnAction(e -> {
+                    if (current != null && AlertUtil.showYesNoConfirmation("Restore", "Restore account", "Do you want to restore this account?")) {
+                        userDAO.restoreUser((int) current.id());
+                        onShowArchive();
+                    }
+                });
+                deleteBtn.setOnAction(e -> {
+                    if (current != null && AlertUtil.showYesNoConfirmation("Permanent Delete", "Permanently delete this account?", "This cannot be undone!")) {
+                        userDAO.permanentDeleteUser((int) current.id());
+                        onShowArchive();
+                    }
+                });
             }
             @Override protected void render(AccountRow r) { current = r; setGraphic(box); }
         };

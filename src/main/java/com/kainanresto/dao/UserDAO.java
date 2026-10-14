@@ -33,10 +33,9 @@ public class UserDAO {
         DATABASE_ERROR
     }
 
-    // LOGIN
     public Optional<User> login(String username, String plainPassword) {
         String sql = "SELECT user_id, username, password, role, full_name, is_active " +
-                "FROM users WHERE username = ? LIMIT 1";
+                "FROM users WHERE username = ? AND is_deleted = 0 LIMIT 1";
 
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -67,36 +66,30 @@ public class UserDAO {
         return Optional.empty();
     }
 
-    // LOGOUT TO
     public OperationResult setAccountInactive(int userId) {
         String sql = "UPDATE users SET is_active = 0 WHERE user_id = ?";
-
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setInt(1, userId);
             int rows = stmt.executeUpdate();
             return (rows > 0) ? OperationResult.SUCCESS : OperationResult.NOT_FOUND;
-
         } catch (SQLException e) {
             System.err.println("UserDAO.setAccountInactive: DB Error - " + e.getMessage());
             return OperationResult.DATABASE_ERROR;
         }
     }
 
-    // REGISTER
     public OperationResult register(User user) {
         if (checkUserExists(user.getUsername())) {
             return OperationResult.DUPLICATE_ENTRY;
         }
 
-        String sql = "INSERT INTO users (user_id, username, password, role, full_name, is_active) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO users (user_id, username, password, role, full_name, is_active, is_deleted) " +
+                "VALUES (?, ?, ?, ?, ?, ?, 0)";
         String hashedPassword = PasswordHasher.hash(user.getPassword());
 
         for (int attempt = 0; attempt < USER_ID_MAX_ATTEMPTS; attempt++) {
             int randomId = generateRandomUserId();
-
             try (Connection conn = DatabaseConfig.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
 
@@ -116,9 +109,7 @@ public class UserDAO {
             } catch (SQLIntegrityConstraintViolationException e) {
                 if (e.getErrorCode() == MYSQL_DUPLICATE_KEY_ERROR) {
                     String msg = e.getMessage() == null ? "" : e.getMessage().toUpperCase();
-                    if (msg.contains("PRIMARY")) {
-                        continue;
-                    }
+                    if (msg.contains("PRIMARY")) continue;
                     return OperationResult.DUPLICATE_ENTRY;
                 }
                 System.err.println("UserDAO.register: DB Error - " + e.getMessage());
@@ -132,39 +123,56 @@ public class UserDAO {
     }
 
     private int generateRandomUserId() {
-        return USER_ID_MIN + RANDOM.nextInt(USER_ID_MAX - USER_ID_MIN + 1);
+        return USER_ID_MIN + RANDOM.nextInt((USER_ID_MAX - USER_ID_MIN) + 1);
     }
 
-    // RESET PASSWORD
     public OperationResult resetPassword(String username, String newPlainPassword) {
         String sql = "UPDATE users SET password = ? WHERE username = ? ";
-
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setString(1, PasswordHasher.hash(newPlainPassword));
             stmt.setString(2, username);
-
             int rows = stmt.executeUpdate();
             return (rows > 0) ? OperationResult.SUCCESS : OperationResult.NOT_FOUND;
-
         } catch (SQLException e) {
             System.err.println("UserDAO.resetPassword: DB Error - " + e.getMessage());
             return OperationResult.DATABASE_ERROR;
         }
     }
 
-    // PERMANENTLY DELETE USER FROM DATABASE
-    public OperationResult permanentDeleteUser(int userId) {
-        String sql = "DELETE FROM users WHERE user_id = ?";
-
+    public OperationResult archiveUser(int userId) {
+        String sql = "UPDATE users SET is_deleted = 1, is_active = 0 WHERE user_id = ?";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setInt(1, userId);
             int rows = stmt.executeUpdate();
             return (rows > 0) ? OperationResult.SUCCESS : OperationResult.NOT_FOUND;
+        } catch (SQLException e) {
+            System.err.println("UserDAO.archiveUser: DB Error - " + e.getMessage());
+            return OperationResult.DATABASE_ERROR;
+        }
+    }
 
+    public OperationResult restoreUser(int userId) {
+        String sql = "UPDATE users SET is_deleted = 0 WHERE user_id = ?";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            int rows = stmt.executeUpdate();
+            return (rows > 0) ? OperationResult.SUCCESS : OperationResult.NOT_FOUND;
+        } catch (SQLException e) {
+            System.err.println("UserDAO.restoreUser: DB Error - " + e.getMessage());
+            return OperationResult.DATABASE_ERROR;
+        }
+    }
+
+    public OperationResult permanentDeleteUser(int userId) {
+        String sql = "DELETE FROM users WHERE user_id = ?";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            int rows = stmt.executeUpdate();
+            return (rows > 0) ? OperationResult.SUCCESS : OperationResult.NOT_FOUND;
         } catch (SQLException e) {
             System.err.println("UserDAO.permanentDeleteUser: DB Error - " + e.getMessage());
             return OperationResult.DATABASE_ERROR;
@@ -182,19 +190,15 @@ public class UserDAO {
         );
     }
 
-    // PANG VERIFY SA FORGOT PASS IF EXISTING YUNG USER NA ADMIN
     public boolean verifyAdminCredentials(String adminUsername, String adminPassword) {
-        String sql = "SELECT password, role FROM users WHERE username = ?";
-
+        String sql = "SELECT password, role FROM users WHERE username = ? AND is_deleted = 0";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setString(1, adminUsername);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     String storedHash = rs.getString("password");
                     String role = rs.getString("role");
-
                     if (PasswordHasher.verify(adminPassword, storedHash)) {
                         return "ADMIN".equalsIgnoreCase(role) ||
                                 "MANAGER".equalsIgnoreCase(role) ||
@@ -208,7 +212,6 @@ public class UserDAO {
         return false;
     }
 
-    // PANG VERIFY SA FORGOT PASS KAHIT  INACTIVE YUNG USER
     public boolean checkUserExists(String username) {
         String sql = "SELECT 1 FROM users WHERE username = ? LIMIT 1";
         try (Connection conn = DatabaseConfig.getConnection();
@@ -223,10 +226,9 @@ public class UserDAO {
         return false;
     }
 
-    // SETTINGS ACCOUNT MANAGEMENT TO
     public List<AccountRow> getAllAccounts() {
         List<AccountRow> accounts = new ArrayList<>();
-        String query = "SELECT user_id, full_name, username, role, is_active, last_login, created_at FROM users";
+        String query = "SELECT user_id, full_name, username, role, is_active, last_login, created_at FROM users WHERE is_deleted = 0";
 
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query);
@@ -236,17 +238,37 @@ public class UserDAO {
                 long id = rs.getLong("user_id");
                 String fullName = rs.getString("full_name");
                 String username = rs.getString("username");
-
                 AccountRole role = AccountRole.valueOf(rs.getString("role").toUpperCase());
-
                 boolean isActive = rs.getBoolean("is_active");
                 AccountStatus status = isActive ? AccountStatus.ACTIVE : AccountStatus.INACTIVE;
+                LocalDateTime lastLogin = rs.getTimestamp("last_login") != null ? rs.getTimestamp("last_login").toLocalDateTime() : null;
+                java.time.LocalDate createdAt = rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime().toLocalDate() : null;
 
-                LocalDateTime lastLogin = rs.getTimestamp("last_login") != null ?
-                        rs.getTimestamp("last_login").toLocalDateTime() : null;
+                accounts.add(new AccountRow(id, fullName, username, role, status, lastLogin, createdAt));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return accounts;
+    }
 
-                java.time.LocalDate createdAt = rs.getTimestamp("created_at") != null ?
-                        rs.getTimestamp("created_at").toLocalDateTime().toLocalDate() : null;
+    public List<AccountRow> getArchivedAccounts() {
+        List<AccountRow> accounts = new ArrayList<>();
+        String query = "SELECT user_id, full_name, username, role, is_active, last_login, created_at FROM users WHERE is_deleted = 1";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                long id = rs.getLong("user_id");
+                String fullName = rs.getString("full_name");
+                String username = rs.getString("username");
+                AccountRole role = AccountRole.valueOf(rs.getString("role").toUpperCase());
+                boolean isActive = rs.getBoolean("is_active");
+                AccountStatus status = isActive ? AccountStatus.ACTIVE : AccountStatus.INACTIVE;
+                LocalDateTime lastLogin = rs.getTimestamp("last_login") != null ? rs.getTimestamp("last_login").toLocalDateTime() : null;
+                java.time.LocalDate createdAt = rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime().toLocalDate() : null;
 
                 accounts.add(new AccountRow(id, fullName, username, role, status, lastLogin, createdAt));
             }
@@ -258,13 +280,9 @@ public class UserDAO {
 
     public boolean updateAccount(int userId, String fullName, String username, String newPassword, AccountRole role, AccountStatus status) {
         boolean updatePassword = (newPassword != null && !newPassword.isEmpty());
-
-        String sql;
-        if (updatePassword) {
-            sql = "UPDATE users SET full_name = ?, username = ?, password = ?, role = ?, is_active = ? WHERE user_id = ?";
-        } else {
-            sql = "UPDATE users SET full_name = ?, username = ?, role = ?, is_active = ? WHERE user_id = ?";
-        }
+        String sql = updatePassword
+                ? "UPDATE users SET full_name = ?, username = ?, password = ?, role = ?, is_active = ? WHERE user_id = ?"
+                : "UPDATE users SET full_name = ?, username = ?, role = ?, is_active = ? WHERE user_id = ?";
 
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -273,15 +291,12 @@ public class UserDAO {
             pstmt.setString(2, username);
 
             int paramIndex = 3;
-
             if (updatePassword) {
                 pstmt.setString(paramIndex++, PasswordHasher.hash(newPassword));
             }
 
             pstmt.setString(paramIndex++, role.name());
-
-            int isActive = (status == AccountStatus.ACTIVE) ? 1 : 0;
-            pstmt.setInt(paramIndex++, isActive);
+            pstmt.setInt(paramIndex++, (status == AccountStatus.ACTIVE) ? 1 : 0);
             pstmt.setInt(paramIndex, userId);
 
             int rowsAffected = pstmt.executeUpdate();
