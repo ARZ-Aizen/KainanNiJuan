@@ -253,6 +253,7 @@ public class SalesController {
 
             ReceiptModalController controller = loader.getController();
             controller.setReceiptData(order, receipt, pay);
+
             Stage stage = new Stage();
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.initStyle(javafx.stage.StageStyle.TRANSPARENT);
@@ -261,6 +262,11 @@ public class SalesController {
                 stage.initOwner(salesRoot.getScene().getWindow());
                 root.getStylesheets().addAll(salesRoot.getScene().getStylesheets());
             }
+
+            root.getStylesheets().add(Objects.requireNonNull(
+                    getClass().getResource("/com/kainanresto/styles/util/ReceiptModalView.css"),
+                    "ReceiptModalView.css not found").toExternalForm());
+
             Scene scene = new Scene(root);
             scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
             stage.setScene(scene);

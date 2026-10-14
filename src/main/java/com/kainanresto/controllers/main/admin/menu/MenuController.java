@@ -22,8 +22,6 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
 import java.io.File;
 import java.math.BigDecimal;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -520,17 +518,10 @@ public class MenuController {
 
         boolean finalAvailable = currentQuantity() > 0;
 
-        String cleanImageUri = addDishImageUri;
-        if (cleanImageUri != null) {
-            if (cleanImageUri.contains("/")) {
-                cleanImageUri = cleanImageUri.substring(cleanImageUri.lastIndexOf("/") + 1);
-            }
-            if (cleanImageUri.contains("\\")) {
-                cleanImageUri = cleanImageUri.substring(cleanImageUri.lastIndexOf("\\") + 1);
-            }
-            if (addDishImageFile == null) {
-                cleanImageUri = URLDecoder.decode(cleanImageUri.replace("+", "%2B"), StandardCharsets.UTF_8);
-            }
+        // Path stored in DB: "<Category>/<file>", e.g. "Silog Meals/adobosilog.png"
+        String imagePath = addDishImageUri;          // editing without a new photo: keep the stored path as is
+        if (addDishImageFile != null) {              // new photo picked: build "<Category>/<filename>"
+            imagePath = categoryFolder(category) + "/" + addDishImageFile.getName();
         }
 
         String desc = addDishDescriptionField.getText() == null ? "" : addDishDescriptionField.getText().trim();
@@ -544,7 +535,7 @@ public class MenuController {
         }
 
         NewDishForm form = new NewDishForm(name, category, price, desc.isEmpty() ? null : desc,
-                finalAvailable, cleanImageUri, currentQuantity());
+                finalAvailable, imagePath, currentQuantity());
 
         if (currentEditingDish == null) {
             if (productDAO.addDish(form)) {
@@ -664,6 +655,10 @@ public class MenuController {
                     && !t.contains("  ");
             return ok ? c : null;
         });
+    }
+
+    private static String categoryFolder(String category) {
+        return category.replaceAll("[\\\\/:*?\"<>|]", "").trim();
     }
 
     private static String normalize(String s) {
