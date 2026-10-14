@@ -38,20 +38,22 @@ public final class AdminAuthDialog {
         //USERNAME
         TextField userField = new TextField();
         userField.setPromptText("Admin Username");
-        userField.setStyle("-fx-background-color: transparent; -fx-font-size: 14px; -fx-prompt-text-fill: #a1887f; -fx-text-fill: #3e2723;");
+        userField.setStyle("-fx-background-color: transparent; -fx-font-size: 14px; -fx-prompt-text-fill: #a1887f; -fx-text-fill: #3e2723; -fx-padding: 6 0 6 0;");
         HBox userBox = new HBox(userField);
         userBox.getStyleClass().add("pay-input-box");
-        userBox.setStyle("-fx-padding: 4 8 4 8;");
+        userBox.setStyle("-fx-padding: 6 12 6 12;");
+        userBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(userField, Priority.ALWAYS);
         userField.focusedProperty().addListener((o, was, is) -> userBox.pseudoClassStateChanged(FIELD_FOCUSED, is));
 
         //PASSWORD
         PasswordField passField = new PasswordField();
         passField.setPromptText("Admin Password");
-        passField.setStyle("-fx-background-color: transparent; -fx-font-size: 14px; -fx-prompt-text-fill: #a1887f; -fx-text-fill: #3e2723;");
+        passField.setStyle("-fx-background-color: transparent; -fx-font-size: 14px; -fx-prompt-text-fill: #a1887f; -fx-text-fill: #3e2723; -fx-padding: 6 0 6 0;");
         HBox passBox = new HBox(passField);
         passBox.getStyleClass().add("pay-input-box");
-        passBox.setStyle("-fx-padding: 4 8 4 8;");
+        passBox.setStyle("-fx-padding: 6 12 6 12;");
+        passBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(passField, Priority.ALWAYS);
         passField.focusedProperty().addListener((o, was, is) -> passBox.pseudoClassStateChanged(FIELD_FOCUSED, is));
 

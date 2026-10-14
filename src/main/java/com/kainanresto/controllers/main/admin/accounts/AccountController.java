@@ -22,7 +22,9 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
+import javafx.stage.Window;
 import javafx.util.StringConverter;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -335,6 +337,12 @@ public class AccountController {
             return;
         }
         if (AlertUtil.showYesNoConfirmation("Archive Account", "Archive account: " + selectedAccount.username() + "?", "This user will be moved to the archive and can no longer log in.")) {
+
+            // --- ADMIN AUTH CHECK ---
+            Window window = accountsView.getScene().getWindow();
+            if (!AdminAuthDialog.show(window, "Authorize Account Archiving")) return;
+            // ------------------------
+
             if (userDAO.archiveUser((int) selectedAccount.id()) == UserDAO.OperationResult.SUCCESS) {
                 AlertUtil.showInfo("Success", "Account has been archived.");
                 loadAccountManagementData();
@@ -417,6 +425,11 @@ public class AccountController {
         if (!password.equals(confirm)) { AlertUtil.showWarning("Passwords Do Not Match", "The password and confirmation must be the same."); if (addAccountVisibleConfirmPasswordField.isVisible()) addAccountVisibleConfirmPasswordField.requestFocus(); else addAccountConfirmPasswordField.requestFocus(); return; }
 
         if (!AlertUtil.showYesNoConfirmation("Create Account", "Create this account?", "A " + role.getDisplayName() + " account will be created for \"" + name + "\" (@" + username + ").")) return;
+
+        // --- ADMIN AUTH CHECK ---
+        Window window = addAccountNameField.getScene().getWindow();
+        if (!AdminAuthDialog.show(window, "Authorize New Account Creation")) return;
+        // ------------------------
 
         User newUser = new User(0, username, password, role, name, false);
         UserDAO.OperationResult result = userDAO.register(newUser);
@@ -510,6 +523,11 @@ public class AccountController {
 
         if (!editFormChanged()) { AlertUtil.showInfo("No Changes", "You haven't changed anything."); return; }
         if (!AlertUtil.showYesNoConfirmation("Save Changes", "Update account details?", "Save these changes to the database?")) return;
+
+        // --- ADMIN AUTH CHECK ---
+        Window window = editAccountNameField.getScene().getWindow();
+        if (!AdminAuthDialog.show(window, "Authorize Account Update")) return;
+        // ------------------------
 
         String finalPassword = newPassword.isEmpty() ? null : newPassword;
         if (userDAO.updateAccount((int) editingAccount.id(), name, username, finalPassword, role, editingAccount.status())) {
@@ -609,12 +627,23 @@ public class AccountController {
                 box.setAlignment(Pos.CENTER);
                 restoreBtn.setOnAction(e -> {
                     if (current != null && AlertUtil.showYesNoConfirmation("Restore", "Restore account", "Do you want to restore this account?")) {
+
+                        // --- ADMIN AUTH CHECK ---
+                        Window window = archiveTable.getScene().getWindow();
+                        if (!AdminAuthDialog.show(window, "Authorize Account Restoration")) return;
+                        // ------------------------
+
                         userDAO.restoreUser((int) current.id());
                         onShowArchive();
                     }
                 });
                 deleteBtn.setOnAction(e -> {
                     if (current != null && AlertUtil.showYesNoConfirmation("Permanent Delete", "Permanently delete this account?", "This cannot be undone!")) {
+
+                        Window window = archiveTable.getScene().getWindow();
+                        if (!AdminAuthDialog.show(window, "Authorize Permanent Deletion")) return;
+                        // ------------------------
+
                         userDAO.permanentDeleteUser((int) current.id());
                         onShowArchive();
                     }
