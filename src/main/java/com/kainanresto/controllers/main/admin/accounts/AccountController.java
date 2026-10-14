@@ -393,11 +393,17 @@ public class AccountController {
             return;
         }
         if (!password.equals(confirm)) {
-            setAddAccountError("Passwords do not match.");
+            AlertUtil.showWarning("Passwords Do Not Match", "The password and confirmation must be the same.");
             if (addAccountVisibleConfirmPasswordField.isVisible()) addAccountVisibleConfirmPasswordField.requestFocus(); else addAccountConfirmPasswordField.requestFocus();
             return;
         }
 
+        if (!AlertUtil.showYesNoConfirmation(
+                "Create Account",
+                "Create this account?",
+                "A " + role.getDisplayName() + " account will be created for \"" + name + "\" (@" + username + ").")) {
+            return;
+        }
 
         User newUser = new User(0, username, password, role, name, false);
         UserDAO.OperationResult result = userDAO.register(newUser);
@@ -409,10 +415,10 @@ public class AccountController {
                 showAccountsList();
             }
             case DUPLICATE_ENTRY -> {
-                setAddAccountError("That username already exists.");
+                AlertUtil.showWarning("Username Taken", "The username \"" + username + "\" already exists. Please choose another.");
                 addAccountUsernameField.requestFocus();
             }
-            default -> setAddAccountError("Failed to create account. Please try again.");
+            default -> AlertUtil.showError("Database Error", "Failed to create the account. Please try again.");
         }
     }
 
@@ -453,10 +459,28 @@ public class AccountController {
     }
 
     @FXML private void onEditAccountCancel() {
-        if (AlertUtil.showYesNoConfirmation("Cancel Edit", "Discard changes?", "Any unsaved changes will be lost.")) {
+        if (!editFormChanged() || AlertUtil.showYesNoConfirmation(
+                "Cancel Edit", "Discard changes?", "Any unsaved changes will be lost.")) {
             editingAccount = null;
             showAccountsList();
         }
+    }
+
+    private boolean editFormChanged() {
+        if (editingAccount == null) return false;
+
+        String name = editAccountNameField.getText() == null ? "" : editAccountNameField.getText().trim();
+        String username = editAccountUsernameField.getText() == null ? "" : editAccountUsernameField.getText().trim();
+        if (username.startsWith("@")) username = username.substring(1);
+
+        String origName = editingAccount.fullName() == null ? "" : editingAccount.fullName();
+        String origUser = editingAccount.username() == null ? "" : editingAccount.username();
+
+        return !name.equals(origName)
+                || !username.equals(origUser)
+                || editAccountRoleCombo.getValue() != editingAccount.role()
+                || !readField(editAccountPasswordField, editAccountVisiblePasswordField).isEmpty()
+                || !readField(editAccountConfirmPasswordField, editAccountVisibleConfirmPasswordField).isEmpty();
     }
 
     @FXML private void onEditAccountSave() {
@@ -482,10 +506,16 @@ public class AccountController {
                 return;
             }
             if (!newPassword.equals(confirm)) {
-                setEditAccountError("Passwords do not match.");
+                AlertUtil.showWarning("Passwords Do Not Match", "The password and confirmation must be the same.");
                 if (editAccountVisibleConfirmPasswordField.isVisible()) editAccountVisibleConfirmPasswordField.requestFocus(); else editAccountConfirmPasswordField.requestFocus();
                 return;
             }
+        }
+
+        // Nothing changed -> no need to hit the database
+        if (!editFormChanged()) {
+            AlertUtil.showInfo("No Changes", "You haven't changed anything.");
+            return;
         }
 
         if (!AlertUtil.showYesNoConfirmation("Save Changes", "Update account details?", "Save these changes to the database?")) return;
@@ -497,7 +527,7 @@ public class AccountController {
             loadAccountManagementData();
             showAccountsList();
         } else {
-            setEditAccountError("Failed to update account. Username might already exist.");
+            AlertUtil.showError("Update Failed", "Failed to update the account. The username might already exist.");
         }
     }
 
