@@ -228,8 +228,12 @@ public class ClientController {
             return;
         }
 
+        // CORRECTED: Calculate subtotal directly using unitPrice * quantity
+        BigDecimal subtotal = BigDecimal.ZERO;
         List<BigDecimal> unitPrices = new ArrayList<>();
         for (ReceiptLine line : currentCart) {
+            BigDecimal lineTotal = line.unitPrice().multiply(BigDecimal.valueOf(line.quantity()));
+            subtotal = subtotal.add(lineTotal);
             for (int i = 0; i < line.quantity(); i++) unitPrices.add(line.unitPrice());
         }
         unitPrices.sort(Comparator.reverseOrder());
@@ -237,29 +241,38 @@ public class ClientController {
         boolean discountActive = currentDiscountRate.signum() > 0;
         discountCards = Math.max(1, Math.min(discountCards, unitPrices.size()));
 
-        BigDecimal subtotal = unitPrices.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-
         BigDecimal discountedBase = BigDecimal.ZERO;
         if (discountActive) {
             for (int i = 0; i < discountCards; i++) discountedBase = discountedBase.add(unitPrices.get(i));
         }
-        BigDecimal discountAmount = discountedBase.multiply(currentDiscountRate).setScale(2, RoundingMode.HALF_UP);
 
-        BigDecimal netSubtotal = subtotal.subtract(discountAmount);
-        BigDecimal vatBase = (discountActive && VAT_EXEMPT_ON_DISCOUNTED)
-                ? subtotal.subtract(discountedBase)
-                : netSubtotal;
+        BigDecimal vatDivisor = new BigDecimal("1.12");
+        BigDecimal discountAmountToDisplay = BigDecimal.ZERO;
 
-        BigDecimal vatAmount = vatBase.multiply(VAT_RATE).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal serviceCharge = netSubtotal.multiply(SERVICE_CHARGE_RATE).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal total = netSubtotal.add(vatAmount).add(serviceCharge);
+        if (discountActive && VAT_EXEMPT_ON_DISCOUNTED) {
+            BigDecimal vatExemptBase = discountedBase.divide(vatDivisor, 4, RoundingMode.HALF_UP);
+            BigDecimal vatDeduction = discountedBase.subtract(vatExemptBase);
+            BigDecimal pureDiscount = vatExemptBase.multiply(currentDiscountRate).setScale(2, RoundingMode.HALF_UP);
+            discountAmountToDisplay = vatDeduction.add(pureDiscount).setScale(2, RoundingMode.HALF_UP);
+        } else if (discountActive) {
+            discountAmountToDisplay = discountedBase.multiply(currentDiscountRate).setScale(2, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal netSales = subtotal.subtract(discountAmountToDisplay);
+        BigDecimal serviceCharge = netSales.multiply(SERVICE_CHARGE_RATE).setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal nonDiscountedBase = subtotal.subtract(discountedBase);
+        BigDecimal embeddedVat = nonDiscountedBase.subtract(nonDiscountedBase.divide(vatDivisor, 4, RoundingMode.HALF_UP))
+                .setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal total = netSales.add(serviceCharge);
 
         ReceiptTotals totals = new ReceiptTotals(
                 subtotal,
                 SERVICE_CHARGE_RATE.multiply(new BigDecimal("100")),
                 serviceCharge,
                 VAT_RATE.multiply(new BigDecimal("100")),
-                vatAmount,
+                embeddedVat,
                 total
         );
 
@@ -277,7 +290,7 @@ public class ClientController {
 
         lastTotals = totals;
         posViewController.setReceipt(new ArrayList<>(currentCart), totals, discountedUnits, currentDiscountRate);
-        posViewController.setDiscountSummary(discountActive, discountCards, discountAmount);
+        posViewController.setDiscountSummary(discountActive, discountCards, discountAmountToDisplay);
     }
 
     private void onProceedToPayment() {
@@ -294,7 +307,6 @@ public class ClientController {
         OrderReceipt receipt = new OrderReceipt(
                 orderNumber,
                 orderType,
-                null,
                 OrderStatus.PREPARING,
                 com.kainanresto.controllers.util.SystemTimeManager.getCurrentLocalDateTime(),
                 currentCashierName(),

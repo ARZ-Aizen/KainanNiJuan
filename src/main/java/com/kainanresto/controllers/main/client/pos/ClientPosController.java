@@ -338,11 +338,17 @@ public class ClientPosController {
 
         int discQty = Math.min(discountedUnits.getOrDefault(line.name(), 0), line.quantity());
         boolean discounted = discQty > 0 && discountRate.signum() > 0;
-        BigDecimal off = discounted
-                ? line.unitPrice().multiply(discountRate).multiply(BigDecimal.valueOf(discQty)).setScale(2, RoundingMode.HALF_UP)
-                : BigDecimal.ZERO;
-        BigDecimal discountedTotal = line.lineTotal().subtract(off);
         boolean wholeLine = discQty == line.quantity();
+
+        // FIXED: Extract 12% VAT before applying the discount rate (Philippine Law)
+        BigDecimal unitOff = BigDecimal.ZERO;
+        if (discounted) {
+            BigDecimal vatExemptPrice = line.unitPrice().divide(new BigDecimal("1.12"), 4, RoundingMode.HALF_UP);
+            unitOff = vatExemptPrice.multiply(discountRate).setScale(2, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal off = unitOff.multiply(BigDecimal.valueOf(discQty));
+        BigDecimal discountedTotal = line.lineTotal().subtract(off);
 
         Label name = new Label(ClientUIHelper.valueOrDash(line.name()));
         name.getStyleClass().add("receipt-line-name");
@@ -354,7 +360,7 @@ public class ClientPosController {
         HBox.setHgrow(info, Priority.ALWAYS);
 
         if (discounted && wholeLine) {
-            BigDecimal unitOff = line.unitPrice().multiply(discountRate).setScale(2, RoundingMode.HALF_UP);
+            // FIXED: Reusing the legally computed unitOff from above
             Text oldUnit = new Text(ClientUIHelper.formatPeso(line.unitPrice()));
             oldUnit.setStrikethrough(true);
             oldUnit.getStyleClass().add("receipt-old-text");

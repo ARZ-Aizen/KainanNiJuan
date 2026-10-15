@@ -44,11 +44,12 @@ public class OrderDAO {
     }
 
 
-    public boolean saveOrder(OrderReceipt r, PaymentResult pay, Integer cashierId, String cashierRole) {        String insertOrder = """
-            INSERT INTO orders (order_number, order_type, order_type_detail, status, payment_status, created_at,
+    public boolean saveOrder(OrderReceipt r, PaymentResult pay, Integer cashierId, String cashierRole) {
+        String insertOrder = """
+            INSERT INTO orders (order_number, order_type, status, payment_status, created_at,
                 cashier_id, cashier_name, cashier_role, discount_name, subtotal, discount_amount,
                 service_charge_rate, service_charge, vat_rate, vat, total, cash_tendered, change_amount)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """;
         String insertItem = "INSERT INTO order_items (order_id, dish_id, dish_name, image_url, unit_price, quantity) VALUES (?,?,?,?,?,?)";
         String deduct = "UPDATE dishes SET quantity = quantity - ? WHERE id = ? AND quantity >= ?";
@@ -64,7 +65,6 @@ public class OrderDAO {
                     int i = 1;
                     ps.setString(i++, r.orderNumber());
                     ps.setString(i++, r.orderType());
-                    ps.setString(i++, r.orderTypeDetail());
                     ps.setString(i++, r.status().name());
                     ps.setString(i++, "Paid");
                     ps.setTimestamp(i++, Timestamp.valueOf(r.createdAt()));
@@ -176,7 +176,7 @@ public class OrderDAO {
     """;
 
         String ordersSql = """
-        SELECT id, order_number, order_type, order_type_detail, status, created_at, cashier_name, discount_name,
+        SELECT id, order_number, order_type, status, created_at, cashier_name, discount_name,
                subtotal, service_charge_rate, service_charge, vat_rate, vat, total
         FROM orders 
         WHERE created_at >= ? OR status = 'PREPARING' 
@@ -206,7 +206,7 @@ public class OrderDAO {
                                 rs.getBigDecimal("vat_rate"), rs.getBigDecimal("vat"),
                                 rs.getBigDecimal("total"));
                         result.add(new OrderReceipt(
-                                rs.getString("order_number"), rs.getString("order_type"), rs.getString("order_type_detail"),
+                                rs.getString("order_number"), rs.getString("order_type"),
                                 OrderStatus.fromString(rs.getString("status")),
                                 rs.getTimestamp("created_at").toLocalDateTime(),
                                 rs.getString("cashier_name"),
@@ -223,7 +223,7 @@ public class OrderDAO {
 
     public OrderReceipt findReceipt(String orderNumber) {
         String orderSql = """
-        SELECT id, order_number, order_type, order_type_detail, status, created_at, cashier_name, discount_name,
+        SELECT id, order_number, order_type, status, created_at, cashier_name, discount_name,
                subtotal, service_charge_rate, service_charge, vat_rate, vat, total
         FROM orders WHERE order_number = ?
     """;
@@ -246,7 +246,7 @@ public class OrderDAO {
                             rs.getBigDecimal("vat_rate"), rs.getBigDecimal("vat"),
                             rs.getBigDecimal("total"));
                     base = new OrderReceipt(
-                            rs.getString("order_number"), rs.getString("order_type"), rs.getString("order_type_detail"),
+                            rs.getString("order_number"), rs.getString("order_type"),
                             OrderStatus.fromString(rs.getString("status")),
                             rs.getTimestamp("created_at").toLocalDateTime(),
                             rs.getString("cashier_name"),
@@ -266,7 +266,7 @@ public class OrderDAO {
                 }
             }
 
-            return new OrderReceipt(base.orderNumber(), base.orderType(), base.orderTypeDetail(), base.status(),
+            return new OrderReceipt(base.orderNumber(), base.orderType(), base.status(),
                     base.createdAt(), base.cashierName(), lines, base.discountName(), base.totals());
         } catch (SQLException e) {
             e.printStackTrace();

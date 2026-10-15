@@ -26,7 +26,7 @@ public final class ReceiptPdfGenerator {
 
     private static final float PAGE_W = 226.77f;            // 80 mm
     private static final float MARGIN = 14f;
-    private static final float CONTENT_W = PAGE_W - MARGIN * 2;
+    private static final float CONTENT_W = PAGE_W - (MARGIN * 2f);
     private static final float QTY_W = 28f, AMT_W = 64f, COL_GAP = 6f;
     private static final float LINE_H = 12f;
 
@@ -46,7 +46,7 @@ public final class ReceiptPdfGenerator {
         List<Element> elements = build(r, pay);
         float contentH = 0;
         for (Element e : elements) contentH += e.height();
-        float pageH = Math.max(200f, contentH + MARGIN * 2);
+        float pageH = Math.max(200f, contentH + (MARGIN * 2f));
 
         Path dir = Path.of(System.getProperty("user.home"), "Documents", "KainanNiJuan", "Receipts");
         Files.createDirectories(dir);
@@ -79,7 +79,6 @@ public final class ReceiptPdfGenerator {
         els.add(dash());
 
         String type = (r.orderType() == null || r.orderType().isBlank()) ? "-" : r.orderType();
-        if (r.orderTypeDetail() != null && !r.orderTypeDetail().isBlank()) type += " - " + r.orderTypeDetail().trim();
         els.add(kv("Order No.", r.orderNumber(), REGULAR, 8.5f));
         els.add(kv("Date", r.createdAt() == null ? "-" : r.createdAt().format(DATE_FMT), REGULAR, 8.5f));
         els.add(kv("Cashier", r.cashierName(), REGULAR, 8.5f));
@@ -143,7 +142,7 @@ public final class ReceiptPdfGenerator {
 
     private static Element itemRow(ReceiptLine l) throws IOException {
         float size = 9f;
-        float nameW = CONTENT_W - QTY_W - AMT_W - COL_GAP * 2;
+        float nameW = CONTENT_W - QTY_W - AMT_W - (COL_GAP * 2f);
         List<String> nameLines = wrap(safe(l.name() == null ? "-" : l.name(), REGULAR), REGULAR, size, nameW);
         String unit = safe(money(l.unitPrice()), REGULAR);
         String qty = String.valueOf(l.quantity());

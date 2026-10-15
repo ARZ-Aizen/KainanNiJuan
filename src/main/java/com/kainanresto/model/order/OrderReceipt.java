@@ -8,7 +8,6 @@ import java.util.List;
 
 public record OrderReceipt(String orderNumber,
                            String orderType,
-                           String orderTypeDetail,
                            OrderStatus status,
                            LocalDateTime createdAt,
                            String cashierName,

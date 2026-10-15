@@ -43,9 +43,6 @@ public final class ReceiptDialog {
 
         //INFO
         String type = ClientUIHelper.valueOrDash(r.orderType());
-        if (r.orderTypeDetail() != null && !r.orderTypeDetail().isBlank()) {
-            type += " \u2022 " + r.orderTypeDetail().trim();
-        }
         VBox meta = new VBox(6,
                 kv("Order No.", r.orderNumber()),
                 kv("Date", r.createdAt() == null ? "\u2014" : r.createdAt().format(DATE_FMT)),

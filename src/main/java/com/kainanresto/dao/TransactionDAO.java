@@ -122,9 +122,14 @@ public class TransactionDAO {
                 while (rs.next()) {
                     hourSalesMap.put(rs.getInt("hr"), rs.getBigDecimal("sales"));
                 }
-                for (int h = 8; h <= 22; h += 2) { // 8 AM to 10 PM buckets
+
+                        for (int h = 0; h <= 22; h += 2) {
                     String label = (h % 12 == 0 ? 12 : h % 12) + (h < 12 ? " AM" : " PM");
-                    BigDecimal val = hourSalesMap.getOrDefault(h, BigDecimal.ZERO);
+
+                    BigDecimal evenHourSales = hourSalesMap.getOrDefault(h, BigDecimal.ZERO);
+                    BigDecimal oddHourSales = hourSalesMap.getOrDefault(h + 1, BigDecimal.ZERO);
+                    BigDecimal val = evenHourSales.add(oddHourSales);
+
                     points.add(new ChartPoint(label, val));
                 }
             } else {
