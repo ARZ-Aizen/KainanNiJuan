@@ -35,7 +35,7 @@ public class UserDAO {
 
     public Optional<User> login(String username, String plainPassword) {
         String sql = "SELECT user_id, username, password, role, full_name, is_active " +
-                "FROM users WHERE username = ? AND is_deleted = 0 LIMIT 1";
+                "FROM users WHERE BINARY username = ? AND is_deleted = 0 LIMIT 1";
 
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -127,7 +127,7 @@ public class UserDAO {
     }
 
     public OperationResult resetPassword(String username, String newPlainPassword) {
-        String sql = "UPDATE users SET password = ? WHERE username = ? ";
+        String sql = "UPDATE users SET password = ? WHERE BINARY username = ? ";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, PasswordHasher.hash(newPlainPassword));
@@ -213,7 +213,7 @@ public class UserDAO {
     }
 
     public boolean checkUserExists(String username) {
-        String sql = "SELECT 1 FROM users WHERE username = ? LIMIT 1";
+        String sql = "SELECT 1 FROM users WHERE BINARY username = ? LIMIT 1";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, username);

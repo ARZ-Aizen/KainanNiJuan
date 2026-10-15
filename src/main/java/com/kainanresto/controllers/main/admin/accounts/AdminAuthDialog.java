@@ -79,6 +79,7 @@ public final class AdminAuthDialog {
 
         //BEHAVIOR
         Runnable doAuth = () -> {
+            // NOTE: We use .trim() without .toLowerCase() to preserve exact strict capitalization
             String uname = userField.getText().trim();
             String pwd = passField.getText();
 
