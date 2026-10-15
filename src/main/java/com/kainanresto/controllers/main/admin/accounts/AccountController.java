@@ -7,6 +7,7 @@ import com.kainanresto.model.account.AccountStatus;
 import com.kainanresto.model.account.User;
 import com.kainanresto.model.util.Icons;
 import com.kainanresto.util.AlertUtil;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -134,6 +135,20 @@ public class AccountController {
         double scale = targetSize / 24.0;
         icon.setScaleX(scale); icon.setScaleY(scale);
         icon.setStyle("-fx-stroke-width: " + (2.0 / scale) + ";");
+    }
+
+    /* ============================== REAL-TIME SYNC ============================== */
+
+    public void refreshData(List<AccountRow> latestUsers) {
+        if (addAccountView.isVisible() || editAccountView.isVisible()) {
+            return;
+        }
+        Platform.runLater(() -> {
+            accountsMaster.setAll(latestUsers);
+            if (archiveAccountsView.isVisible()) {
+                archiveMaster.setAll(userDAO.getArchivedAccounts());
+            }
+        });
     }
 
     /* ============================== VIEW TOGGLING ============================== */

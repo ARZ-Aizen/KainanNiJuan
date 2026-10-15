@@ -107,6 +107,19 @@ public class MenuController {
         }
     }
 
+
+    public void refreshData(List<Dishes> latestDishes) {
+        if (addDishView.isVisible()) return;
+
+        new Thread(() -> {
+            List<String> cats = productDAO.getAllCategories();
+            Platform.runLater(() -> {
+                setMenuCategories(cats);
+                setDishes(latestDishes);
+            });
+        }).start();
+    }
+
     private void showMenuGrid() {
         addDishView.setVisible(false);
         addDishView.setManaged(false);

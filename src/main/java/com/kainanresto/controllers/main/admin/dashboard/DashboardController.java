@@ -67,6 +67,12 @@ public class DashboardController {
         startAutoRefresh(30);
     }
 
+    /* ============================== REAL-TIME SYNC ============================== */
+
+    public void refreshData() {
+        fetchLiveData();
+    }
+
     /* ============================== ASYNC DATA FETCHING ============================== */
 
     public void fetchLiveData() {

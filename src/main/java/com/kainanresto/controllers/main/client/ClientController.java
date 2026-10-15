@@ -149,19 +149,26 @@ public class ClientController {
             Stage stage = (Stage) appRoot.getScene().getWindow();
             stage.setOnCloseRequest((WindowEvent closeEvent) -> {
                 closeEvent.consume();
+                RealTimePoller.stopPolling();
                 SessionManager.clearSession();
                 NavigationUtil.switchScene(closeEvent, "/com/kainanresto/views/id/LoginView.fxml", "Kainan Ni Juan POS - Login");
             });
         });
+
         RealTimePoller.startPolling(this::refreshActiveClientData, 3.0);
     }
 
     private void refreshActiveClientData() {
         Thread t = new Thread(() -> {
             List<OrderReceipt> receipts = orderDAO.loadReceipts(LocalDate.now().atStartOfDay());
+            List<Dishes> dishes = productDAO.getAllDishes();
+
             Platform.runLater(() -> {
-                if (omView.isVisible() && omViewController != null) {
-                    omViewController.setReceipts(receipts);
+                if (omViewController != null) {
+                    omViewController.refreshData(receipts);
+                }
+                if (posViewController != null) {
+                    posViewController.refreshData(dishes);
                 }
             });
         });
@@ -242,7 +249,6 @@ public class ClientController {
             return;
         }
 
-        // CORRECTED: Calculate subtotal directly using unitPrice * quantity
         BigDecimal subtotal = BigDecimal.ZERO;
         List<BigDecimal> unitPrices = new ArrayList<>();
         for (ReceiptLine line : currentCart) {
@@ -425,12 +431,12 @@ public class ClientController {
     @FXML private void onSwitchToAdmin(ActionEvent event) {
         User u = SessionManager.getCurrentUser();
         if (!RoleAccess.canUseBoth(u)) return;
+        RealTimePoller.stopPolling();
         NavigationUtil.switchScene(event, "/com/kainanresto/views/main/admin/MainAdminView.fxml",
                 "Kainan Ni Juan POS - " + u.getFullName() + " (" + u.getRole() + ")");
     }
 
     @FXML private void onLogout(ActionEvent event) {
-
         boolean confirmed = AlertUtil.showYesNoConfirmation(
                 "",
                 "Log Out",
@@ -440,6 +446,8 @@ public class ClientController {
         if (!confirmed) {
             return;
         }
+
+        RealTimePoller.stopPolling();
 
         User currentUser = SessionManager.getCurrentUser();
         if (currentUser != null) {

@@ -108,6 +108,14 @@ public class ClientPosController {
         setDiscountSummary(false, 1, null);
     }
 
+    /* ============================== REAL-TIME SYNC ============================== */
+
+    public void refreshData(List<Dishes> latestDishes) {
+        if (loading) return;
+        dishItems.setAll(latestDishes == null ? List.of() : latestDishes);
+        applyPosFilter();
+    }
+
     public void setCategories(List<String> categories) {
         suppliedCategories = categories == null ? new ArrayList<>() : new ArrayList<>(categories);
         rebuildCategoryChips();

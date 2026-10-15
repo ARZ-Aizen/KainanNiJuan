@@ -109,6 +109,12 @@ public class SalesController {
         }
     }
 
+    /* ============================== REAL-TIME SYNC ============================== */
+
+    public void refreshData() {
+        loadSalesData();
+    }
+
     /* ============================== DATA LOADING ============================== */
 
     private void loadSalesData() {

@@ -121,6 +121,28 @@ public class ClientOrderManagementController {
         applyOmFilter();
     }
 
+    /* ============================== REAL-TIME SYNC ============================== */
+
+    public void refreshData(List<OrderReceipt> latestReceipts) {
+        omReceipts.clear();
+        List<OrderCard> cards = new ArrayList<>();
+        if (latestReceipts != null) {
+            for (OrderReceipt r : latestReceipts) {
+                if (r == null) continue;
+                omReceipts.put(r.orderNumber(), r);
+                cards.add(toCard(r));
+            }
+        }
+        if (omSelectedOrderNo != null) {
+            omReceiptDetails = omReceipts.get(omSelectedOrderNo);
+        }
+
+        omOrders.setAll(cards);
+        updateOmChipCounts();
+        updateOmReceiptPanel();
+        applyOmFilter();
+    }
+
     /* ============================== PUBLIC API ============================== */
 
     public void setOrders(List<OrderCard> orders) {

@@ -35,6 +35,9 @@ public final class NavigationUtil {
             return;
         }
 
+        // CRITICAL: Stop any active background polling immediately upon initiating scene switch
+        RealTimePoller.stopPolling();
+
         // KUNG NAKABUKAS NA YUNG STAGE, FADE OUT ANG BUONG WINDOW HINDI LANG YUNG CONTENT
         if (stage.isShowing()) {
             Timeline popOut = new Timeline(
@@ -50,6 +53,9 @@ public final class NavigationUtil {
 
     private static void loadAndShowNewScene(Stage stage, String fxmlPath, String windowTitle) {
         try {
+            // Double-check polling is stopped when loading new scene context
+            RealTimePoller.stopPolling();
+
             FXMLLoader loader = new FXMLLoader(NavigationUtil.class.getResource(fxmlPath));
             Parent root = loader.load();
 
@@ -122,6 +128,7 @@ public final class NavigationUtil {
 
         stage.setOnCloseRequest((WindowEvent closeEvent) -> {
             closeEvent.consume(); // PARA DI MAGCLOSE NG TULUYAN BIGLAAN
+            RealTimePoller.stopPolling(); // Ensure polling stops on X button close
             SessionManager.clearSession();
             // PARA MAPABALIK SA LOGIN
             switchScene(closeEvent, "/com/kainanresto/views/id/LoginView.fxml", "Kainan Ni Juan POS - Login");
