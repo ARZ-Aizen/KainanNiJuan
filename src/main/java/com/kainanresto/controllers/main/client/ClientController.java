@@ -153,6 +153,20 @@ public class ClientController {
                 NavigationUtil.switchScene(closeEvent, "/com/kainanresto/views/id/LoginView.fxml", "Kainan Ni Juan POS - Login");
             });
         });
+        RealTimePoller.startPolling(this::refreshActiveClientData, 3.0);
+    }
+
+    private void refreshActiveClientData() {
+        Thread t = new Thread(() -> {
+            List<OrderReceipt> receipts = orderDAO.loadReceipts(LocalDate.now().atStartOfDay());
+            Platform.runLater(() -> {
+                if (omView.isVisible() && omViewController != null) {
+                    omViewController.setReceipts(receipts);
+                }
+            });
+        });
+        t.setDaemon(true);
+        t.start();
     }
 
     private void setupCartHandlers() {
