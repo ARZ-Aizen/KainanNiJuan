@@ -210,7 +210,7 @@ public class MainAdminController {
             );
         });
 
-        RealTimePoller.startPolling(this::refreshCurrentAdminView, 3.0);
+        RealTimePoller.startPolling(this::refreshCurrentAdminView, 1.0);
 
         //SA ROLE TO
         boolean both = RoleAccess.canUseBoth(SessionManager.getCurrentUser());
@@ -234,14 +234,12 @@ public class MainAdminController {
 
         Thread t = new Thread(() -> {
             try {
-                // Fetch latest data sets
                 List<OrderReceipt> receipts = orderDAO.loadReceipts(LocalDate.now().atStartOfDay());
                 List<Dishes> dishes = productDAO.getAllDishes();
-                List<com.kainanresto.model.account.AccountRow> users = userDAO.getAllAccounts(); // FIXED: Changed List<User> to List<AccountRow>
+                List<com.kainanresto.model.account.AccountRow> users = userDAO.getAllAccounts();
 
                 Platform.runLater(() -> {
                     try {
-                        // Pass data dynamically depending on which controller is currently active
                         if (activeSubController instanceof com.kainanresto.controllers.main.admin.sales.SalesController) {
                             ((com.kainanresto.controllers.main.admin.sales.SalesController) activeSubController).refreshData();
                         } else if (activeSubController instanceof com.kainanresto.controllers.main.admin.menu.MenuController) {

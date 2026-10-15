@@ -155,7 +155,7 @@ public class ClientController {
             });
         });
 
-        RealTimePoller.startPolling(this::refreshActiveClientData, 3.0);
+        RealTimePoller.startPolling(this::refreshActiveClientData, 1.0);
     }
 
     private void refreshActiveClientData() {
