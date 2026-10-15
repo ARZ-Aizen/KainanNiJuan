@@ -126,20 +126,6 @@ public class UserDAO {
         return USER_ID_MIN + RANDOM.nextInt((USER_ID_MAX - USER_ID_MIN) + 1);
     }
 
-    public OperationResult resetPassword(String username, String newPlainPassword) {
-        String sql = "UPDATE users SET password = ? WHERE BINARY username = ? ";
-        try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, PasswordHasher.hash(newPlainPassword));
-            stmt.setString(2, username);
-            int rows = stmt.executeUpdate();
-            return (rows > 0) ? OperationResult.SUCCESS : OperationResult.NOT_FOUND;
-        } catch (SQLException e) {
-            System.err.println("UserDAO.resetPassword: DB Error - " + e.getMessage());
-            return OperationResult.DATABASE_ERROR;
-        }
-    }
-
     public OperationResult archiveUser(int userId) {
         String sql = "UPDATE users SET is_deleted = 1, is_active = 0 WHERE user_id = ?";
         try (Connection conn = DatabaseConfig.getConnection();
