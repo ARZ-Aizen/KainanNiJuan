@@ -1,5 +1,7 @@
 package com.kainanresto.controllers.main.admin.settings;
 
+import com.kainanresto.dao.OrderDAO;
+import com.kainanresto.model.transac.Transaction;
 import com.kainanresto.model.util.Icons;
 import com.kainanresto.util.AlertUtil;
 import javafx.application.Platform;
@@ -10,19 +12,21 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
+
 import java.io.*;
+import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
+import java.time.format.TextStyle;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Properties;
-import com.kainanresto.dao.OrderDAO;
-import com.kainanresto.model.transac.Transaction;
-import java.time.LocalDateTime;
-import com.kainanresto.dao.ProductDAO;
-import com.kainanresto.model.dish.Dishes;
 
 
 public class SettingsController {
@@ -166,53 +170,71 @@ public class SettingsController {
         loadSettingsData();
     }
 
-    /* ============================== BACKUP & RESTORE ============================== */
+    /* ============================== BACKUP & EXPORT (PER MONTH) ============================== */
 
     @FXML
     private void onSettingsBackupDatabase() {
+        // In-app modal month filter (MonthFilterModal.fxml + MonthFilterController)
+        Optional<YearMonth> picked = MonthFilterController.show(
+                settingsRoot.getScene().getWindow(), "Export Sales History");
+        if (picked.isEmpty()) return;               // user cancelled
+        YearMonth ym = picked.get();
+
+        // Half-open range: [first day 00:00, first day of next month 00:00)
+        LocalDateTime start = ym.atDay(1).atStartOfDay();
+        LocalDateTime endExclusive = ym.plusMonths(1).atDay(1).atStartOfDay();
+
         FileChooser chooser = new FileChooser();
-        chooser.setTitle("Export Sales History to Excel");
-        chooser.setInitialFileName("Sales_Backup_" + LocalDate.now().toString() + ".csv");
+        chooser.setTitle("Export Sales History");
+        chooser.setInitialFileName("Sales_" + ym + ".csv");   // e.g. Sales_2026-10.csv
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel/CSV File", "*.csv"));
 
         File file = chooser.showSaveDialog(settingsRoot.getScene().getWindow());
-        if (file != null) {
-            Thread t = new Thread(() -> {
-                try {
-                    OrderDAO orderDAO = new OrderDAO();
-                    java.util.List<Transaction> sales = orderDAO.getTransactions(
-                            LocalDateTime.of(2000, 1, 1, 0, 0),
-                            LocalDateTime.now().plusDays(1)
-                    );
+        if (file == null) return;
 
-                    try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
-                        writer.println("Order ID,Created At,Staff,Total Amount,Order Status,Payment Status");
+        Thread t = new Thread(() -> {
+            try {
+                java.util.List<Transaction> sales = new OrderDAO().getTransactions(start, endExclusive);
 
-                        for (Transaction tx : sales) {
-                            String date = tx.lastActivityAt() != null ?
-                                    tx.lastActivityAt().format(DateTimeFormatter.ofPattern("MMM d yyyy h:mm a", Locale.ENGLISH)) : "";
-
-                            writer.printf("\"%s\",\"%s\",\"%s\",%.2f,\"%s\",\"%s\"%n",
-                                    tx.orderId(),
-                                    date,
-                                    tx.staffName(),
-                                    tx.total(),
-                                    tx.status(),
-                                    tx.paymentStatus()
-                            );
-                        }
-                    }
-
-                    Platform.runLater(() -> {
-                        AlertUtil.showInfo("Export Successful", "Sales history successfully exported to:\n" + file.getAbsolutePath());
-                    });
-                } catch (Exception e) {
-                    Platform.runLater(() -> AlertUtil.showError("Export Error", "Could not create the Excel file:\n" + e.getMessage()));
+                if (sales.isEmpty()) {
+                    Platform.runLater(() -> AlertUtil.showInfo("No Data",
+                            "There are no transactions for "
+                                    + ym.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+                                    + " " + ym.getYear() + "."));
+                    return;   // don't create an empty file
                 }
-            });
-            t.setDaemon(true);
-            t.start();
-        }
+
+                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM d yyyy h:mm a", Locale.ENGLISH);
+                try (PrintWriter writer = new PrintWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
+                    writer.print('\uFEFF');   // UTF-8 BOM so Excel reads special characters correctly
+                    writer.println("Order ID,Created At,Last Activity,Staff,Total Amount,Order Status,Payment Status");
+                    for (Transaction tx : sales) {
+                        writer.println(String.join(",",
+                                csv(tx.orderId()),
+                                csv(tx.createdAt() != null ? tx.createdAt().format(fmt) : ""),
+                                csv(tx.lastActivityAt() != null ? tx.lastActivityAt().format(fmt) : ""),
+                                csv(tx.staffName()),
+                                tx.total() == null ? "0.00" : tx.total().setScale(2, RoundingMode.HALF_UP).toPlainString(),
+                                csv(tx.status()),
+                                csv(tx.paymentStatus())));
+                    }
+                }
+
+                Platform.runLater(() -> AlertUtil.showInfo("Export Successful",
+                        sales.size() + " transactions exported to:\n" + file.getAbsolutePath()));
+            } catch (Exception e) {
+                Platform.runLater(() -> AlertUtil.showError("Export Error",
+                        "Could not create the file:\n" + e.getMessage()));
+            }
+        });
+        t.setDaemon(true);
+        t.start();
+    }
+
+    /** Wraps a value in quotes and escapes embedded quotes so the CSV stays valid. */
+    private static String csv(String s) {
+        if (s == null) return "\"\"";
+        return "\"" + s.replace("\"", "\"\"") + "\"";
     }
 
     /* ============================== TAB NAVIGATION ============================== */

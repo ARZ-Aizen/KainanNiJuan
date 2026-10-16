@@ -293,10 +293,15 @@ public class OrderDAO {
 
     /* ====================== ADMIN: Sales & Orders table ====================== */
 
+    /**
+     * Returns orders created in the half-open range [from, to).
+     * For a month export: from = first day 00:00, to = first day of next month 00:00.
+     */
     public List<Transaction> getTransactions(LocalDateTime from, LocalDateTime to) {
         String sql = """
             SELECT order_number, order_type, cashier_name, cashier_role,
-                   COALESCE(updated_at, created_at) AS last_activity, total, status, payment_status
+                   created_at, COALESCE(updated_at, created_at) AS last_activity,
+                   total, status, payment_status
             FROM orders WHERE created_at >= ? AND created_at < ? ORDER BY created_at DESC
         """;
         List<Transaction> list = new ArrayList<>();
@@ -310,6 +315,7 @@ public class OrderDAO {
                     list.add(new Transaction(
                             rs.getString("order_number"), rs.getString("order_type"), null,
                             rs.getString("cashier_name"), rs.getString("cashier_role"),
+                            rs.getTimestamp("created_at").toLocalDateTime(),
                             rs.getTimestamp("last_activity").toLocalDateTime(),
                             rs.getBigDecimal("total"),
                             st == null ? rs.getString("status") : st.getDisplayName(),

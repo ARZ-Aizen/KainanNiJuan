@@ -1,0 +1,110 @@
+/* Month filter modal - palette: #D5B392 #B9926D #8C6343 #F9F4EC */
+
+.mf-backdrop {
+    -mf-light: #D5B392;
+    -mf-mid: #B9926D;
+    -mf-dark: #8C6343;
+    -mf-cream: #F9F4EC;
+
+    -mf-text: derive(-mf-dark, -45%);   /* deep brown for headings / labels */
+    -mf-muted: -mf-dark;                /* secondary text */
+    -mf-soft: rgba(213, 179, 146, 0.45);/* soft tan for resting buttons */
+
+    -fx-background-color: rgba(44, 28, 16, 0.50);
+}
+
+.mf-card {
+    -fx-background-color: -mf-cream;
+    -fx-background-radius: 14;
+    -fx-border-color: -mf-light;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(44, 28, 16, 0.40), 30, 0.1, 0, 4);
+}
+
+.mf-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -mf-text;
+}
+
+.mf-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: -mf-muted;
+}
+
+.mf-year {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -mf-text;
+}
+
+/* Quick-pick chips */
+.mf-chip {
+    -fx-background-color: transparent;
+    -fx-border-color: -mf-mid;
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
+    -fx-text-fill: -mf-dark;
+    -fx-font-size: 12px;
+    -fx-padding: 4 12 4 12;
+    -fx-cursor: hand;
+}
+.mf-chip:hover {
+    -fx-background-color: -mf-soft;
+}
+
+/* Year arrows */
+.mf-arrow {
+    -fx-background-color: -mf-soft;
+    -fx-background-radius: 8;
+    -fx-font-size: 16px;
+    -fx-text-fill: -mf-text;
+    -fx-min-width: 40;
+    -fx-min-height: 32;
+    -fx-cursor: hand;
+}
+.mf-arrow:hover {
+    -fx-background-color: -mf-light;
+}
+
+/* Month buttons */
+.mf-month {
+    -fx-background-color: -mf-soft;
+    -fx-background-radius: 8;
+    -fx-text-fill: -mf-text;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+}
+.mf-month:hover {
+    -fx-background-color: -mf-light;
+}
+.mf-month.mf-selected,
+.mf-month.mf-selected:hover {
+    -fx-background-color: -mf-dark;
+    -fx-text-fill: -mf-cream;
+    -fx-font-weight: bold;
+}
+
+/* Footer buttons */
+.mf-btn-secondary {
+    -fx-background-color: -mf-soft;
+    -fx-text-fill: -mf-text;
+    -fx-background-radius: 8;
+    -fx-padding: 9 18 9 18;
+    -fx-cursor: hand;
+}
+.mf-btn-secondary:hover {
+    -fx-background-color: -mf-light;
+}
+
+.mf-btn-primary {
+    -fx-background-color: -mf-dark;
+    -fx-text-fill: -mf-cream;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-padding: 9 18 9 18;
+    -fx-cursor: hand;
+}
+.mf-btn-primary:hover {
+    -fx-background-color: derive(-mf-dark, -12%);
+}

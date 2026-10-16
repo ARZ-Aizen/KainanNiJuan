@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- Dim backdrop (fills the owner window). Clicking it cancels. -->
+<StackPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.kainanresto.controllers.main.admin.settings.MonthFilterController"
+           alignment="CENTER" styleClass="mf-backdrop"
+           onMouseClicked="#onBackdropClicked">
+
+    <!-- Card (clicks on it are swallowed so they don't dismiss the modal) -->
+    <VBox styleClass="mf-card" spacing="14" prefWidth="364"
+          maxWidth="-Infinity" maxHeight="-Infinity"
+          onMouseClicked="#onCardClicked">
+        <padding>
+            <Insets top="24" right="24" bottom="24" left="24"/>
+        </padding>
+
+        <!-- Header -->
+        <VBox spacing="2">
+            <Label fx:id="titleLabel" styleClass="mf-title" text="Export Sales History"/>
+            <Label styleClass="mf-subtitle" text="Choose the month to export"/>
+        </VBox>
+
+        <!-- Quick picks -->
+        <HBox spacing="8">
+            <Button styleClass="mf-chip" text="This month" onAction="#onThisMonth"/>
+            <Button styleClass="mf-chip" text="Last month" onAction="#onLastMonth"/>
+        </HBox>
+
+        <!-- Year selector -->
+        <HBox spacing="8" alignment="CENTER">
+            <Button fx:id="prevYearBtn" styleClass="mf-arrow" text="&#8249;" onAction="#onPrevYear"/>
+            <Label fx:id="yearLabel" styleClass="mf-year" alignment="CENTER"
+                   maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+            <Button fx:id="nextYearBtn" styleClass="mf-arrow" text="&#8250;" onAction="#onNextYear"/>
+        </HBox>
+
+        <!-- Month grid: userData = month number (1-12) -->
+        <GridPane fx:id="monthGrid" hgap="8" vgap="8">
+            <Button text="Jan" userData="1"  styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+            <Button text="Feb" userData="2"  styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+            <Button text="Mar" userData="3"  styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+            <Button text="Apr" userData="4"  styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+            <Button text="May" userData="5"  styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+            <Button text="Jun" userData="6"  styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+            <Button text="Jul" userData="7"  styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+            <Button text="Aug" userData="8"  styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+            <Button text="Sep" userData="9"  styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+            <Button text="Oct" userData="10" styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+            <Button text="Nov" userData="11" styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+            <Button text="Dec" userData="12" styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="2" GridPane.rowIndex="3"/>
+        </GridPane>
+
+        <!-- Footer -->
+        <HBox spacing="10" alignment="CENTER_RIGHT">
+            <Button fx:id="cancelBtn" styleClass="mf-btn-secondary" text="Cancel"
+                    cancelButton="true" onAction="#onCancel"/>
+            <Button fx:id="exportBtn" styleClass="mf-btn-primary" text="Export"
+                    defaultButton="true" onAction="#onConfirm"/>
+        </HBox>
+    </VBox>
+</StackPane>
