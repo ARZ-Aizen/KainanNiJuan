@@ -105,6 +105,8 @@ public class ClientController {
     private static final BigDecimal SERVICE_CHARGE_RATE = new BigDecimal("0.05");
     private static final boolean VAT_EXEMPT_ON_DISCOUNTED = true;
 
+    private ConnectionOverlay connectionOverlay;
+
     @FXML private Button navSwitchBtn;
     @FXML private SVGPath switchIcon;
 
@@ -150,15 +152,26 @@ public class ClientController {
             stage.setOnCloseRequest((WindowEvent closeEvent) -> {
                 closeEvent.consume();
                 RealTimePoller.stopPolling();
+                shutdownConnectionWatch();
                 SessionManager.clearSession();
                 NavigationUtil.switchScene(closeEvent, "/com/kainanresto/views/id/LoginView.fxml", "Kainan Ni Juan POS - Login");
             });
         });
 
         RealTimePoller.startPolling(this::refreshActiveClientData, 1.0);
+
+        ConnectionMonitor.start();
+        connectionOverlay = ConnectionOverlay.attach(appRoot, this::refreshActiveClientData);
+    }
+
+    private void shutdownConnectionWatch() {
+        ConnectionMonitor.stop();
+        if (connectionOverlay != null) connectionOverlay.dispose();
     }
 
     private void refreshActiveClientData() {
+        if (!ConnectionMonitor.isConnected()) return;
+
         Thread t = new Thread(() -> {
             List<OrderReceipt> receipts = orderDAO.loadReceipts(LocalDate.now().atStartOfDay());
             List<Dishes> dishes = productDAO.getAllDishes();
@@ -432,6 +445,7 @@ public class ClientController {
         User u = SessionManager.getCurrentUser();
         if (!RoleAccess.canUseBoth(u)) return;
         RealTimePoller.stopPolling();
+        shutdownConnectionWatch();
         NavigationUtil.switchScene(event, "/com/kainanresto/views/main/admin/MainAdminView.fxml",
                 "Kainan Ni Juan POS - " + u.getFullName() + " (" + u.getRole() + ")");
     }
@@ -448,6 +462,7 @@ public class ClientController {
         }
 
         RealTimePoller.stopPolling();
+        shutdownConnectionWatch();
 
         User currentUser = SessionManager.getCurrentUser();
         if (currentUser != null) {

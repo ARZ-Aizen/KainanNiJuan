@@ -42,14 +42,12 @@ import java.util.Map;
 
 public class MainAdminController {
 
-    //ROOT
     @FXML private StackPane appRoot;
     @FXML private BorderPane mainLayout;
     @FXML private VBox sidebarRoot;
     @FXML private Region sidebarScrim;
     @FXML private VBox expandedSidebar;
 
-    //BRAND
     @FXML private ImageView restaurantLogoImage, expandedLogoImage;
     @FXML private Label expandedRestaurantNameLabel, expandedPortalLabel;
 
@@ -58,7 +56,6 @@ public class MainAdminController {
     @FXML private Label currentDateLabel;
     @FXML private StackPane contentArea;
 
-    //NAV BUTTONS
     @FXML private Button navDashboardBtn;
     @FXML private Button navMenuBtn;
     @FXML private Button navSalesOrdersBtn;
@@ -66,14 +63,12 @@ public class MainAdminController {
     @FXML private Button navSettingsBtn;
     @FXML private HBox topbar;
 
-    //NAV BUTTONS
     @FXML private Button expNavDashboardBtn;
     @FXML private Button expNavMenuBtn;
     @FXML private Button expNavSalesOrdersBtn;
     @FXML private Button expNavAccountManagementBtn;
     @FXML private Button expNavSettingsBtn;
 
-    //ICONS
     @FXML private SVGPath dashboardIcon;
     @FXML private SVGPath menuIcon;
     @FXML private SVGPath salesOrdersIcon;
@@ -115,7 +110,7 @@ public class MainAdminController {
 
     private Timeline sidebarAnimation;
 
-    //SWITCHING SA ADMIN OR CLIENT IF SUPERVISOR OR MANAGER
+    private ConnectionOverlay connectionOverlay;
 
     @FXML private Button navSwitchBtn, expNavSwitchBtn;
     @FXML private SVGPath switchIcon, expSwitchIcon;
@@ -199,6 +194,7 @@ public class MainAdminController {
 
                         closeEvent.consume();
                         RealTimePoller.stopPolling();
+                        shutdownConnectionWatch();
                         SessionManager.clearSession();
 
                         NavigationUtil.switchScene(
@@ -212,7 +208,6 @@ public class MainAdminController {
 
         RealTimePoller.startPolling(this::refreshCurrentAdminView, 1.0);
 
-        //SA ROLE TO
         boolean both = RoleAccess.canUseBoth(SessionManager.getCurrentUser());
         for (Button b : new Button[]{navSwitchBtn, expNavSwitchBtn}) {
             if (b == null) continue;
@@ -220,15 +215,21 @@ public class MainAdminController {
             b.setManaged(both);
         }
 
+        ConnectionMonitor.start();
+        connectionOverlay = ConnectionOverlay.attach(appRoot, this::refreshCurrentAdminView);
     }
 
-    /* ================= RealTime Polling Dispatcher ================= */
+    private void shutdownConnectionWatch() {
+        ConnectionMonitor.stop();
+        if (connectionOverlay != null) connectionOverlay.dispose();
+    }
 
     private final OrderDAO orderDAO = new OrderDAO();
     private final ProductDAO productDAO = new ProductDAO();
     private final UserDAO userDAO = new UserDAO();
 
     private void refreshCurrentAdminView() {
+        if (!ConnectionMonitor.isConnected()) return;
         if (appRoot.getScene() == null || appRoot.getScene().getWindow() == null) return;
         if (activeSubController == null) return;
 
@@ -263,8 +264,6 @@ public class MainAdminController {
         t.setDaemon(true);
         t.start();
     }
-
-    /* ================= ICONS ================= */
 
     private void initializeIcons() {
 
@@ -379,8 +378,6 @@ public class MainAdminController {
             );
         }
     }
-
-    /* ================= SIDEBAR EXPAND / COLLAPSE ================= */
 
     @FXML
     private void onSidebarClicked(MouseEvent event) {
@@ -535,8 +532,6 @@ public class MainAdminController {
         sidebarAnimation.play();
     }
 
-    /* ================= ROUTING LOGIC ================= */
-
     private void switchView(
             String fxmlPath,
             String title,
@@ -578,8 +573,6 @@ public class MainAdminController {
         }
     }
 
-    /* ================= NAVIGATION STATE ================= */
-
     private void setActiveNav(int index) {
 
         for (int i = 0; i < compactNav.length; i++) {
@@ -601,8 +594,6 @@ public class MainAdminController {
                 .getStyleClass()
                 .add(EXP_NAV_ACTIVE);
     }
-
-    /* ================= NAVIGATION ================= */
 
     @FXML
     private void onNavDashboard() {
@@ -663,11 +654,10 @@ public class MainAdminController {
         User u = SessionManager.getCurrentUser();
         if (!RoleAccess.canUseBoth(u)) return;
         RealTimePoller.stopPolling();
+        shutdownConnectionWatch();
         NavigationUtil.switchScene(event, "/com/kainanresto/views/main/client/ClientView.fxml",
                 "Kainan Ni Juan POS - " + u.getFullName() + " (" + u.getRole() + ")");
     }
-
-    /* ================= LOGOUT ================= */
 
     @FXML private void onLogout(ActionEvent event) {
         boolean confirmed = AlertUtil.showYesNoConfirmation(
@@ -681,6 +671,7 @@ public class MainAdminController {
         }
 
         RealTimePoller.stopPolling();
+        shutdownConnectionWatch();
 
         User currentUser = SessionManager.getCurrentUser();
 
