@@ -5,6 +5,7 @@ import com.kainanresto.model.dish.Dishes;
 import com.kainanresto.model.util.Icons;
 import com.kainanresto.util.AlertUtil;
 import com.kainanresto.util.DishImageLoader;
+import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -12,14 +13,17 @@ import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
+import javafx.util.Duration;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -106,7 +110,6 @@ public class MenuController {
             icon.setStyle("-fx-stroke-width: " + (2.0 / scale) + ";");
         }
     }
-
 
     public void refreshData(List<Dishes> latestDishes) {
         if (addDishView.isVisible()) return;
@@ -374,6 +377,39 @@ public class MenuController {
         addCategoryNameField.textProperty().addListener((o, a, b) -> setInvalid(addCategoryNameField, false));
         addDishPriceField.textProperty().addListener((o, a, b) -> setInvalid(addDishPriceField.getParent(), false));
         addDishCategoryCombo.valueProperty().addListener((o, a, b) -> setInvalid(addDishCategoryCombo, false));
+
+        Circle previewClip = new Circle(PREVIEW_IMAGE_SIZE / 2.0, PREVIEW_IMAGE_SIZE / 2.0, PREVIEW_IMAGE_SIZE / 2.0);
+        addDishPreviewImage.setClip(previewClip);
+        addDishPreviewImage.setPreserveRatio(true);
+    }
+
+    private void showPreview(Image image) {
+        addDishPreviewImage.setViewport(null);
+        addDishPreviewImage.setOpacity(0);
+        addDishPreviewImage.setImage(image);
+
+        Runnable finish = () -> {
+            if (addDishPreviewImage.getImage() != image) return;
+            if (!image.isError() && image.getWidth() > 0 && image.getHeight() > 0) {
+                double side = Math.min(image.getWidth(), image.getHeight());
+                addDishPreviewImage.setViewport(new Rectangle2D(
+                        (image.getWidth() - side) / 2.0,
+                        (image.getHeight() - side) / 2.0,
+                        side, side));
+            }
+            FadeTransition fade = new FadeTransition(Duration.millis(180), addDishPreviewImage);
+            fade.setFromValue(0);
+            fade.setToValue(1);
+            fade.play();
+        };
+
+        if (image.getProgress() >= 1.0) {
+            finish.run();
+        } else {
+            image.progressProperty().addListener((obs, was, now) -> {
+                if (now.doubleValue() >= 1.0) finish.run();
+            });
+        }
     }
 
     private void resetAddDishForm() {
@@ -403,6 +439,8 @@ public class MenuController {
         addDishAvailableBtn.setSelected(true);
         addDishImageUri = null;
         addDishImageFile = null;
+        addDishPreviewImage.setViewport(null);
+        addDishPreviewImage.setOpacity(1);
         addDishPreviewImage.setImage(null);
         addCategoryNameField.clear();
         setAddDishError(null);
@@ -467,8 +505,8 @@ public class MenuController {
 
         if (dish.imageUrl() != null && !dish.imageUrl().isBlank()) {
             addDishImageUri = dish.imageUrl();
-            Image image = DishImageLoader.load(addDishImageUri, PREVIEW_IMAGE_SIZE);
-            if (image != null) DishImageLoader.fadeInWhenLoaded(addDishPreviewImage, image);
+            Image image = DishImageLoader.load(addDishImageUri, PREVIEW_IMAGE_SIZE * 2);
+            if (image != null) showPreview(image);
         }
 
         menuGridView.setVisible(false);
@@ -489,7 +527,7 @@ public class MenuController {
 
             String previewUri = file.toURI().toString();
             Image image = new Image(previewUri, 300.0, 300.0, true, true, true);
-            DishImageLoader.fadeInWhenLoaded(addDishPreviewImage, image);
+            showPreview(image);
         }
     }
 
