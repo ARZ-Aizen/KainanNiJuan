@@ -574,17 +574,28 @@ public class MenuController {
         String imagePath = addDishImageUri;
         if (addDishImageFile != null) {
             imagePath = categoryFolder(category) + "/" + addDishImageFile.getName();
+        } else if (imagePath != null
+                && (imagePath.startsWith("http") || imagePath.startsWith("file:") || imagePath.startsWith("jar:"))) {
+            String f = imagePath.substring(imagePath.lastIndexOf('/') + 1);
+            f = java.net.URLDecoder.decode(f.replace("+", "%2B"), java.nio.charset.StandardCharsets.UTF_8);
+            imagePath = categoryFolder(category) + "/" + f;
         }
 
         String desc = addDishDescriptionField.getText() == null ? "" : addDishDescriptionField.getText().trim();
 
         if (addDishImageFile != null) {
-            if (!productDAO.uploadImage(addDishImageFile, category)) {
+            ProductDAO.UploadResult result = productDAO.uploadImageResult(addDishImageFile, category);
+            if (result == ProductDAO.UploadResult.FAILED) {
                 AlertUtil.showError("Upload Failed",
-                        "Could not upload the image to the server. Check the connection and try again.");
+                        "Could not save the image. Check the server connection and try again.");
                 return;
             }
             DishImageLoader.clearCache();
+            if (result == ProductDAO.UploadResult.LOCAL_ONLY) {
+                AlertUtil.showInfo("Saved Locally Only",
+                        "The server could not be reached, so the photo was saved on this computer only. "
+                                + "Other computers will not see it until it is uploaded to the server.");
+            }
         }
 
         NewDishForm form = new NewDishForm(name, category, price, desc.isEmpty() ? null : desc,
