@@ -6,7 +6,7 @@ import com.kainanresto.model.order.OrderStats;
 import com.kainanresto.model.transac.PaymentResult;
 import com.kainanresto.model.transac.Transaction;
 import com.kainanresto.model.util.Icons;
-import com.kainanresto.util.ReceiptPdfGenerator;
+import com.kainanresto.util.AlertUtil;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -19,20 +19,16 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
-import com.kainanresto.util.AlertUtil;
-import java.awt.*;
-import java.io.File;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -42,13 +38,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Function;
-import javafx.geometry.Insets;
-import javafx.scene.Scene;
-import javafx.scene.layout.Priority;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-import com.kainanresto.model.transac.ReceiptLine;
-import com.kainanresto.model.transac.ReceiptTotals;
 
 public class SalesController {
 
@@ -69,6 +58,7 @@ public class SalesController {
     @FXML private Label ordersTablePlaceholder;
     @FXML private TableColumn<Transaction, String> orderIdColumn, orderTypeColumn, orderCreatedColumn, orderTotalColumn, orderStatusColumn, orderPaymentColumn;
     @FXML private TableColumn<Transaction, Transaction> orderStaffColumn, orderActionsColumn;
+
     private static final PseudoClass FIELD_FOCUSED = PseudoClass.getPseudoClass("field-focused");
     private static final DateTimeFormatter ORDER_TIME_FORMAT = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
     private static final DateTimeFormatter ORDER_DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy, h:mm a", Locale.ENGLISH);
@@ -77,6 +67,10 @@ public class SalesController {
     private final ObservableList<Transaction> orderItems = FXCollections.observableArrayList();
     private FilteredList<Transaction> filteredOrders;
     private FilterPill orderDateFilter, orderStatusFilter, orderPaymentFilter;
+
+    // Row-actions menu state: refreshes are deferred while the menu is open
+    private ContextMenu activeActionsMenu;
+    private boolean refreshPending;
 
     @FXML
     public void initialize() {
@@ -115,9 +109,20 @@ public class SalesController {
         loadSalesData();
     }
 
+    public void refresh() {
+        loadSalesData();
+    }
+
     /* ============================== DATA LOADING ============================== */
 
     private void loadSalesData() {
+        // Don't rebuild the table while the row-actions menu is open,
+        // otherwise the anchor button is detached and the menu auto-hides.
+        if (activeActionsMenu != null && activeActionsMenu.isShowing()) {
+            refreshPending = true;
+            return;
+        }
+
         LocalDateTime[] range = dateRange(orderDateFilter == null ? null : orderDateFilter.selected);
         Thread t = new Thread(() -> {
             List<Transaction> tx = orderDAO.getTransactions(range[0], range[1]);
@@ -130,8 +135,6 @@ public class SalesController {
         t.setDaemon(true);
         t.start();
     }
-
-    public void refresh() { loadSalesData(); }
 
     private static LocalDateTime[] dateRange(String option) {
         LocalDate today = LocalDate.now();
@@ -219,15 +222,28 @@ public class SalesController {
         if (dateWasChanged) onOrderDateChanged();
     }
 
+    /* ============================== ROW ACTIONS ============================== */
+
     private void onOrderActions(Transaction order, Node anchor) {
+        if (activeActionsMenu != null) activeActionsMenu.hide();
+
         ContextMenu menu = new ContextMenu();
         menu.getStyleClass().add("filter-menu");
 
         MenuItem viewReceipt = new MenuItem("View Receipt");
         viewReceipt.setMnemonicParsing(false);
         viewReceipt.setOnAction(e -> viewReceipt(order));
-
         menu.getItems().add(viewReceipt);
+
+        menu.setOnHidden(e -> {
+            if (activeActionsMenu == menu) activeActionsMenu = null;
+            if (refreshPending) {          // run the refresh that was skipped
+                refreshPending = false;
+                loadSalesData();
+            }
+        });
+
+        activeActionsMenu = menu;
         menu.show(anchor, Side.BOTTOM, 0.0, 4.0);
     }
 
@@ -284,81 +300,6 @@ public class SalesController {
         }
     }
 
-    private static HBox receiptRow(String label, String value, boolean emphasized) {
-        Label l = new Label(label);
-        Label v = new Label(value);
-        l.getStyleClass().add(emphasized ? "receipt-total-label" : "receipt-row-label");
-        v.getStyleClass().add(emphasized ? "receipt-total-value" : "receipt-row-value");
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        HBox row = new HBox(8.0, l, spacer, v);
-        row.setAlignment(Pos.CENTER_LEFT);
-        return row;
-    }
-
-    private static final double QTY_COL_W = 36.0, AMT_COL_W = 90.0;
-
-    private static HBox itemHeaderRow() {
-        Label item = new Label("Item");
-        Label qty = new Label("Qty");
-        Label amt = new Label("Amount");
-        for (Label l : List.of(item, qty, amt)) l.getStyleClass().add("receipt-item-header");
-        HBox.setHgrow(item, Priority.ALWAYS);
-        item.setMaxWidth(Double.MAX_VALUE);
-        qty.setMinWidth(QTY_COL_W); qty.setPrefWidth(QTY_COL_W); qty.setAlignment(Pos.CENTER);
-        amt.setMinWidth(AMT_COL_W); amt.setPrefWidth(AMT_COL_W); amt.setAlignment(Pos.CENTER_RIGHT);
-        return new HBox(6.0, item, qty, amt);
-    }
-
-    private static HBox itemRow(ReceiptLine line) {
-        Label name = new Label(valueOrDash(line.name()));
-        name.setWrapText(true);
-        name.getStyleClass().add("receipt-row-value");
-        Label unit = new Label(formatPesoCompact(line.unitPrice()));
-        unit.getStyleClass().add("receipt-unit-price");
-        VBox nameBox = new VBox(1.0, name, unit);
-        HBox.setHgrow(nameBox, Priority.ALWAYS);
-
-        Label qty = new Label(String.valueOf(line.quantity()));
-        qty.setMinWidth(QTY_COL_W); qty.setPrefWidth(QTY_COL_W); qty.setAlignment(Pos.CENTER);
-        qty.getStyleClass().add("receipt-row-value");
-
-        Label amt = new Label(formatPesoCompact(line.lineTotal()));
-        amt.setMinWidth(AMT_COL_W); amt.setPrefWidth(AMT_COL_W); amt.setAlignment(Pos.CENTER_RIGHT);
-        amt.getStyleClass().add("receipt-row-value");
-
-        HBox row = new HBox(6.0, nameBox, qty, amt);
-        row.setAlignment(Pos.TOP_LEFT);
-        return row;
-    }
-
-    private static String rateSuffix(BigDecimal rate) {
-        return rate == null ? "" : " (" + rate.stripTrailingZeros().toPlainString() + "%)";
-    }
-
-    private void printReceipt(OrderReceipt receipt, PaymentResult pay, Button trigger) {
-        trigger.setDisable(true);
-        Thread worker = new Thread(() -> {
-            try {
-                File pdf = ReceiptPdfGenerator.generate(receipt, pay);
-                if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
-                    Desktop.getDesktop().open(pdf);
-                } else {
-                    Platform.runLater(() -> AlertUtil.showInfo("Print Receipt",
-                            "Receipt saved to:\n" + pdf.getAbsolutePath()));
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                Platform.runLater(() -> AlertUtil.showError("Print Receipt",
-                        "The receipt PDF could not be created."));
-            } finally {
-                Platform.runLater(() -> trigger.setDisable(false));
-            }
-        });
-        worker.setDaemon(true);
-        worker.start();
-    }
-
     /* ============================== DATA SETTERS ============================== */
 
     public void setOrderStats(OrderStats stats) {
@@ -380,7 +321,12 @@ public class SalesController {
     }
 
     public void setOrders(List<Transaction> orders) {
-        orderItems.setAll(orders == null ? List.of() : orders);
+        List<Transaction> incoming = orders == null ? List.of() : orders;
+        // Skip the rebuild when nothing changed (avoids flicker / lost scroll / closed menus).
+        // Relies on Transaction.equals (works automatically if Transaction is a record).
+        if (!orderItems.equals(incoming)) {
+            orderItems.setAll(incoming);
+        }
         applyOrderFilters();
     }
 
