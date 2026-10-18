@@ -28,7 +28,7 @@ public final class DatabaseConfig {
             System.err.println("DatabaseConfig: Error reading db.properties: " + e.getMessage());
         }
 
-        String host = properties.getProperty("db.host", "192.168.1.10");
+        String host = properties.getProperty("db.host", "192.168.1.15");
         String port = properties.getProperty("db.port", "3306");
         String dbName = properties.getProperty("db.name", "kainan_pos");
         String user = properties.getProperty("db.user", "pos_user");
@@ -40,6 +40,7 @@ public final class DatabaseConfig {
         config.setPassword(password);
         config.setDriverClassName("org.mariadb.jdbc.Driver");
 
+        // CONNECTION POOL SIZING AND TIMEOUTS
         config.setMaximumPoolSize(10);
         config.setMinimumIdle(2);
         config.setIdleTimeout(30000);
@@ -71,12 +72,13 @@ public final class DatabaseConfig {
         }
     }
 
-    //PANG TEST NG CONNECTION
+    // PANG TEST NG CONNECTION
     public static void main(String[] args) {
         System.out.println("Testing MariaDB connection via HikariCP...");
         try (Connection conn = getConnection()) {
             System.out.println("Connection status: SUCCESS!");
-            System.out.println("Connected to: " + conn.getMetaData().getDatabaseProductName() + " " + conn.getMetaData().getDatabaseProductVersion());
+            System.out.println("Connected to: " + conn.getMetaData().getDatabaseProductName() + " "
+                    + conn.getMetaData().getDatabaseProductVersion());
         } catch (SQLException e) {
             System.err.println("Connection status: FAILED!");
             e.printStackTrace();
