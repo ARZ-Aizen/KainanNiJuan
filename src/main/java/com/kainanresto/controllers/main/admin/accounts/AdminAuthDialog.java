@@ -1,6 +1,9 @@
 package com.kainanresto.controllers.main.admin.accounts;
 
 import com.kainanresto.dao.UserDAO;
+import com.kainanresto.model.account.User;
+import com.kainanresto.util.AlertUtil;
+import com.kainanresto.util.SessionManager;
 import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -20,35 +23,48 @@ public final class AdminAuthDialog {
     private AdminAuthDialog() {}
 
     public static boolean show(Window owner, String actionDesc) {
+        User currentUser = SessionManager.getCurrentUser();
+        if (currentUser == null) {
+            AlertUtil.showError("Authorization Error", "No active session found. Please log in again.");
+            return false;
+        }
+
         boolean[] authorized = new boolean[1];
 
-        //HEADER TO
-        Label title = new Label("Admin Authorization");
+        // HEADER
+        Label title = new Label("Account Authorization");
         title.getStyleClass().add("pay-title");
         Label subtitle = new Label(actionDesc);
         subtitle.getStyleClass().add("pay-subtitle");
         VBox header = new VBox(2, title, subtitle);
         header.setAlignment(Pos.CENTER);
 
-        //CREDENTIALS
+        // ERROR
         Label errorMsg = new Label("");
         errorMsg.setStyle("-fx-text-fill: #d32f2f; -fx-font-size: 12px;");
         errorMsg.setVisible(false);
 
-        //USERNAME
-        TextField userField = new TextField();
-        userField.setPromptText("Admin Username");
-        userField.setStyle("-fx-background-color: transparent; -fx-font-size: 14px; -fx-prompt-text-fill: #a1887f; -fx-text-fill: #3e2723; -fx-padding: 6 0 6 0;");
-        HBox userBox = new HBox(userField);
+        // USERNAME - locked to the currently logged in user
+        TextField userField = new TextField(currentUser.getUsername());
+        userField.setEditable(false);
+        userField.setFocusTraversable(false);
+        userField.setStyle("-fx-background-color: transparent; -fx-font-size: 14px; -fx-text-fill: #5d4037; -fx-font-weight: bold; -fx-padding: 6 0 6 0;");
+
+        Label userPrefix = new Label("@");
+        userPrefix.setStyle("-fx-font-size: 14px; -fx-text-fill: #a1887f; -fx-font-weight: bold; -fx-padding: 6 2 6 0;");
+
+        Label roleBadge = new Label(currentUser.getRole() != null ? currentUser.getRole().getDisplayName() : "");
+        roleBadge.setStyle("-fx-background-color: #efebe9; -fx-text-fill: #5d4037; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 3 8 3 8; -fx-background-radius: 12px;");
+
+        HBox userBox = new HBox(4, userPrefix, userField, roleBadge);
         userBox.getStyleClass().add("pay-input-box");
-        userBox.setStyle("-fx-padding: 6 12 6 12;");
+        userBox.setStyle("-fx-padding: 6 12 6 12; -fx-background-color: #faf8f5;");
         userBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(userField, Priority.ALWAYS);
-        userField.focusedProperty().addListener((o, was, is) -> userBox.pseudoClassStateChanged(FIELD_FOCUSED, is));
 
-        //PASSWORD
+        // PASSWORD
         PasswordField passField = new PasswordField();
-        passField.setPromptText("Admin Password");
+        passField.setPromptText("Enter your password to authorize");
         passField.setStyle("-fx-background-color: transparent; -fx-font-size: 14px; -fx-prompt-text-fill: #a1887f; -fx-text-fill: #3e2723; -fx-padding: 6 0 6 0;");
         HBox passBox = new HBox(passField);
         passBox.getStyleClass().add("pay-input-box");
@@ -59,7 +75,7 @@ public final class AdminAuthDialog {
 
         VBox inputs = new VBox(12, userBox, passBox, errorMsg);
 
-        //BUTTONS
+        // BUTTONS
         Button cancel = new Button("Cancel");
         cancel.setMnemonicParsing(false);
         cancel.getStyleClass().add("pay-cancel-btn");
@@ -77,36 +93,42 @@ public final class AdminAuthDialog {
 
         Stage stage = DialogSupport.createStage(owner, card);
 
-        //BEHAVIOR
+        // BEHAVIOR
         Runnable doAuth = () -> {
             String uname = userField.getText().trim();
             String pwd = passField.getText();
 
-            if (uname.isEmpty() || pwd.isEmpty()) {
-                errorMsg.setText("Username and password are required.");
+            if (pwd.isEmpty()) {
+                errorMsg.setText("Password is required.");
+                errorMsg.setVisible(true);
+                return;
+            }
+
+            if (!uname.equalsIgnoreCase(currentUser.getUsername())) {
+                errorMsg.setText("Only the currently logged-in user can authorize this action.");
                 errorMsg.setVisible(true);
                 return;
             }
 
             UserDAO dao = new UserDAO();
-            boolean isAuthorizedAdmin = dao.verifyAdminCredentials(uname, pwd);
+            boolean isAuthorized = dao.verifyUserPassword(currentUser.getUsername(), pwd);
 
-            if (isAuthorizedAdmin) {
+            if (isAuthorized) {
                 authorized[0] = true;
                 stage.close();
             } else {
-                errorMsg.setText("Invalid credentials or user lacks authorization.");
+                errorMsg.setText("Invalid password. Please try again.");
                 errorMsg.setVisible(true);
+                passField.selectAll();
+                passField.requestFocus();
             }
         };
 
-        //KEYBOARD SHORTCUT TO
-        userField.setOnAction(e -> passField.requestFocus());
         passField.setOnAction(e -> doAuth.run());
         confirm.setOnAction(e -> doAuth.run());
         cancel.setOnAction(e -> stage.close());
 
-        stage.setOnShown(e -> userField.requestFocus());
+        stage.setOnShown(e -> passField.requestFocus());
 
         stage.showAndWait();
         return authorized[0];

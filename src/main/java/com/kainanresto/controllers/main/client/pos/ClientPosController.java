@@ -197,8 +197,15 @@ public class ClientPosController {
         } else {
             receiptSubtotalLabel.setText(ClientUIHelper.formatPeso(totals.subtotal()));
             receiptServiceLabel.setText("Service charge" + rateSuffix(totals.serviceChargeRate()));
-            receiptServiceValueLabel.setText(ClientUIHelper.formatPeso(totals.serviceCharge()));
-            receiptVatLabel.setText("VAT" + rateSuffix(totals.vatRate()));
+            if (discountRate != null && discountRate.signum() > 0) {
+                if (totals.vat() == null || totals.vat().signum() == 0) {
+                    receiptVatLabel.setText("VAT (0% \u2013 VAT Exempt)");
+                } else {
+                    receiptVatLabel.setText("VAT (12% on regular items)");
+                }
+            } else {
+                receiptVatLabel.setText("VAT" + rateSuffix(totals.vatRate()));
+            }
             receiptVatValueLabel.setText(ClientUIHelper.formatPeso(totals.vat()));
             receiptTotalLabel.setText(ClientUIHelper.formatPeso(totals.total()));
         }

@@ -678,6 +678,9 @@ public class MainAdminController {
         if (currentUser != null) {
             new com.kainanresto.dao.UserDAO()
                     .setAccountInactive(currentUser.getUserId());
+            if (currentUser.getRole() == com.kainanresto.model.account.AccountRole.ADMIN) {
+                com.kainanresto.controllers.id.LoginController.clearRememberedUser();
+            }
         }
 
         SessionManager.clearSession();

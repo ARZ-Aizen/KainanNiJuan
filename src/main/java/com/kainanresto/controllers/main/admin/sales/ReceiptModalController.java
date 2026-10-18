@@ -49,14 +49,28 @@ public class ReceiptModalController {
             subtotalLabel.setText(formatPeso(t.subtotal()));
             serviceChargeNameLabel.setText("Service Charge" + rateSuffix(t.serviceChargeRate()));
             serviceChargeValueLabel.setText(formatPeso(t.serviceCharge()));
-            vatNameLabel.setText("VAT" + rateSuffix(t.vatRate()));
-            vatValueLabel.setText(formatPeso(t.vat()));
+            boolean hasDiscount = receipt.discountName() != null && !receipt.discountName().isBlank() && !"None".equalsIgnoreCase(receipt.discountName());
+            boolean isSeniorOrPwd = hasDiscount && (receipt.discountName().toLowerCase().contains("senior") || receipt.discountName().toLowerCase().contains("pwd"));
+
+            if (isSeniorOrPwd) {
+                if (t.vat() == null || t.vat().signum() == 0) {
+                    vatNameLabel.setText("VAT (0% - VAT Exempt)");
+                    vatValueLabel.setText(formatPeso(BigDecimal.ZERO));
+                } else {
+                    vatNameLabel.setText("VAT (12% on regular items)");
+                    vatValueLabel.setText(formatPeso(t.vat()));
+                }
+            } else {
+                vatNameLabel.setText("VAT" + rateSuffix(t.vatRate()));
+                vatValueLabel.setText(formatPeso(t.vat()));
+            }
+
             totalLabel.setText(formatPeso(t.total()));
 
-            if (t.subtotal() != null && t.serviceCharge() != null && t.vat() != null && t.total() != null) {
-                BigDecimal discount = t.subtotal().add(t.serviceCharge()).add(t.vat()).subtract(t.total());
+            if (hasDiscount && t.subtotal() != null && t.serviceCharge() != null && t.total() != null) {
+                BigDecimal discount = t.subtotal().add(t.serviceCharge()).subtract(t.total());
                 if (discount.signum() > 0) {
-                    discountNameLabel.setText(receipt.discountName() == null ? "Discount" : "Discount - " + receipt.discountName());
+                    discountNameLabel.setText("Discount - " + receipt.discountName());
                     discountValueLabel.setText("-" + formatPeso(discount));
                     discountRow.setVisible(true);
                     discountRow.setManaged(true);

@@ -92,13 +92,18 @@
                 <Label fx:id="orderPaymentValueLabel" text="—" styleClass="filter-pill-value" />
                 <StackPane styleClass="icon-host-14"><SVGPath styleClass="phosphor-icon, icon-muted, filter-chevron" /></StackPane>
             </HBox>
+            <HBox fx:id="orderSortPill" styleClass="filter-pill" alignment="CENTER_LEFT" spacing="8.0">
+                <Label text="Sort:" styleClass="filter-pill-label" />
+                <Label fx:id="orderSortValueLabel" text="Newest First" styleClass="filter-pill-value" />
+                <StackPane styleClass="icon-host-14"><SVGPath styleClass="phosphor-icon, icon-muted, filter-chevron" /></StackPane>
+            </HBox>
             <Button fx:id="clearOrderFiltersBtn" text="Clear Filters" onAction="#onClearOrderFilters" styleClass="btn-text" mnemonicParsing="false" />
         </HBox>
     </HBox>
 
     <!-- Orders table -->
-    <VBox styleClass="table-card" VBox.vgrow="ALWAYS">
-        <TableView fx:id="ordersTable" styleClass="orders-table" VBox.vgrow="ALWAYS" fixedCellSize="61.0" minHeight="240.0" focusTraversable="false">
+    <VBox styleClass="table-card" VBox.vgrow="ALWAYS" spacing="14.0">
+        <TableView fx:id="ordersTable" styleClass="orders-table" VBox.vgrow="ALWAYS" fixedCellSize="58.0" minHeight="240.0" focusTraversable="false">
             <placeholder>
                 <Label fx:id="ordersTablePlaceholder" text="" styleClass="dashboard-placeholder" />
             </placeholder>
@@ -113,5 +118,16 @@
                 <TableColumn fx:id="orderActionsColumn" text="ACTIONS" prefWidth="72.0" minWidth="72.0" maxWidth="72.0" resizable="false" sortable="false" reorderable="false" styleClass="col-center" />
             </columns>
         </TableView>
+
+        <!-- Pagination Bar -->
+        <HBox fx:id="paginationBar" alignment="CENTER_LEFT" spacing="12.0" styleClass="table-pagination-bar">
+            <Label fx:id="paginationInfoLabel" text="Showing 0 of 0 orders" styleClass="pagination-info" />
+            <Region HBox.hgrow="ALWAYS" />
+            <HBox alignment="CENTER_RIGHT" spacing="6.0">
+                <Button fx:id="prevPageBtn" text="Previous" styleClass="pagination-btn, pagination-btn-nav" onAction="#onPrevPage" mnemonicParsing="false" />
+                <HBox fx:id="pageNumbersBox" alignment="CENTER" spacing="4.0" />
+                <Button fx:id="nextPageBtn" text="Next" styleClass="pagination-btn, pagination-btn-nav" onAction="#onNextPage" mnemonicParsing="false" />
+            </HBox>
+        </HBox>
     </VBox>
 </VBox>

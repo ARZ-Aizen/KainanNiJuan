@@ -16,44 +16,31 @@ import javafx.stage.FileChooser;
 import java.io.*;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.DateTimeParseException;
 import java.time.format.TextStyle;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Properties;
-
 
 public class SettingsController {
 
     @FXML private HBox settingsRoot;
     @FXML private ScrollPane settingsScroll;
     @FXML private VBox settingsContent;
-    @FXML private VBox settingsTimeCard, settingsBackupCard, settingsSecurityCard;
+    @FXML private VBox settingsBackupCard, settingsSecurityCard;
 
-    @FXML private Button settingsTabTimeBtn, settingsTabBackupBtn, settingsTabSecurityBtn;
-    @FXML private SVGPath settingsGeneralIcon, settingsBackupTabIcon, settingsSecurityIcon;
+    @FXML private Button settingsTabBackupBtn, settingsTabSecurityBtn;
+    @FXML private SVGPath settingsBackupTabIcon, settingsSecurityIcon;
     @FXML private SVGPath settingsBackupBtnIcon;
 
-    @FXML private TextField settingsDateField, settingsTimeField;
-    @FXML private ToggleGroup settingsSyncGroup;
-    @FXML private ToggleButton settingsSyncManualBtn, settingsSyncAutoBtn;
     @FXML private ToggleButton settingsRequirePinToggle;
     @FXML private Label settingsErrorLabel;
 
     private static final String SETTINGS_TAB_ACTIVE = "settings-tab-active";
-    private static final DateTimeFormatter SETTINGS_DATE_FMT = new DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern("MMMM d, yyyy").toFormatter(Locale.ENGLISH);
-    private static final DateTimeFormatter SETTINGS_TIME_FMT = new DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern("h:mm a").toFormatter(Locale.ENGLISH);
-
     private static final String CONFIG_FILE = "config.properties";
     private Properties appProperties = new Properties();
-
-    @FXML private SVGPath settingsExportInvBtnIcon;
 
     @FXML
     public void initialize() {
@@ -63,11 +50,9 @@ public class SettingsController {
     }
 
     private void setupIcons() {
-        setIconScale(settingsGeneralIcon, Icons.CLOCK, 18.0);
         setIconScale(settingsBackupTabIcon, Icons.DATABASE, 18.0);
         setIconScale(settingsSecurityIcon, Icons.SHIELD, 18.0);
         setIconScale(settingsBackupBtnIcon, Icons.DOWNLOAD, 16.0);
-        setIconScale(settingsExportInvBtnIcon, Icons.CLIPBOARD_TEXT, 16.0);
     }
 
     private void setIconScale(SVGPath icon, String content, double targetSize) {
@@ -80,39 +65,13 @@ public class SettingsController {
     }
 
     private void setupSettingsPage() {
-        settingsSyncManualBtn.setSelected(true);
-        settingsSyncGroup.selectedToggleProperty().addListener((obs, old, now) -> {
-            if (now == null && old != null) settingsSyncGroup.selectToggle(old);
-            else updateSettingsTimeFieldsEnabled();
-        });
-        updateSettingsTimeFieldsEnabled();
         setSettingsError(null);
-    }
-
-    private void updateSettingsTimeFieldsEnabled() {
-        boolean auto = settingsSyncAutoBtn.isSelected();
-        settingsDateField.setDisable(auto);
-        settingsTimeField.setDisable(auto);
-
-        if (auto) {
-            settingsDateField.setText(LocalDate.now().format(SETTINGS_DATE_FMT));
-            settingsTimeField.setText(LocalTime.now().format(SETTINGS_TIME_FMT));
-        }
     }
 
     private void loadSettingsData() {
         try (InputStream input = new FileInputStream(CONFIG_FILE)) {
             appProperties.load(input);
         } catch (IOException ex) {
-        }
-
-        boolean isAuto = Boolean.parseBoolean(appProperties.getProperty("timeSyncAuto", "true"));
-        if (isAuto) {
-            settingsSyncAutoBtn.setSelected(true);
-        } else {
-            settingsSyncManualBtn.setSelected(true);
-            settingsDateField.setText(appProperties.getProperty("manualDate", LocalDate.now().format(SETTINGS_DATE_FMT)));
-            settingsTimeField.setText(appProperties.getProperty("manualTime", LocalTime.now().format(SETTINGS_TIME_FMT)));
         }
 
         boolean requirePin = Boolean.parseBoolean(appProperties.getProperty("requirePinForVoid", "false"));
@@ -129,24 +88,12 @@ public class SettingsController {
     private void onSettingsSave() {
         setSettingsError(null);
 
-        boolean isAuto = settingsSyncAutoBtn.isSelected();
+        // Remove obsolete time settings
+        appProperties.remove("timeOffsetSeconds");
+        appProperties.remove("timeSyncAuto");
+        appProperties.remove("manualDate");
+        appProperties.remove("manualTime");
 
-        if (!isAuto) {
-            try {
-                LocalDate.parse(settingsDateField.getText().trim(), SETTINGS_DATE_FMT);
-            } catch (DateTimeParseException ex) {
-                setSettingsError("System date must be in the form Month D, YYYY."); return;
-            }
-            try {
-                LocalTime.parse(settingsTimeField.getText().trim(), SETTINGS_TIME_FMT);
-            } catch (DateTimeParseException ex) {
-                setSettingsError("System time must be in the form H:MM AM/PM."); return;
-            }
-        }
-
-        appProperties.setProperty("timeSyncAuto", String.valueOf(isAuto));
-        appProperties.setProperty("manualDate", settingsDateField.getText().trim());
-        appProperties.setProperty("manualTime", settingsTimeField.getText().trim());
         appProperties.setProperty("requirePinForVoid", String.valueOf(settingsRequirePinToggle.isSelected()));
 
         try (OutputStream output = new FileOutputStream(CONFIG_FILE)) {
@@ -225,12 +172,11 @@ public class SettingsController {
         return "\"" + s.replace("\"", "\"\"") + "\"";
     }
 
-    @FXML private void onSettingsTabTime() { selectSettingsTab(settingsTabTimeBtn, settingsTimeCard); }
     @FXML private void onSettingsTabBackup() { selectSettingsTab(settingsTabBackupBtn, settingsBackupCard); }
     @FXML private void onSettingsTabSecurity() { selectSettingsTab(settingsTabSecurityBtn, settingsSecurityCard); }
 
     private void selectSettingsTab(Button active, Node section) {
-        for (Button btn : new Button[]{settingsTabTimeBtn, settingsTabBackupBtn, settingsTabSecurityBtn}) {
+        for (Button btn : new Button[]{settingsTabBackupBtn, settingsTabSecurityBtn}) {
             btn.getStyleClass().remove(SETTINGS_TAB_ACTIVE);
         }
         if (!active.getStyleClass().contains(SETTINGS_TAB_ACTIVE)) active.getStyleClass().add(SETTINGS_TAB_ACTIVE);

@@ -81,45 +81,51 @@
             }
         }
 
-        // LOGIN
-        @FXML private void handleLogin(ActionEvent event) {
-            String username = usernameField.getText().trim();
-            String password = passwordField.getText();
-    
-            boolean rememberMe = rememberMeCheckbox != null
-                    && rememberMeCheckbox.isSelected();
-    
-            if (username.isEmpty() || password.isEmpty()) {
-                AlertUtil.showWarning(
-                        "Login Validation",
-                        "Please enter both username and password."
-                );
-                return;
-            }
-    
-            Optional<User> authenticatedUser = userDAO.login(username, password);
-    
-            if (authenticatedUser.isEmpty()) {
-                AlertUtil.showError(
-                        "Login Failed",
-                        "Invalid username or password."
-                );
-                passwordField.clear();
-                passwordVisibleField.clear();
-                passwordField.requestFocus();
-                return;
-            }
-    
-            if (rememberMe) {
-                prefs.putBoolean(PREF_REMEMBERED, true);
-                prefs.put(PREF_USERNAME, username);
-            } else {
-                prefs.remove(PREF_REMEMBERED);
-                prefs.remove(PREF_USERNAME);
-            }
-    
-            User user = authenticatedUser.get();
-            SessionManager.setCurrentUser(user);
+    public static void clearRememberedUser() {
+        Preferences p = Preferences.userNodeForPackage(LoginController.class);
+        p.remove(PREF_REMEMBERED);
+        p.remove(PREF_USERNAME);
+    }
+
+    // LOGIN
+    @FXML private void handleLogin(ActionEvent event) {
+        String username = usernameField.getText().trim();
+        String password = passwordField.getText();
+
+        boolean rememberMe = rememberMeCheckbox != null
+                && rememberMeCheckbox.isSelected();
+
+        if (username.isEmpty() || password.isEmpty()) {
+            AlertUtil.showWarning(
+                    "Login Validation",
+                    "Please enter both username and password."
+            );
+            return;
+        }
+
+        Optional<User> authenticatedUser = userDAO.login(username, password);
+
+        if (authenticatedUser.isEmpty()) {
+            AlertUtil.showError(
+                    "Login Failed",
+                    "Invalid username or password."
+            );
+            passwordField.clear();
+            passwordVisibleField.clear();
+            passwordField.requestFocus();
+            return;
+        }
+
+        User user = authenticatedUser.get();
+        SessionManager.setCurrentUser(user);
+
+        boolean isAdmin = user.getRole() == AccountRole.ADMIN;
+        if (rememberMe && !isAdmin) {
+            prefs.putBoolean(PREF_REMEMBERED, true);
+            prefs.put(PREF_USERNAME, username);
+        } else {
+            clearRememberedUser();
+        }
     
             AlertUtil.showInfo(
                     "Login Success",

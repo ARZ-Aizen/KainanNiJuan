@@ -198,6 +198,28 @@ public class UserDAO {
         return false;
     }
 
+    public boolean verifyUserPassword(String username, String plainPassword) {
+        String sql = "SELECT password, role FROM users WHERE BINARY username = ? AND is_deleted = 0";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, username);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    String storedHash = rs.getString("password");
+                    String role = rs.getString("role");
+                    if (PasswordHasher.verify(plainPassword, storedHash)) {
+                        return "ADMIN".equalsIgnoreCase(role) ||
+                                "MANAGER".equalsIgnoreCase(role) ||
+                                "SUPERVISOR".equalsIgnoreCase(role);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("UserDAO.verifyUserPassword: DB Error - " + e.getMessage());
+        }
+        return false;
+    }
+
     public boolean checkUserExists(String username) {
         String sql = "SELECT 1 FROM users WHERE BINARY username = ? AND is_deleted = 0 LIMIT 1";
         try (Connection conn = DatabaseConfig.getConnection();

@@ -10,21 +10,10 @@
     <padding>
         <Insets top="32" right="32" bottom="32" left="32"/>
     </padding>
-    <fx:define>
-        <ToggleGroup fx:id="settingsSyncGroup"/>
-    </fx:define>
 
     <!-- Left tab list -->
     <VBox styleClass="settings-tabs" spacing="6" minWidth="260" prefWidth="260" maxWidth="260" maxHeight="-Infinity">
-        <Button fx:id="settingsTabTimeBtn" text="Time &amp; Date" styleClass="settings-tab, settings-tab-active"
-                maxWidth="Infinity" mnemonicParsing="false" onAction="#onSettingsTabTime">
-            <graphic>
-                <StackPane styleClass="settings-host-18">
-                    <SVGPath fx:id="settingsGeneralIcon" styleClass="phosphor-icon"/>
-                </StackPane>
-            </graphic>
-        </Button>
-        <Button fx:id="settingsTabBackupBtn" text="Backup &amp; Restore" styleClass="settings-tab"
+        <Button fx:id="settingsTabBackupBtn" text="Backup &amp; Export" styleClass="settings-tab, settings-tab-active"
                 maxWidth="Infinity" mnemonicParsing="false" onAction="#onSettingsTabBackup">
             <graphic>
                 <StackPane styleClass="settings-host-18">
@@ -47,39 +36,6 @@
         <content>
             <VBox fx:id="settingsContent" styleClass="settings-content" spacing="24">
 
-                <!-- Time & Date -->
-                <VBox fx:id="settingsTimeCard" styleClass="settings-card" spacing="20">
-                    <VBox spacing="4">
-                        <Label text="System Time &amp; Date" styleClass="settings-card-title"/>
-                        <Label text="Manage how the POS terminal tracks and records transaction timestamps"
-                               styleClass="settings-card-subtitle" wrapText="true"/>
-                    </VBox>
-                    <Region styleClass="settings-divider"/>
-                    <VBox spacing="16">
-                        <VBox spacing="6">
-                            <Label text="System Time Sync Mode" styleClass="settings-field-label"/>
-                            <HBox styleClass="settings-segment" spacing="4">
-                                <ToggleButton fx:id="settingsSyncManualBtn" text="Manually Change" toggleGroup="$settingsSyncGroup"
-                                              styleClass="settings-segment-btn" mnemonicParsing="false"
-                                              maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
-                                <ToggleButton fx:id="settingsSyncAutoBtn" text="Auto Sync" toggleGroup="$settingsSyncGroup"
-                                              styleClass="settings-segment-btn" mnemonicParsing="false"
-                                              maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
-                            </HBox>
-                        </VBox>
-                        <HBox spacing="16">
-                            <VBox spacing="6" HBox.hgrow="ALWAYS" prefWidth="0">
-                                <Label text="System Date" styleClass="settings-field-label"/>
-                                <TextField fx:id="settingsDateField" promptText="e.g., October 2, 2026" styleClass="settings-input"/>
-                            </VBox>
-                            <VBox spacing="6" HBox.hgrow="ALWAYS" prefWidth="0">
-                                <Label text="System Time" styleClass="settings-field-label"/>
-                                <TextField fx:id="settingsTimeField" promptText="e.g., 10:30 AM" styleClass="settings-input"/>
-                            </VBox>
-                        </HBox>
-                    </VBox>
-                </VBox>
-
                 <!-- Export Operations -->
                 <VBox fx:id="settingsBackupCard" styleClass="settings-card" spacing="20">
                     <VBox spacing="4">
@@ -100,7 +56,7 @@
                     </HBox>
                 </VBox>
 
-                <!-- Terminal & Security Protocols (Ito ang nawawala) -->
+                <!-- Terminal & Security Protocols -->
                 <VBox fx:id="settingsSecurityCard" styleClass="settings-card" spacing="20">
                     <VBox spacing="4">
                         <Label text="Terminal &amp; Security Protocols" styleClass="settings-card-title"/>

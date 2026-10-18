@@ -4,7 +4,9 @@ package com.kainanresto.config;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-// SQL
+// SQL & IO
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
@@ -13,19 +15,60 @@ import java.util.Properties;
 
 public final class DatabaseConfig {
 
-    private static final HikariDataSource DATA_SOURCE;
+    private static HikariDataSource dataSource = null;
+    private static Throwable initError = null;
 
     static {
+        initPool();
+    }
+
+    private static synchronized void initPool() {
+        if (dataSource != null && !dataSource.isClosed()) return;
+
         Properties properties = new Properties();
 
+        // 1. Load bundled defaults from inside the JAR
         try (InputStream input = DatabaseConfig.class.getResourceAsStream("/db.properties")) {
-            if (input == null) {
-                System.err.println("DatabaseConfig: db.properties not found! Falling back to defaults.");
-            } else {
+            if (input != null) {
                 properties.load(input);
             }
-        } catch (IOException e) {
-            System.err.println("DatabaseConfig: Error reading db.properties: " + e.getMessage());
+        } catch (IOException ignored) {}
+
+        // 2. Candidate external locations for db.properties:
+        // a) Current working directory: "db.properties"
+        // b) Next to the executable/JAR install folder: "{app}/db.properties"
+        // c) User AppData: "%APPDATA%/KainanNiJuan/db.properties"
+        File externalFile = new File("db.properties");
+        if (!externalFile.exists()) {
+            try {
+                File codeLocation = new File(DatabaseConfig.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+                File jarDir = codeLocation.getParentFile();
+                if (jarDir != null) {
+                    File rootDir = jarDir.getParentFile();
+                    if (rootDir != null && new File(rootDir, "db.properties").exists()) {
+                        externalFile = new File(rootDir, "db.properties");
+                    } else if (new File(jarDir, "db.properties").exists()) {
+                        externalFile = new File(jarDir, "db.properties");
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (!externalFile.exists()) {
+            String appData = System.getenv("APPDATA");
+            if (appData != null) {
+                File appDataFile = new File(appData + File.separator + "KainanNiJuan" + File.separator + "db.properties");
+                if (appDataFile.exists()) externalFile = appDataFile;
+            }
+        }
+
+        if (externalFile.exists()) {
+            try (FileInputStream fis = new FileInputStream(externalFile)) {
+                properties.load(fis);
+                System.out.println("DatabaseConfig: Loaded external configuration from " + externalFile.getAbsolutePath());
+            } catch (IOException e) {
+                System.err.println("DatabaseConfig: Error reading external db.properties: " + e.getMessage());
+            }
         }
 
         String host = properties.getProperty("db.host", "192.168.1.15");
@@ -48,10 +91,11 @@ public final class DatabaseConfig {
         config.setMaxLifetime(1800000);
 
         try {
-            DATA_SOURCE = new HikariDataSource(config);
+            dataSource = new HikariDataSource(config);
+            initError = null;
         } catch (Exception e) {
-            System.err.println("DatabaseConfig: Critical failure initializing pool: " + e.getMessage());
-            throw new ExceptionInInitializerError(e);
+            initError = e;
+            System.err.println("DatabaseConfig: Pool initialization failed: " + e.getMessage());
         }
     }
 
@@ -60,15 +104,20 @@ public final class DatabaseConfig {
     }
 
     public static Connection getConnection() throws SQLException {
-        if (DATA_SOURCE == null || DATA_SOURCE.isClosed()) {
-            throw new SQLException("Connection pool is not available.");
+        if (dataSource == null || dataSource.isClosed()) {
+            initPool();
         }
-        return DATA_SOURCE.getConnection();
+        if (dataSource == null || dataSource.isClosed()) {
+            String msg = initError != null ? initError.getMessage() : "Database connection pool is not available.";
+            throw new SQLException("Could not connect to database: " + msg, initError);
+        }
+        return dataSource.getConnection();
     }
 
     public static void closePool() {
-        if (DATA_SOURCE != null && !DATA_SOURCE.isClosed()) {
-            DATA_SOURCE.close();
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
+            dataSource = null;
         }
     }
 

@@ -480,8 +480,18 @@ public class ClientOrderManagementController {
         } else {
             omrSubtotalLabel.setText(ClientUIHelper.formatPeso(totals.subtotal()));
             omrServiceLabel.setText("Service charge" + rateSuffix(totals.serviceChargeRate()));
-            omrServiceValueLabel.setText(ClientUIHelper.formatPeso(totals.serviceCharge()));
-            omrVatLabel.setText("VAT" + rateSuffix(totals.vatRate()));
+            boolean hasDiscount = detail != null && detail.discountName() != null && !detail.discountName().isBlank() && !"None".equalsIgnoreCase(detail.discountName());
+            boolean isSeniorOrPwd = hasDiscount && (detail.discountName().toLowerCase().contains("senior") || detail.discountName().toLowerCase().contains("pwd"));
+
+            if (isSeniorOrPwd) {
+                if (totals.vat() == null || totals.vat().signum() == 0) {
+                    omrVatLabel.setText("VAT (0% \u2013 VAT Exempt)");
+                } else {
+                    omrVatLabel.setText("VAT (12% on regular items)");
+                }
+            } else {
+                omrVatLabel.setText("VAT" + rateSuffix(totals.vatRate()));
+            }
             omrVatValueLabel.setText(ClientUIHelper.formatPeso(totals.vat()));
             omrTotalLabel.setText(ClientUIHelper.formatPeso(totals.total()));
         }

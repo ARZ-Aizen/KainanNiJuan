@@ -1173,6 +1173,26 @@
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
 }
+.orders-table .scroll-bar:vertical {
+    -fx-opacity: 0;
+    -fx-padding: 0;
+    -fx-pref-width: 0;
+    -fx-max-width: 0;
+}
+.orders-table .scroll-bar:vertical .thumb,
+.orders-table .scroll-bar:vertical .track,
+.orders-table .scroll-bar:vertical .increment-button,
+.orders-table .scroll-bar:vertical .decrement-button {
+    -fx-pref-width: 0;
+    -fx-max-width: 0;
+    -fx-padding: 0;
+}
+.orders-table .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+}
 .orders-table .column-header-background {
     -fx-background-color: transparent;
     -fx-background-insets: 0;
@@ -1269,6 +1289,98 @@
     -fx-faint-focus-color: transparent;
 }
 .row-action-btn:hover { -fx-background-color: #F2EAE0; }
+
+/* ================= ORDERS PAGINATION ================= */
+.table-pagination-bar {
+    -fx-padding: 14px 4px 0 4px;
+    -fx-border-color: #EAE1D4 transparent transparent transparent;
+    -fx-border-width: 1px 0 0 0;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.pagination-info {
+    -fx-font-size: 13px;
+    -fx-text-fill: #6E625C;
+    -fx-font-weight: 500;
+}
+
+.pagination-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #2E2520;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.pagination-btn-nav {
+    -fx-padding: 6px 14px;
+    -fx-background-color: #F9F4EC;
+    -fx-border-color: #EAE1D4;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+}
+.pagination-btn-nav:hover {
+    -fx-background-color: #F2EAE0;
+    -fx-border-color: #D8CEBF;
+}
+.pagination-btn-nav:disabled {
+    -fx-opacity: 0.4;
+    -fx-cursor: default;
+}
+
+.pagination-page-btn {
+    -fx-min-width: 32px;
+    -fx-pref-width: 32px;
+    -fx-max-width: 32px;
+    -fx-min-height: 32px;
+    -fx-pref-height: 32px;
+    -fx-max-height: 32px;
+    -fx-padding: 0;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #6E625C;
+    -fx-background-color: transparent;
+    -fx-border-color: #EAE1D4;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.pagination-page-btn:hover {
+    -fx-background-color: #FCF7F0;
+    -fx-text-fill: #2E2520;
+    -fx-border-color: #D8CEBF;
+}
+
+.pagination-page-active {
+    -fx-background-color: #8C6343;
+    -fx-text-fill: white;
+    -fx-font-weight: 700;
+    -fx-border-color: #8C6343;
+}
+.pagination-page-active:hover {
+    -fx-background-color: #7A5538;
+    -fx-text-fill: white;
+}
+
+.pagination-ellipsis,
+.pagination-ellipsis-btn {
+    -fx-text-fill: #8C6343;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-border-color: transparent;
+    -fx-background-color: transparent;
+}
+.pagination-ellipsis-btn:hover {
+    -fx-background-color: #FCF7F0;
+    -fx-border-color: #EAE1D4;
+    -fx-text-fill: #7A5538;
+}
 
 /* ================= ACCOUNT MANAGEMENT ================= */
 .accounts-page {

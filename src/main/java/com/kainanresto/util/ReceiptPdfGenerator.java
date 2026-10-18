@@ -88,13 +88,23 @@ public final class ReceiptPdfGenerator {
         els.add(dash());
 
         els.add(kv("Subtotal", money(t.subtotal()), REGULAR, 9f));
-        BigDecimal discount = t.subtotal().add(t.serviceCharge()).add(t.vat()).subtract(t.total());
-        if (discount.signum() > 0) {
-            String label = r.discountName() == null ? "Discount" : "Discount - " + r.discountName();
+        boolean hasDiscount = r.discountName() != null && !r.discountName().isBlank() && !"None".equalsIgnoreCase(r.discountName());
+        BigDecimal discount = hasDiscount ? t.subtotal().add(t.serviceCharge()).subtract(t.total()) : BigDecimal.ZERO;
+        if (hasDiscount && discount.signum() > 0) {
+            String label = "Discount - " + r.discountName();
             els.add(kv(label, "-" + money(discount), REGULAR, 9f));
         }
         els.add(kv("Service charge" + rateSuffix(t.serviceChargeRate()), money(t.serviceCharge()), REGULAR, 9f));
-        els.add(kv("VAT" + rateSuffix(t.vatRate()), money(t.vat()), REGULAR, 9f));
+        boolean isSeniorOrPwd = hasDiscount && (r.discountName().toLowerCase().contains("senior") || r.discountName().toLowerCase().contains("pwd"));
+        String vatLabel;
+        if (isSeniorOrPwd) {
+            vatLabel = (t.vat() == null || t.vat().signum() == 0)
+                    ? "VAT (0% - VAT Exempt)"
+                    : "VAT (12% on regular items)";
+        } else {
+            vatLabel = "VAT" + rateSuffix(t.vatRate());
+        }
+        els.add(kv(vatLabel, money(t.vat()), REGULAR, 9f));
         els.add(solid());
         els.add(kv("TOTAL", money(t.total()), BOLD, 12f, 20f));
         els.add(dash());

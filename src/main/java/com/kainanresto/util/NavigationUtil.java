@@ -127,6 +127,10 @@ public final class NavigationUtil {
         stage.setOnCloseRequest((WindowEvent closeEvent) -> {
             closeEvent.consume(); // PARA DI MAGCLOSE NG TULUYAN BIGLAAN
             RealTimePoller.stopPolling();
+            com.kainanresto.model.account.User currentUser = SessionManager.getCurrentUser();
+            if (currentUser != null && currentUser.getRole() == com.kainanresto.model.account.AccountRole.ADMIN) {
+                com.kainanresto.controllers.id.LoginController.clearRememberedUser();
+            }
             SessionManager.clearSession();
             // PARA MAPABALIK SA LOGIN
             switchScene(closeEvent, "/com/kainanresto/views/id/LoginView.fxml", "Kainan Ni Juan POS - Login");

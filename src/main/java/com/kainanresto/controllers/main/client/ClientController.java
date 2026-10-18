@@ -35,6 +35,7 @@ import javafx.stage.WindowEvent;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -353,7 +354,7 @@ public class ClientController {
                 orderNumber,
                 orderType,
                 OrderStatus.PREPARING,
-                com.kainanresto.controllers.util.SystemTimeManager.getCurrentLocalDateTime(),
+                LocalDateTime.now(),
                 currentCashierName(),
                 List.copyOf(currentCart),
                 hasDiscount ? currentDiscountName : null,
@@ -480,6 +481,9 @@ public class ClientController {
         if (currentUser != null) {
             com.kainanresto.dao.UserDAO userDAO = new com.kainanresto.dao.UserDAO();
             userDAO.setAccountInactive(currentUser.getUserId());
+            if (currentUser.getRole() == com.kainanresto.model.account.AccountRole.ADMIN) {
+                com.kainanresto.controllers.id.LoginController.clearRememberedUser();
+            }
         }
         SessionManager.clearSession();
         NavigationUtil.switchScene(event, "/com/kainanresto/views/id/LoginView.fxml", "Kainan Ni Juan - Login");

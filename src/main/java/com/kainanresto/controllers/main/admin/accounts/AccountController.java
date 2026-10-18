@@ -7,6 +7,8 @@ import com.kainanresto.model.account.AccountStatus;
 import com.kainanresto.model.account.User;
 import com.kainanresto.model.util.Icons;
 import com.kainanresto.util.AlertUtil;
+import com.kainanresto.util.PasswordHasher;
+import com.kainanresto.util.SessionManager;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
@@ -205,6 +207,10 @@ public class AccountController {
 
     private void showAccountsList() {
         showView(accountsView);
+        if (editAccountRoleCombo != null)
+            editAccountRoleCombo.setDisable(false);
+        if (editAccountUsernameField != null)
+            editAccountUsernameField.setDisable(false);
     }
 
     private void showEditAccountForm() {
@@ -427,18 +433,79 @@ public class AccountController {
                 .setText(accountsMaster.isEmpty() ? "No accounts loaded." : "No accounts match your filters.");
     }
 
+    private AccountRole getCurrentUserRole() {
+        User currentUser = SessionManager.getCurrentUser();
+        return currentUser != null ? currentUser.getRole() : null;
+    }
+
+    public static List<AccountRole> getAssignableRoles(AccountRole actorRole) {
+        if (actorRole == null) {
+            return List.of();
+        }
+        return switch (actorRole) {
+            case ADMIN -> List.of(AccountRole.CASHIER, AccountRole.MANAGER, AccountRole.SUPERVISOR);
+            case SUPERVISOR -> List.of(AccountRole.CASHIER, AccountRole.MANAGER);
+            case MANAGER -> List.of(AccountRole.CASHIER);
+            case CASHIER -> List.of();
+        };
+    }
+
+    public static boolean canManageRole(AccountRole actorRole, AccountRole targetRole) {
+        if (actorRole == null || targetRole == null) {
+            return false;
+        }
+        if (targetRole == AccountRole.ADMIN) {
+            return false;
+        }
+        return getAssignableRoles(actorRole).contains(targetRole);
+    }
+
+    private boolean isSelf(AccountRow account) {
+        if (account == null)
+            return false;
+        User currentUser = SessionManager.getCurrentUser();
+        if (currentUser == null)
+            return false;
+        return currentUser.getUserId() == account.id()
+                || (account.username() != null && account.username().equalsIgnoreCase(currentUser.getUsername()));
+    }
+
     private void editAccount(AccountRow selectedAccount) {
-        if (selectedAccount.role() == AccountRole.ADMIN || "admin".equalsIgnoreCase(selectedAccount.username())) {
+        boolean self = isSelf(selectedAccount);
+        if (!self && (selectedAccount.role() == AccountRole.ADMIN || "admin".equalsIgnoreCase(selectedAccount.username()))) {
             AlertUtil.showError("Action Denied", "The primary administrator account cannot be edited.");
+            return;
+        }
+
+        AccountRole currentRole = getCurrentUserRole();
+        if (!self && !canManageRole(currentRole, selectedAccount.role())) {
+            AlertUtil.showError("Action Denied", "You do not have permission to edit a "
+                    + selectedAccount.role().getDisplayName() + " account.");
             return;
         }
 
         editingAccount = selectedAccount;
         editAccountNameField.setText(selectedAccount.fullName() == null ? "" : selectedAccount.fullName());
         editAccountUsernameField.setText(selectedAccount.username() == null ? "" : selectedAccount.username());
+
+        boolean isRootAdmin = "admin".equalsIgnoreCase(selectedAccount.username())
+                && selectedAccount.role() == AccountRole.ADMIN;
+        editAccountUsernameField.setDisable(isRootAdmin);
+
         resetPasswordFields(editAccountPasswordField, editAccountVisiblePasswordField,
                 editAccountConfirmPasswordField, editAccountVisibleConfirmPasswordField);
-        editAccountRoleCombo.setValue(selectedAccount.role());
+
+        if (self) {
+            editAccountRoleCombo.getItems().setAll(selectedAccount.role());
+            editAccountRoleCombo.setValue(selectedAccount.role());
+            editAccountRoleCombo.setDisable(true);
+        } else {
+            List<AccountRole> allowableRoles = getAssignableRoles(currentRole);
+            editAccountRoleCombo.getItems().setAll(allowableRoles);
+            editAccountRoleCombo.setValue(selectedAccount.role());
+            editAccountRoleCombo.setDisable(false);
+        }
+
         editAccountCreatedLabel.setText(selectedAccount.createdDate() == null ? "—"
                 : selectedAccount.createdDate().format(EDIT_ACCOUNT_DATE_FMT));
         editAccountLastLoginLabel.setText(formatAccountLastLogin(selectedAccount.lastLogin()));
@@ -448,10 +515,22 @@ public class AccountController {
     }
 
     private void deleteAccount(AccountRow selectedAccount) {
+        if (isSelf(selectedAccount)) {
+            AlertUtil.showError("Action Denied", "You cannot archive your own active account.");
+            return;
+        }
         if (selectedAccount.role() == AccountRole.ADMIN || "admin".equalsIgnoreCase(selectedAccount.username())) {
             AlertUtil.showError("Action Denied", "The primary administrator account cannot be archived.");
             return;
         }
+
+        AccountRole currentRole = getCurrentUserRole();
+        if (!canManageRole(currentRole, selectedAccount.role())) {
+            AlertUtil.showError("Action Denied", "You do not have permission to archive a "
+                    + selectedAccount.role().getDisplayName() + " account.");
+            return;
+        }
+
         if (AlertUtil.showYesNoConfirmation("Archive Account", "Archive account: " + selectedAccount.username() + "?",
                 "This user will be moved to the archive and can no longer log in.")) {
 
@@ -469,12 +548,7 @@ public class AccountController {
     }
 
     private void setupAddAccountPage() {
-        List<AccountRole> allowableRoles = new ArrayList<>();
-        for (AccountRole r : AccountRole.values())
-            if (r != AccountRole.ADMIN)
-                allowableRoles.add(r);
-
-        addAccountRoleCombo.getItems().setAll(allowableRoles);
+        addAccountRoleCombo.getItems().setAll(getAssignableRoles(getCurrentUserRole()));
         addAccountRoleCombo.setConverter(new StringConverter<>() {
             @Override
             public String toString(AccountRole r) {
@@ -508,11 +582,25 @@ public class AccountController {
 
     @FXML
     private void onAddAccount() {
+        AccountRole currentRole = getCurrentUserRole();
+        List<AccountRole> allowableRoles = getAssignableRoles(currentRole);
+        if (allowableRoles.isEmpty()) {
+            AlertUtil.showError("Action Denied", "You do not have permission to create accounts.");
+            return;
+        }
+
         addAccountNameField.clear();
         addAccountUsernameField.clear();
         resetPasswordFields(addAccountPasswordField, addAccountVisiblePasswordField,
                 addAccountConfirmPasswordField, addAccountVisibleConfirmPasswordField);
-        addAccountRoleCombo.setValue(null);
+
+        addAccountRoleCombo.getItems().setAll(allowableRoles);
+        if (allowableRoles.size() == 1) {
+            addAccountRoleCombo.setValue(allowableRoles.get(0));
+        } else {
+            addAccountRoleCombo.setValue(null);
+        }
+
         setAddAccountError(null);
         showAddAccountForm();
         addAccountNameField.requestFocus();
@@ -550,6 +638,13 @@ public class AccountController {
         String password = readField(addAccountPasswordField, addAccountVisiblePasswordField);
         String confirm = readField(addAccountConfirmPasswordField, addAccountVisibleConfirmPasswordField);
         AccountRole role = addAccountRoleCombo.getValue();
+
+        AccountRole currentRole = getCurrentUserRole();
+        if (!getAssignableRoles(currentRole).contains(role)) {
+            AlertUtil.showError("Action Denied", "You do not have permission to create a "
+                    + (role != null ? role.getDisplayName() : "selected") + " account.");
+            return;
+        }
 
         if (name.isEmpty() || username.isEmpty() || password.isEmpty() || confirm.isEmpty() || role == null) {
             setAddAccountError("Please fill in all required fields.");
@@ -616,12 +711,7 @@ public class AccountController {
     }
 
     private void setupEditAccountPage() {
-        List<AccountRole> allowableRoles = new ArrayList<>();
-        for (AccountRole r : AccountRole.values())
-            if (r != AccountRole.ADMIN)
-                allowableRoles.add(r);
-
-        editAccountRoleCombo.getItems().setAll(allowableRoles);
+        editAccountRoleCombo.getItems().setAll(getAssignableRoles(getCurrentUserRole()));
         editAccountRoleCombo.setConverter(new StringConverter<>() {
             @Override
             public String toString(AccountRole r) {
@@ -701,6 +791,25 @@ public class AccountController {
         String confirm = readField(editAccountConfirmPasswordField, editAccountVisibleConfirmPasswordField);
         AccountRole role = editAccountRoleCombo.getValue();
 
+        AccountRole currentRole = getCurrentUserRole();
+        boolean self = isSelf(editingAccount);
+
+        if (!self && !canManageRole(currentRole, editingAccount.role())) {
+            AlertUtil.showError("Action Denied", "You do not have permission to edit a "
+                    + editingAccount.role().getDisplayName() + " account.");
+            return;
+        }
+        if (self) {
+            if (role != editingAccount.role()) {
+                AlertUtil.showError("Action Denied", "You cannot change your own account role.");
+                return;
+            }
+        } else if (!getAssignableRoles(currentRole).contains(role)) {
+            AlertUtil.showError("Action Denied", "You do not have permission to assign the role of "
+                    + (role != null ? role.getDisplayName() : "selected") + ".");
+            return;
+        }
+
         if (name.isEmpty() || username.isEmpty() || role == null) {
             setEditAccountError("Please fill in all required fields.");
             return;
@@ -750,6 +859,16 @@ public class AccountController {
         String finalPassword = newPassword.isEmpty() ? null : newPassword;
         if (userDAO.updateAccount((int) editingAccount.id(), name, username, finalPassword, role,
                 editingAccount.status())) {
+            if (self) {
+                User current = SessionManager.getCurrentUser();
+                if (current != null) {
+                    current.setFullName(name);
+                    current.setUsername(username);
+                    if (finalPassword != null) {
+                        current.setPassword(PasswordHasher.hash(finalPassword));
+                    }
+                }
+            }
             editingAccount = null;
             AlertUtil.showInfo("Account Updated", "The account details were successfully saved.");
             loadAccountManagementData();
@@ -872,6 +991,12 @@ public class AccountController {
             @Override
             protected void render(AccountRow r) {
                 current = r;
+                AccountRole currentRole = getCurrentUserRole();
+                boolean self = isSelf(r);
+                boolean canEdit = self || (r != null && canManageRole(currentRole, r.role()));
+                boolean canDelete = !self && (r != null && canManageRole(currentRole, r.role()));
+                editBtn.setDisable(!canEdit);
+                deleteBtn.setDisable(!canDelete);
                 setGraphic(box);
             }
         };
@@ -887,7 +1012,15 @@ public class AccountController {
             {
                 box.setAlignment(Pos.CENTER);
                 restoreBtn.setOnAction(e -> {
-                    if (current != null && AlertUtil.showYesNoConfirmation("Restore", "Restore account",
+                    if (current == null) return;
+                    AccountRole currentRole = getCurrentUserRole();
+                    if (!canManageRole(currentRole, current.role())) {
+                        AlertUtil.showError("Action Denied", "You do not have permission to restore a "
+                                + current.role().getDisplayName() + " account.");
+                        return;
+                    }
+
+                    if (AlertUtil.showYesNoConfirmation("Restore", "Restore account",
                             "Do you want to restore this account?")) {
 
                         Window window = archiveTable.getScene().getWindow();
@@ -899,7 +1032,15 @@ public class AccountController {
                     }
                 });
                 deleteBtn.setOnAction(e -> {
-                    if (current != null && AlertUtil.showYesNoConfirmation("Permanent Delete",
+                    if (current == null) return;
+                    AccountRole currentRole = getCurrentUserRole();
+                    if (!canManageRole(currentRole, current.role())) {
+                        AlertUtil.showError("Action Denied", "You do not have permission to permanently delete a "
+                                + current.role().getDisplayName() + " account.");
+                        return;
+                    }
+
+                    if (AlertUtil.showYesNoConfirmation("Permanent Delete",
                             "Permanently delete this account?", "This cannot be undone!")) {
 
                         Window window = archiveTable.getScene().getWindow();
@@ -915,6 +1056,10 @@ public class AccountController {
             @Override
             protected void render(AccountRow r) {
                 current = r;
+                AccountRole currentRole = getCurrentUserRole();
+                boolean allowed = r != null && canManageRole(currentRole, r.role());
+                restoreBtn.setDisable(!allowed);
+                deleteBtn.setDisable(!allowed);
                 setGraphic(box);
             }
         };

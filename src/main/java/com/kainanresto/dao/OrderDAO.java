@@ -53,7 +53,9 @@ public class OrderDAO {
         String deduct = "UPDATE dishes SET quantity = quantity - ? WHERE id = ? AND quantity >= ?";
 
         ReceiptTotals t = r.totals();
-        BigDecimal discountAmount = t.subtotal().add(t.serviceCharge()).add(t.vat()).subtract(t.total());
+        BigDecimal discountAmount = (r.discountName() == null || r.discountName().isBlank() || "None".equalsIgnoreCase(r.discountName()))
+                ? BigDecimal.ZERO
+                : t.subtotal().add(t.serviceCharge()).subtract(t.total());
 
         try (Connection conn = DatabaseConfig.getConnection()) {
             conn.setAutoCommit(false);

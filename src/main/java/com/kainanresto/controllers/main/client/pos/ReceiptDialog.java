@@ -89,17 +89,29 @@ public final class ReceiptDialog {
         scroll.setMaxHeight(cap);
 
         // SUMMARY
-        BigDecimal discount = t.subtotal().add(t.serviceCharge()).add(t.vat()).subtract(t.total());
+        boolean hasDiscount = r.discountName() != null && !r.discountName().isBlank() && !"None".equalsIgnoreCase(r.discountName());
+        BigDecimal discount = hasDiscount ? t.subtotal().add(t.serviceCharge()).subtract(t.total()) : BigDecimal.ZERO;
 
         VBox summary = new VBox(8);
         summary.getChildren().add(sum("Subtotal", ClientUIHelper.formatPeso(t.subtotal())));
-        if (discount.signum() > 0) {
-            String label = r.discountName() == null ? "Discount" : "Discount \u2013 " + r.discountName();
+        if (hasDiscount && discount.signum() > 0) {
+            String label = "Discount \u2013 " + r.discountName();
             summary.getChildren().add(sum(label, "-" + ClientUIHelper.formatPeso(discount)));
         }
+
+        boolean isSeniorOrPwd = hasDiscount && (r.discountName().toLowerCase().contains("senior") || r.discountName().toLowerCase().contains("pwd"));
+        String vatLabel;
+        if (isSeniorOrPwd) {
+            vatLabel = (t.vat() == null || t.vat().signum() == 0)
+                    ? "VAT (0% \u2013 VAT Exempt)"
+                    : "VAT (12% on regular items)";
+        } else {
+            vatLabel = "VAT" + rateSuffix(t.vatRate());
+        }
+
         summary.getChildren().addAll(
                 sum("Service charge" + rateSuffix(t.serviceChargeRate()), ClientUIHelper.formatPeso(t.serviceCharge())),
-                sum("VAT" + rateSuffix(t.vatRate()), ClientUIHelper.formatPeso(t.vat())));
+                sum(vatLabel, ClientUIHelper.formatPeso(t.vat())));
 
         Label totalLabel = new Label("TOTAL");
         totalLabel.getStyleClass().add("rcpt-total-label");

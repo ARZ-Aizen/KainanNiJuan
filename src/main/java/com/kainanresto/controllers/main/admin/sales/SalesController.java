@@ -12,7 +12,6 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -33,10 +32,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 
 public class SalesController {
@@ -48,9 +44,9 @@ public class SalesController {
     @FXML private Label ordersVoidsValueLabel, ordersVoidsNoteLabel;
     @FXML private Label ordersAvgSpendValueLabel, ordersAvgSpendNoteLabel;
 
-    @FXML private HBox ordersSearchBox, orderDatePill, orderStatusPill, orderPaymentPill;
+    @FXML private HBox ordersSearchBox, orderDatePill, orderStatusPill, orderPaymentPill, orderSortPill;
     @FXML private TextField ordersSearchField;
-    @FXML private Label orderDateValueLabel, orderStatusValueLabel, orderPaymentValueLabel;
+    @FXML private Label orderDateValueLabel, orderStatusValueLabel, orderPaymentValueLabel, orderSortValueLabel;
 
     @FXML private SVGPath ordersSearchIcon, ordersRevenueIcon, ordersTotalIcon, ordersVoidsIcon, ordersAvgSpendIcon;
 
@@ -59,14 +55,24 @@ public class SalesController {
     @FXML private TableColumn<Transaction, String> orderIdColumn, orderTypeColumn, orderCreatedColumn, orderTotalColumn, orderStatusColumn, orderPaymentColumn;
     @FXML private TableColumn<Transaction, Transaction> orderStaffColumn, orderActionsColumn;
 
+    @FXML private HBox paginationBar;
+    @FXML private Label paginationInfoLabel;
+    @FXML private Button prevPageBtn, nextPageBtn;
+    @FXML private HBox pageNumbersBox;
+
     private static final PseudoClass FIELD_FOCUSED = PseudoClass.getPseudoClass("field-focused");
     private static final DateTimeFormatter ORDER_TIME_FORMAT = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
     private static final DateTimeFormatter ORDER_DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy, h:mm a", Locale.ENGLISH);
 
     private final OrderDAO orderDAO = new OrderDAO();
     private final ObservableList<Transaction> orderItems = FXCollections.observableArrayList();
-    private FilteredList<Transaction> filteredOrders;
-    private FilterPill orderDateFilter, orderStatusFilter, orderPaymentFilter;
+    private FilterPill orderDateFilter, orderStatusFilter, orderPaymentFilter, orderSortFilter;
+
+    private static final int PAGE_SIZE = 10;
+    private int currentPage = 1;
+    private int totalPages = 1;
+    private List<Transaction> filteredAndSortedList = new ArrayList<>();
+    private final ObservableList<Transaction> displayedPageItems = FXCollections.observableArrayList();
 
     private ContextMenu activeActionsMenu;
     private boolean refreshPending;
@@ -146,18 +152,21 @@ public class SalesController {
 
     private void setupOrdersPage() {
         orderDateFilter    = new FilterPill(orderDatePill, orderDateValueLabel, this::onOrderDateChanged);
-        orderStatusFilter  = new FilterPill(orderStatusPill, orderStatusValueLabel, this::applyOrderFilters);
-        orderPaymentFilter = new FilterPill(orderPaymentPill, orderPaymentValueLabel, this::applyOrderFilters);
+        orderStatusFilter  = new FilterPill(orderStatusPill, orderStatusValueLabel, this::onFilterChanged);
+        orderPaymentFilter = new FilterPill(orderPaymentPill, orderPaymentValueLabel, this::onFilterChanged);
+        orderSortFilter    = new FilterPill(orderSortPill, orderSortValueLabel, this::onFilterChanged);
+
         orderDateFilter.setOptions(List.of("Today", "Yesterday", "Last 7 Days", "This Month", "All Time"));
         orderStatusFilter.setOptions(List.of("All States", "Preparing", "Completed", "Cancelled"));
         orderPaymentFilter.setOptions(List.of("All", "Paid", "Refunded"));
+        orderSortFilter.setOptions(List.of("Newest First", "Oldest First"));
 
         setupOrdersTable();
 
         ordersSearchField.focusedProperty().addListener((obs, was, is) -> ordersSearchBox.pseudoClassStateChanged(FIELD_FOCUSED, is));
-        ordersSearchField.textProperty().addListener((obs, oldText, newText) -> applyOrderFilters());
+        ordersSearchField.textProperty().addListener((obs, oldText, newText) -> onFilterChanged());
 
-        applyOrderFilters();
+        applyOrderFilters(true);
     }
 
     private void setupOrdersTable() {
@@ -176,21 +185,172 @@ public class SalesController {
         orderActionsColumn.setCellFactory(col -> new ActionsCell());
 
         ordersTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        ordersTable.setItems(displayedPageItems);
 
-        filteredOrders = new FilteredList<>(orderItems, o -> true);
-        ordersTable.setItems(filteredOrders);
+        ordersTable.skinProperty().addListener((obs, o, n) -> disableTableScrollbars());
     }
 
-    private void applyOrderFilters() {
-        if (filteredOrders == null) return;
+    private void disableTableScrollbars() {
+        ScrollBar vBar = (ScrollBar) ordersTable.lookup(".scroll-bar:vertical");
+        if (vBar != null) {
+            vBar.setDisable(true);
+            vBar.setVisible(false);
+            vBar.setManaged(false);
+            vBar.setPrefWidth(0);
+            vBar.setMaxWidth(0);
+        }
+        ScrollBar hBar = (ScrollBar) ordersTable.lookup(".scroll-bar:horizontal");
+        if (hBar != null) {
+            hBar.setDisable(true);
+            hBar.setVisible(false);
+            hBar.setManaged(false);
+            hBar.setPrefHeight(0);
+            hBar.setMaxHeight(0);
+        }
+    }
+
+    private void onFilterChanged() {
+        currentPage = 1;
+        applyOrderFilters(true);
+    }
+
+    private void applyOrderFilters(boolean resetPage) {
         String query = ordersSearchField.getText() == null ? "" : ordersSearchField.getText().trim().toLowerCase(Locale.ENGLISH);
 
-        filteredOrders.setPredicate(order ->
-                matchesOrderText(order, query)
-                        && orderStatusFilter.accepts(order.status())
-                        && orderPaymentFilter.accepts(order.paymentStatus()));
+        List<Transaction> filtered = new ArrayList<>();
+        for (Transaction order : orderItems) {
+            if (matchesOrderText(order, query)
+                    && (orderStatusFilter == null || orderStatusFilter.accepts(order.status()))
+                    && (orderPaymentFilter == null || orderPaymentFilter.accepts(order.paymentStatus()))) {
+                filtered.add(order);
+            }
+        }
+
+        boolean oldestFirst = orderSortFilter != null && "Oldest First".equalsIgnoreCase(orderSortFilter.selected);
+        filtered.sort((a, b) -> {
+            LocalDateTime timeA = a.lastActivityAt() != null ? a.lastActivityAt() : (a.createdAt() != null ? a.createdAt() : LocalDateTime.MIN);
+            LocalDateTime timeB = b.lastActivityAt() != null ? b.lastActivityAt() : (b.createdAt() != null ? b.createdAt() : LocalDateTime.MIN);
+            int cmp = timeA.compareTo(timeB);
+            if (cmp != 0) {
+                return oldestFirst ? cmp : -cmp;
+            }
+            String idA = a.orderId() == null ? "" : a.orderId();
+            String idB = b.orderId() == null ? "" : b.orderId();
+            return oldestFirst ? idA.compareTo(idB) : idB.compareTo(idA);
+        });
+        filteredAndSortedList = filtered;
 
         ordersTablePlaceholder.setText(orderItems.isEmpty() ? "No orders found." : "No orders match your filters.");
+
+        if (resetPage) {
+            currentPage = 1;
+        }
+        updatePageDisplay();
+    }
+
+    private void updatePageDisplay() {
+        int totalItems = filteredAndSortedList.size();
+        this.totalPages = Math.max(1, (int) Math.ceil((double) totalItems / PAGE_SIZE));
+
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        int fromIndex = totalItems == 0 ? 0 : (currentPage - 1) * PAGE_SIZE;
+        int toIndex = Math.min(fromIndex + PAGE_SIZE, totalItems);
+
+        List<Transaction> slice = totalItems == 0 ? List.of() : filteredAndSortedList.subList(fromIndex, toIndex);
+        displayedPageItems.setAll(slice);
+
+        if (totalItems == 0) {
+            paginationInfoLabel.setText("Showing 0 of 0 orders");
+        } else {
+            paginationInfoLabel.setText(String.format(Locale.ENGLISH, "Showing %,d–%,d of %,d orders", (fromIndex + 1), toIndex, totalItems));
+        }
+
+        prevPageBtn.setDisable(currentPage <= 1);
+        nextPageBtn.setDisable(currentPage >= totalPages);
+
+        renderPaginationControls(currentPage, totalPages);
+        Platform.runLater(this::disableTableScrollbars);
+    }
+
+    private void renderPaginationControls(int curPage, int numPages) {
+        pageNumbersBox.getChildren().clear();
+        if (numPages <= 1) {
+            Button btn = createPageButton(1, true);
+            pageNumbersBox.getChildren().add(btn);
+            return;
+        }
+
+        if (numPages <= 7) {
+            for (int p = 1; p <= numPages; p++) {
+                pageNumbersBox.getChildren().add(createPageButton(p, p == curPage));
+            }
+            return;
+        }
+
+        // When numPages > 7: balanced 7-element window with '...' ellipsis
+        if (curPage <= 4) {
+            for (int p = 1; p <= 5; p++) {
+                pageNumbersBox.getChildren().add(createPageButton(p, p == curPage));
+            }
+            pageNumbersBox.getChildren().add(createEllipsisButton(Math.min(numPages, curPage + 5)));
+            pageNumbersBox.getChildren().add(createPageButton(numPages, false));
+        } else if (curPage >= numPages - 3) {
+            pageNumbersBox.getChildren().add(createPageButton(1, false));
+            pageNumbersBox.getChildren().add(createEllipsisButton(Math.max(1, curPage - 5)));
+            for (int p = numPages - 4; p <= numPages; p++) {
+                pageNumbersBox.getChildren().add(createPageButton(p, p == curPage));
+            }
+        } else {
+            pageNumbersBox.getChildren().add(createPageButton(1, false));
+            pageNumbersBox.getChildren().add(createEllipsisButton(Math.max(1, curPage - 5)));
+            pageNumbersBox.getChildren().add(createPageButton(curPage - 1, false));
+            pageNumbersBox.getChildren().add(createPageButton(curPage, true));
+            pageNumbersBox.getChildren().add(createPageButton(curPage + 1, false));
+            pageNumbersBox.getChildren().add(createEllipsisButton(Math.min(numPages, curPage + 5)));
+            pageNumbersBox.getChildren().add(createPageButton(numPages, false));
+        }
+    }
+
+    private Button createEllipsisButton(int jumpTarget) {
+        Button btn = new Button("...");
+        btn.getStyleClass().addAll("pagination-page-btn", "pagination-ellipsis-btn");
+        btn.setMnemonicParsing(false);
+        btn.setTooltip(new Tooltip("Jump to page " + jumpTarget));
+        btn.setOnAction(e -> goToPage(jumpTarget));
+        return btn;
+    }
+
+    private Button createPageButton(int page, boolean active) {
+        Button btn = new Button(String.valueOf(page));
+        btn.getStyleClass().add("pagination-page-btn");
+        btn.setMnemonicParsing(false);
+        if (active) {
+            btn.getStyleClass().add("pagination-page-active");
+        } else {
+            btn.setOnAction(e -> goToPage(page));
+        }
+        return btn;
+    }
+
+    private void goToPage(int page) {
+        this.currentPage = page;
+        updatePageDisplay();
+    }
+
+    @FXML
+    private void onPrevPage() {
+        if (currentPage > 1) {
+            goToPage(currentPage - 1);
+        }
+    }
+
+    @FXML
+    private void onNextPage() {
+        if (currentPage < totalPages) {
+            goToPage(currentPage + 1);
+        }
     }
 
     private static boolean matchesOrderText(Transaction order, String query) {
@@ -200,7 +360,10 @@ public class SalesController {
                 || (order.staffName() != null && order.staffName().toLowerCase(Locale.ENGLISH).contains(query));
     }
 
-    private void onOrderDateChanged() { loadSalesData(); }
+    private void onOrderDateChanged() {
+        currentPage = 1;
+        loadSalesData();
+    }
 
     @FXML
     private void onClearOrderFilters() {
@@ -209,7 +372,9 @@ public class SalesController {
         orderDateFilter.reset();
         orderStatusFilter.reset();
         orderPaymentFilter.reset();
-        applyOrderFilters();
+        if (orderSortFilter != null) orderSortFilter.reset();
+        currentPage = 1;
+        applyOrderFilters(true);
         if (dateWasChanged) onOrderDateChanged();
     }
 
@@ -311,8 +476,8 @@ public class SalesController {
         List<Transaction> incoming = orders == null ? List.of() : orders;
         if (!orderItems.equals(incoming)) {
             orderItems.setAll(incoming);
+            applyOrderFilters(false);
         }
-        applyOrderFilters();
     }
 
     private static String formatPesoCompact(BigDecimal amount) {
