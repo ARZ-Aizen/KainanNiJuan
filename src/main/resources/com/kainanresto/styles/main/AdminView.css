@@ -984,6 +984,23 @@
     -fx-font-family: 'Inter'; -fx-font-size: 11px; -fx-font-weight: 600;
     -fx-text-fill: #8C6343;
 }
+.add-category-scroll,
+.add-category-scroll > .viewport {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+}
+.add-category-scroll > .corner {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+}
+.add-category-scroll-content {
+    -fx-background-color: transparent;
+    -fx-padding: 0 4 0 0;
+}
 .add-category-row {
     -fx-padding: 8 8 8 16;
     -fx-background-color: #FCF7F0;

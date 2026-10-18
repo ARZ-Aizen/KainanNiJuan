@@ -138,8 +138,14 @@
                             </VBox>
                             <Region styleClass="add-divider"/>
                             <HBox alignment="CENTER_LEFT"><Label text="Existing Categories" styleClass="add-label"/><Region HBox.hgrow="ALWAYS"/><Label fx:id="addCategoryCountLabel" text="0 categories" styleClass="add-count-badge"/></HBox>
-                            <VBox fx:id="addCategoryList" spacing="8"/>
-                            <Label fx:id="addCategoryEmptyLabel" text="No categories yet. Add your first one above." styleClass="add-empty"/>
+                            <ScrollPane fx:id="addCategoryScroll" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" styleClass="add-category-scroll" VBox.vgrow="ALWAYS" prefViewportHeight="360" maxHeight="390">
+                                <content>
+                                    <VBox spacing="8" styleClass="add-category-scroll-content">
+                                        <VBox fx:id="addCategoryList" spacing="8"/>
+                                        <Label fx:id="addCategoryEmptyLabel" text="No categories yet. Add your first one above." styleClass="add-empty"/>
+                                    </VBox>
+                                </content>
+                            </ScrollPane>
                         </VBox>
                     </HBox>
                 </VBox>

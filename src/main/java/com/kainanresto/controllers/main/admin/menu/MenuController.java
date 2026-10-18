@@ -56,6 +56,7 @@ public class MenuController {
     @FXML private Label addDishErrorLabel, addCategoryErrorLabel, addCategoryCountLabel, addCategoryEmptyLabel;
     @FXML private SVGPath addDishUploadIcon, addCategoryAddIcon;
     @FXML private VBox addCategoryList;
+    @FXML private ScrollPane addCategoryScroll;
 
     private static final PseudoClass FIELD_FOCUSED = PseudoClass.getPseudoClass("field-focused");
     private static final double DISH_IMAGE_SIZE = 144.66;
@@ -445,6 +446,9 @@ public class MenuController {
         addCategoryNameField.clear();
         setAddDishError(null);
         setAddCategoryError(null);
+        if (addCategoryScroll != null) {
+            addCategoryScroll.setVvalue(0.0);
+        }
     }
 
     private void setFormEditable(boolean editable) {
