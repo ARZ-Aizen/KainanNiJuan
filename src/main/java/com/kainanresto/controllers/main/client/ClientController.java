@@ -182,7 +182,6 @@ public class ClientController {
                     omViewController.refreshData(receipts);
                 }
                 if (posViewController != null) {
-                    // Categories first, so the dish grid is filtered against the up-to-date list
                     posViewController.setCategories(categories);
                     posViewController.refreshData(dishes);
                 }
@@ -192,19 +191,10 @@ public class ClientController {
         t.start();
     }
 
-    /**
-     * Builds the list of category choices for the POS screen.
-     *
-     * Option A (preferred, also shows categories with no dishes): add a category query
-     * to ProductDAO and return it here, e.g. `return productDAO.getAllCategories();`
-     *
-     * Option B (active below): derive categories from the dishes, so only categories
-     * that currently have at least one dish appear.
-     */
     private List<String> loadCategories(List<Dishes> dishes) {
         if (dishes == null) return List.of();
         return dishes.stream()
-                .map(Dishes::category)          // adjust to your accessor (getCategory / categoryName ...)
+                .map(Dishes::category)
                 .filter(c -> c != null && !c.isBlank())
                 .distinct()
                 .sorted()
@@ -516,7 +506,7 @@ public class ClientController {
         Thread loadDataThread = new Thread(() -> {
             try {
                 List<Dishes> dishes = productDAO.getAllDishes();
-                List<String> categories = loadCategories(dishes);   // was: null
+                List<String> categories = loadCategories(dishes);
                 List<String> discounts = List.of("None", "Senior Citizen (20%)", "PWD (20%)");
 
                 Platform.runLater(() -> {

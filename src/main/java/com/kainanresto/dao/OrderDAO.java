@@ -19,8 +19,6 @@ import java.security.SecureRandom;
 
 public class OrderDAO {
 
-    /* ====================== SAVE (order + items + stock, one transaction) ====================== */
-
     private static final String ORDER_CODE_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -121,8 +119,6 @@ public class OrderDAO {
         }
     }
 
-    /* ====================== STATUS CHANGE (cancel restores stock) ====================== */
-
     public boolean updateStatus(String orderNumber, OrderStatus newStatus) {
         String update = "UPDATE orders SET status = ?, payment_status = ?, updated_at = NOW() WHERE order_number = ? AND status = 'PREPARING'";
         String items = "SELECT oi.dish_id, oi.quantity FROM order_items oi JOIN orders o ON o.id = oi.order_id WHERE o.order_number = ?";
@@ -162,8 +158,6 @@ public class OrderDAO {
             return false;
         }
     }
-
-    /* ====================== CLIENT: load orders into Order Management ====================== */
 
     public List<OrderReceipt> loadReceipts(LocalDateTime since) {
         Map<Long, List<ReceiptLine>> linesByOrder = new HashMap<>();
@@ -291,12 +285,6 @@ public class OrderDAO {
         }
     }
 
-    /* ====================== ADMIN: Sales & Orders table ====================== */
-
-    /**
-     * Returns orders created in the half-open range [from, to).
-     * For a month export: from = first day 00:00, to = first day of next month 00:00.
-     */
     public List<Transaction> getTransactions(LocalDateTime from, LocalDateTime to) {
         String sql = """
             SELECT order_number, order_type, cashier_name, cashier_role,

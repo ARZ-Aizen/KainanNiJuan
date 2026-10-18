@@ -40,7 +40,6 @@ public final class DatabaseConfig {
         config.setPassword(password);
         config.setDriverClassName("org.mariadb.jdbc.Driver");
 
-        //CONNECTION POOL SIZING AND TIMEOUTS
         config.setMaximumPoolSize(10);
         config.setMinimumIdle(2);
         config.setIdleTimeout(30000);
@@ -84,5 +83,5 @@ public final class DatabaseConfig {
         } finally {
             closePool();
         }
-    } //*/
+    }
 }

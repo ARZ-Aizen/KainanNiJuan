@@ -24,7 +24,7 @@ import java.util.Locale;
 
 public final class ReceiptPdfGenerator {
 
-    private static final float PAGE_W = 226.77f;            // 80 mm
+    private static final float PAGE_W = 226.77f;
     private static final float MARGIN = 14f;
     private static final float CONTENT_W = PAGE_W - (MARGIN * 2f);
     private static final float QTY_W = 28f, AMT_W = 64f, COL_GAP = 6f;
@@ -67,8 +67,6 @@ public final class ReceiptPdfGenerator {
         }
         return out;
     }
-
-    /* ============================== LAYOUT ============================== */
 
     private static List<Element> build(OrderReceipt r, PaymentResult pay) throws IOException {
         ReceiptTotals t = r.totals();
@@ -189,8 +187,6 @@ public final class ReceiptPdfGenerator {
             cs.stroke();
         });
     }
-
-    /* ============================== HELPERS ============================== */
 
     private static void text(PDPageContentStream cs, PDFont font, float size, float x, float y, String s)
             throws IOException {

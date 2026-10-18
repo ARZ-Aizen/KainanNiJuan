@@ -1,5 +1,0 @@
-db.host="IP ADDRESS OR localhost"
-db.port=3306
-db.name="kainan_pos OR kainan_db"
-db.user="root OR name of user"
-db.password="none OR password of db"

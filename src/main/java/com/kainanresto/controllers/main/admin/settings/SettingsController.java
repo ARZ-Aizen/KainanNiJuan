@@ -31,18 +31,15 @@ import java.util.Properties;
 
 public class SettingsController {
 
-    /* ============================== VIEWS ============================== */
     @FXML private HBox settingsRoot;
     @FXML private ScrollPane settingsScroll;
     @FXML private VBox settingsContent;
     @FXML private VBox settingsTimeCard, settingsBackupCard, settingsSecurityCard;
 
-    /* ============================== TAB BUTTONS & ICONS ============================== */
     @FXML private Button settingsTabTimeBtn, settingsTabBackupBtn, settingsTabSecurityBtn;
     @FXML private SVGPath settingsGeneralIcon, settingsBackupTabIcon, settingsSecurityIcon;
     @FXML private SVGPath settingsBackupBtnIcon;
 
-    /* ============================== FORM CONTROLS ============================== */
     @FXML private TextField settingsDateField, settingsTimeField;
     @FXML private ToggleGroup settingsSyncGroup;
     @FXML private ToggleButton settingsSyncManualBtn, settingsSyncAutoBtn;
@@ -103,8 +100,6 @@ public class SettingsController {
         }
     }
 
-    /* ============================== LOGIC & VALIDATION ============================== */
-
     private void loadSettingsData() {
         try (InputStream input = new FileInputStream(CONFIG_FILE)) {
             appProperties.load(input);
@@ -129,8 +124,6 @@ public class SettingsController {
         settingsErrorLabel.setText(has ? message : "");
         settingsErrorLabel.setVisible(has); settingsErrorLabel.setManaged(has);
     }
-
-    /* ============================== ACTIONS ============================== */
 
     @FXML
     private void onSettingsSave() {
@@ -170,23 +163,19 @@ public class SettingsController {
         loadSettingsData();
     }
 
-    /* ============================== BACKUP & EXPORT (PER MONTH) ============================== */
-
     @FXML
     private void onSettingsBackupDatabase() {
-        // In-app modal month filter (MonthFilterModal.fxml + MonthFilterController)
         Optional<YearMonth> picked = MonthFilterController.show(
                 settingsRoot.getScene().getWindow(), "Export Sales History");
-        if (picked.isEmpty()) return;               // user cancelled
+        if (picked.isEmpty()) return;
         YearMonth ym = picked.get();
 
-        // Half-open range: [first day 00:00, first day of next month 00:00)
         LocalDateTime start = ym.atDay(1).atStartOfDay();
         LocalDateTime endExclusive = ym.plusMonths(1).atDay(1).atStartOfDay();
 
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Export Sales History");
-        chooser.setInitialFileName("Sales_" + ym + ".csv");   // e.g. Sales_2026-10.csv
+        chooser.setInitialFileName("Sales_" + ym + ".csv");
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel/CSV File", "*.csv"));
 
         File file = chooser.showSaveDialog(settingsRoot.getScene().getWindow());
@@ -201,12 +190,12 @@ public class SettingsController {
                             "There are no transactions for "
                                     + ym.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH)
                                     + " " + ym.getYear() + "."));
-                    return;   // don't create an empty file
+                    return;
                 }
 
                 DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM d yyyy h:mm a", Locale.ENGLISH);
                 try (PrintWriter writer = new PrintWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
-                    writer.print('\uFEFF');   // UTF-8 BOM so Excel reads special characters correctly
+                    writer.print('\uFEFF');
                     writer.println("Order ID,Created At,Last Activity,Staff,Total Amount,Order Status,Payment Status");
                     for (Transaction tx : sales) {
                         writer.println(String.join(",",
@@ -231,13 +220,10 @@ public class SettingsController {
         t.start();
     }
 
-    /** Wraps a value in quotes and escapes embedded quotes so the CSV stays valid. */
     private static String csv(String s) {
         if (s == null) return "\"\"";
         return "\"" + s.replace("\"", "\"\"") + "\"";
     }
-
-    /* ============================== TAB NAVIGATION ============================== */
 
     @FXML private void onSettingsTabTime() { selectSettingsTab(settingsTabTimeBtn, settingsTimeCard); }
     @FXML private void onSettingsTabBackup() { selectSettingsTab(settingsTabBackupBtn, settingsBackupCard); }

@@ -60,7 +60,6 @@ public final class ReceiptDialog {
         hAmt.getStyleClass().add("rcpt-head");
         HBox head = new HBox(8, hItem, hQty, hAmt);
 
-        // ---------- items ----------
         VBox items = new VBox(10);
         for (ReceiptLine l : r.lines()) {
             Label name = new Label(ClientUIHelper.valueOrDash(l.name()));

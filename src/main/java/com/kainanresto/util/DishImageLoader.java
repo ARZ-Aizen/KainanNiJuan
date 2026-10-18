@@ -7,20 +7,23 @@ import javafx.scene.image.ImageView;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class DishImageLoader {
 
-    private static final double QUALITY = 2.0;   // decode at 2x display size (keeps HiDPI sharp)
+    private static final double QUALITY = 2.0;
     private static final int MAX_ENTRIES = 150;
 
-    private static final Map<String, Image> CACHE = new LinkedHashMap<>(64, 0.75f, true) {
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<String, Image> eldest) {
-            return size() > MAX_ENTRIES;
-        }
-    };
+    private static final Map<String, Image> CACHE = Collections.synchronizedMap(
+            new LinkedHashMap<>(64, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, Image> eldest) {
+                    return size() > MAX_ENTRIES;
+                }
+            }
+    );
 
     public static void fadeInWhenLoaded(ImageView view, Image image) {
         view.setImage(image);
@@ -89,7 +92,6 @@ public final class DishImageLoader {
         });
     }
 
-    /** Call after a dish image is uploaded or replaced so stale copies aren't shown. */
     public static void clearCache() {
         CACHE.clear();
     }

@@ -35,7 +35,6 @@ public final class NavigationUtil {
             return;
         }
 
-        // CRITICAL: Stop any active background polling immediately upon initiating scene switch
         RealTimePoller.stopPolling();
 
         // KUNG NAKABUKAS NA YUNG STAGE, FADE OUT ANG BUONG WINDOW HINDI LANG YUNG CONTENT
@@ -53,7 +52,6 @@ public final class NavigationUtil {
 
     private static void loadAndShowNewScene(Stage stage, String fxmlPath, String windowTitle) {
         try {
-            // Double-check polling is stopped when loading new scene context
             RealTimePoller.stopPolling();
 
             FXMLLoader loader = new FXMLLoader(NavigationUtil.class.getResource(fxmlPath));
@@ -74,7 +72,7 @@ public final class NavigationUtil {
 
             try {
                 Image icon = new Image(NavigationUtil.class.getResourceAsStream("/com/kainanresto/images/id/KainanNiJuanLogo.png"));
-                stage.getIcons().add(icon);
+                stage.getIcons().setAll(icon);
             } catch (Exception e) {
                 System.err.println("NavigationUtil: Could not load application icon - " + e.getMessage());
             }
@@ -128,7 +126,7 @@ public final class NavigationUtil {
 
         stage.setOnCloseRequest((WindowEvent closeEvent) -> {
             closeEvent.consume(); // PARA DI MAGCLOSE NG TULUYAN BIGLAAN
-            RealTimePoller.stopPolling(); // Ensure polling stops on X button close
+            RealTimePoller.stopPolling();
             SessionManager.clearSession();
             // PARA MAPABALIK SA LOGIN
             switchScene(closeEvent, "/com/kainanresto/views/id/LoginView.fxml", "Kainan Ni Juan POS - Login");

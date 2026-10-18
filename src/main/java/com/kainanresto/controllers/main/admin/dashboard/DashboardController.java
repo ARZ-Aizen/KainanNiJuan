@@ -67,13 +67,9 @@ public class DashboardController {
         startAutoRefresh(30);
     }
 
-    /* ============================== REAL-TIME SYNC ============================== */
-
     public void refreshData() {
         fetchLiveData();
     }
-
-    /* ============================== ASYNC DATA FETCHING ============================== */
 
     public void fetchLiveData() {
         Range currentRange = getRange();
@@ -111,8 +107,6 @@ public class DashboardController {
         }
     }
 
-    /* ============================== PUBLIC API ============================== */
-
     public void setOnRangeChanged(Consumer<Range> handler) { this.onRangeChanged = handler; }
 
     public Range getRange() { return range; }
@@ -141,8 +135,6 @@ public class DashboardController {
         setPlaceholder(bestSellingItemsContainer, 0, "No dashboard data loaded.");
     }
 
-    /* ============================== STAT CARDS ============================== */
-
     private void updateStatCards(DashboardData d) {
         todaysSalesValueLabel.setText(peso(d.todaysSales()));
         setDelta(d.salesDeltaPercent());
@@ -169,8 +161,6 @@ public class DashboardController {
         if (sign > 0) todaysSalesDeltaLabel.getStyleClass().add("delta-up");
         else if (sign < 0) todaysSalesDeltaLabel.getStyleClass().add("delta-down");
     }
-
-    /* ============================== CHART ============================== */
 
     private void updateChart(DashboardData d) {
         XYChart.Series<String, Number> series = new XYChart.Series<>();
@@ -199,8 +189,6 @@ public class DashboardController {
                 : peso(total.divide(BigDecimal.valueOf(orders), 2, RoundingMode.HALF_UP)));
     }
 
-    /* ============================== BEST SELLERS ============================== */
-
     private void updateBestSellers(List<BestSeller> items) {
         bestSellingItemsContainer.getChildren().clear();
         if (items == null || items.isEmpty()) {
@@ -228,8 +216,6 @@ public class DashboardController {
         }
     }
 
-    /* ============================== SALES OVERVIEW ============================== */
-
     private void updateSalesOverview(DashboardData d) {
         if (weeklySalesSummaryLabel != null) weeklySalesSummaryLabel.setText(peso(d.weeklySales()));
         if (monthlySalesSummaryLabel != null) monthlySalesSummaryLabel.setText(peso(d.monthlySales()));
@@ -246,8 +232,6 @@ public class DashboardController {
             container.getChildren().add(l);
         }
     }
-
-    /* ============================== RANGE ============================== */
 
     @FXML private void onRangeToday() { selectRange(Range.TODAY); }
     @FXML private void onRangeWeek()  { selectRange(Range.WEEK); }
@@ -297,8 +281,6 @@ public class DashboardController {
         }
     }
 
-    /* ============================== SETUP ============================== */
-
     private void setupIcons() {
         setIconAndScale(salesStatIcon, Icons.DOLLAR_SIGN, 22.0);
         setIconAndScale(transactionsStatIcon, Icons.NAV_SALES_ORDERS, 22.0);
@@ -325,8 +307,6 @@ public class DashboardController {
             weeklySalesChart.getData().clear();
         }
     }
-
-    /* ============================== HELPERS ============================== */
 
     private static String peso(BigDecimal value) {
         return value == null ? DASH : "\u20B1 " + String.format(Locale.ENGLISH, "%,.2f", value);

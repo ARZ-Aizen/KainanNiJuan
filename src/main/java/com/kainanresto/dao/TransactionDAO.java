@@ -14,8 +14,6 @@ import java.util.*;
 
 public class TransactionDAO {
 
-    /* ============================== STAT CARDS ============================== */
-
     public BigDecimal getTodaysSales() {
         String sql = "SELECT COALESCE(SUM(total), 0) FROM orders WHERE status <> 'CANCELLED' AND created_at >= CURDATE()";
         try (Connection conn = DatabaseConfig.getConnection();
@@ -88,8 +86,6 @@ public class TransactionDAO {
         return queryInt(sql);
     }
 
-    /* ============================== CHART ANALYTICS ============================== */
-
     public List<ChartPoint> getChartPoints(Range range) {
         List<ChartPoint> points = new ArrayList<>();
         String sql = switch (range) {
@@ -154,8 +150,6 @@ public class TransactionDAO {
         return queryInt(sql);
     }
 
-    /* ============================== LOWER SECTION ============================== */
-
     public List<BestSeller> getTopBestSellers(int limit) {
         String sql = """
             SELECT oi.dish_name, SUM(oi.quantity) AS total_sold
@@ -180,8 +174,6 @@ public class TransactionDAO {
         }
         return list;
     }
-
-    /* ============================== SALES SUMMARY METHODS ============================== */
 
     public BigDecimal getWeeklySales() {
         String sql = "SELECT COALESCE(SUM(total), 0) FROM orders WHERE status <> 'CANCELLED' AND created_at >= CURDATE() - INTERVAL 6 DAY";

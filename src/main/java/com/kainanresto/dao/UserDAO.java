@@ -199,7 +199,7 @@ public class UserDAO {
     }
 
     public boolean checkUserExists(String username) {
-        String sql = "SELECT 1 FROM users WHERE BINARY username = ? LIMIT 1";
+        String sql = "SELECT 1 FROM users WHERE BINARY username = ? AND is_deleted = 0 LIMIT 1";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, username);

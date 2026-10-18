@@ -44,7 +44,6 @@ public class ReceiptModalController {
             }
         }
 
-        // Totals
         ReceiptTotals t = receipt.totals();
         if (t != null) {
             subtotalLabel.setText(formatPeso(t.subtotal()));

@@ -15,7 +15,6 @@ public record Transaction(
         String status,
         String paymentStatus
 ) {
-    // Keeps existing 9-argument callers compiling
     public Transaction(String orderId, String orderType, String customerName,
                        String staffName, String staffRole, LocalDateTime lastActivityAt,
                        BigDecimal total, String status, String paymentStatus) {

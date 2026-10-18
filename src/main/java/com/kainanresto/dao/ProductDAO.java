@@ -49,8 +49,6 @@ public class ProductDAO {
 
     public enum UploadResult { SERVER, LOCAL_ONLY, FAILED }
 
-    // ======================= CATEGORIES =======================
-
     public List<String> getAllCategories() {
         List<String> categories = new ArrayList<>();
         String query = "SELECT name FROM categories ORDER BY name ASC";
@@ -163,8 +161,6 @@ public class ProductDAO {
         }
         return -1;
     }
-
-    // ======================= IMAGE HELPERS =======================
 
     private static String encodePath(String s) {
         return URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20");
@@ -318,8 +314,6 @@ public class ProductDAO {
         }
     }
 
-    // ======================= UPLOAD =======================
-
     public boolean uploadImage(File file, String categoryName) {
         return uploadImageResult(file, categoryName) != UploadResult.FAILED;
     }
@@ -378,8 +372,6 @@ public class ProductDAO {
             return false;
         }
     }
-
-    // ======================= DISHES =======================
 
     public List<Dishes> getAllDishes() {
         List<Dishes> dishesList = new ArrayList<>();
@@ -541,7 +533,6 @@ public class ProductDAO {
                 : safeFolder(categoryName);
         if (fileName.isBlank() || folder.isEmpty()) return;
 
-        // keep the file if any other dish still points to it
         String q = "SELECT COUNT(*) FROM dishes WHERE id <> ? AND (image_url = ? OR image_url = ?)";
         try (PreparedStatement st = conn.prepareStatement(q)) {
             st.setLong(1, excludeDishId);
@@ -552,7 +543,7 @@ public class ProductDAO {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            return;   // when in doubt, keep the image
+            return;
         }
 
         deleteImageOnServer(folder, fileName);

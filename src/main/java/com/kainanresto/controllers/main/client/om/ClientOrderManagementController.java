@@ -121,8 +121,6 @@ public class ClientOrderManagementController {
         applyOmFilter();
     }
 
-    /* ============================== REAL-TIME SYNC ============================== */
-
     public void refreshData(List<OrderReceipt> latestReceipts) {
         omReceipts.clear();
         List<OrderCard> cards = new ArrayList<>();
@@ -142,8 +140,6 @@ public class ClientOrderManagementController {
         updateOmReceiptPanel();
         applyOmFilter();
     }
-
-    /* ============================== PUBLIC API ============================== */
 
     public void setOrders(List<OrderCard> orders) {
         omOrders.setAll(orders == null ? List.<OrderCard>of() : orders);
@@ -171,7 +167,7 @@ public class ClientOrderManagementController {
 
         OrderCard card = toCard(receipt);
         omReceipts.put(receipt.orderNumber(), receipt);
-        omOrders.add(0, card);   // newest first
+        omOrders.add(0, card);
 
         updateOmChipCounts();
         updateOmReceiptPanel();
@@ -196,8 +192,6 @@ public class ClientOrderManagementController {
                 lines,
                 receipt.totals() == null ? null : receipt.totals().total());
     }
-
-    /* ============================== STATUS CHANGES ============================== */
 
     private void completeOrder(OrderCard order) {
         if (order == null || order.status() != OrderStatus.PREPARING) return;
@@ -246,8 +240,6 @@ public class ClientOrderManagementController {
         applyOmFilter();
     }
 
-    /* ============================== STATUS CHIPS ============================== */
-
     private ToggleButton createOmChip(String label, OrderStatus status) {
         ToggleButton chip = new ToggleButton(label);
         chip.setMnemonicParsing(false);
@@ -266,8 +258,6 @@ public class ClientOrderManagementController {
             chip.setText(chip.getProperties().get("label") + " (" + count + ")");
         }
     }
-
-    /* ============================== GRID ============================== */
 
     private void applyOmColumns(int columns) {
         omGrid.getColumnConstraints().clear();
@@ -449,8 +439,6 @@ public class ClientOrderManagementController {
         return null;
     }
 
-    /* ============================== RECEIPT PANEL ============================== */
-
     private void updateOmReceiptPanel() {
         OrderCard order = findOmOrder(omSelectedOrderNo);
         if (order == null) {
@@ -529,8 +517,6 @@ public class ClientOrderManagementController {
     @FXML private void onOmReceiptCancel() {
         cancelOrder(findOmOrder(omSelectedOrderNo));
     }
-
-    /* ============================== HELPERS ============================== */
 
     private static String badgeClass(OrderStatus status) {
         if (status == null) return "om-badge-neutral";

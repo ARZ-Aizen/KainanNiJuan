@@ -108,8 +108,6 @@ public class ClientPosController {
         setDiscountSummary(false, 1, null);
     }
 
-    /* ============================== REAL-TIME SYNC ============================== */
-
     public void refreshData(List<Dishes> latestDishes) {
         if (loading) return;
         dishItems.setAll(latestDishes == null ? List.of() : latestDishes);
@@ -348,7 +346,6 @@ public class ClientPosController {
         boolean discounted = discQty > 0 && discountRate.signum() > 0;
         boolean wholeLine = discQty == line.quantity();
 
-        // FIXED: Extract 12% VAT before applying the discount rate (Philippine Law)
         BigDecimal unitOff = BigDecimal.ZERO;
         if (discounted) {
             BigDecimal vatExemptPrice = line.unitPrice().divide(new BigDecimal("1.12"), 4, RoundingMode.HALF_UP);
@@ -368,7 +365,6 @@ public class ClientPosController {
         HBox.setHgrow(info, Priority.ALWAYS);
 
         if (discounted && wholeLine) {
-            // FIXED: Reusing the legally computed unitOff from above
             Text oldUnit = new Text(ClientUIHelper.formatPeso(line.unitPrice()));
             oldUnit.setStrikethrough(true);
             oldUnit.getStyleClass().add("receipt-old-text");

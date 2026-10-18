@@ -68,7 +68,6 @@ public class SalesController {
     private FilteredList<Transaction> filteredOrders;
     private FilterPill orderDateFilter, orderStatusFilter, orderPaymentFilter;
 
-    // Row-actions menu state: refreshes are deferred while the menu is open
     private ContextMenu activeActionsMenu;
     private boolean refreshPending;
 
@@ -103,8 +102,6 @@ public class SalesController {
         }
     }
 
-    /* ============================== REAL-TIME SYNC ============================== */
-
     public void refreshData() {
         loadSalesData();
     }
@@ -113,11 +110,7 @@ public class SalesController {
         loadSalesData();
     }
 
-    /* ============================== DATA LOADING ============================== */
-
     private void loadSalesData() {
-        // Don't rebuild the table while the row-actions menu is open,
-        // otherwise the anchor button is detached and the menu auto-hides.
         if (activeActionsMenu != null && activeActionsMenu.isShowing()) {
             refreshPending = true;
             return;
@@ -150,8 +143,6 @@ public class SalesController {
         }
         return new LocalDateTime[]{start.atStartOfDay(), end.atStartOfDay()};
     }
-
-    /* ============================== SETUP & FILTERS ============================== */
 
     private void setupOrdersPage() {
         orderDateFilter    = new FilterPill(orderDatePill, orderDateValueLabel, this::onOrderDateChanged);
@@ -222,8 +213,6 @@ public class SalesController {
         if (dateWasChanged) onOrderDateChanged();
     }
 
-    /* ============================== ROW ACTIONS ============================== */
-
     private void onOrderActions(Transaction order, Node anchor) {
         if (activeActionsMenu != null) activeActionsMenu.hide();
 
@@ -237,7 +226,7 @@ public class SalesController {
 
         menu.setOnHidden(e -> {
             if (activeActionsMenu == menu) activeActionsMenu = null;
-            if (refreshPending) {          // run the refresh that was skipped
+            if (refreshPending) {
                 refreshPending = false;
                 loadSalesData();
             }
@@ -300,8 +289,6 @@ public class SalesController {
         }
     }
 
-    /* ============================== DATA SETTERS ============================== */
-
     public void setOrderStats(OrderStats stats) {
         if (stats == null) {
             ordersRevenueValueLabel.setText("—"); ordersRevenueNoteLabel.setText("—");
@@ -322,15 +309,11 @@ public class SalesController {
 
     public void setOrders(List<Transaction> orders) {
         List<Transaction> incoming = orders == null ? List.of() : orders;
-        // Skip the rebuild when nothing changed (avoids flicker / lost scroll / closed menus).
-        // Relies on Transaction.equals (works automatically if Transaction is a record).
         if (!orderItems.equals(incoming)) {
             orderItems.setAll(incoming);
         }
         applyOrderFilters();
     }
-
-    /* ============================== FORMATTERS ============================== */
 
     private static String formatPesoCompact(BigDecimal amount) {
         return amount == null ? "—" : String.format(Locale.ENGLISH, "₱%,.2f", amount);
@@ -363,8 +346,6 @@ public class SalesController {
         if (s.startsWith("unpaid")) return "chip-danger";
         return "chip-neutral";
     }
-
-    /* ============================== INNER CLASSES ============================== */
 
     private static final class StaffCell extends TableCell<Transaction, Transaction> {
         private final Label name = new Label();
