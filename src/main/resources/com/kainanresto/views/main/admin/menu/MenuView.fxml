@@ -176,7 +176,7 @@
                     <Label text="View, restore, or permanently delete archived dishes and categories." styleClass="page-subtitle"/>
                 </VBox>
                 <Region HBox.hgrow="ALWAYS" />
-                <Button text="Back to Active Menu" styleClass="accounts-clear-btn" onAction="#onBackToMenu" mnemonicParsing="false"/>
+                <Button text="Back to Active Menu" styleClass="archive-back-btn" onAction="#onBackToMenu" mnemonicParsing="false"/>
             </HBox>
             <Region styleClass="toolbar-divider" />
             <HBox alignment="CENTER_LEFT" spacing="12">
@@ -191,12 +191,11 @@
         <VBox fx:id="archivedDishesContainer" styleClass="accounts-card, accounts-table-card" VBox.vgrow="ALWAYS">
             <TableView fx:id="archiveDishesTable" styleClass="accounts-table" VBox.vgrow="ALWAYS">
                 <columns>
-                    <TableColumn fx:id="archiveDishColImage" text="PREVIEW" prefWidth="90" styleClass="col-center" sortable="false" reorderable="false"/>
-                    <TableColumn fx:id="archiveDishColName" text="NAME" prefWidth="200" styleClass="col-first" sortable="false" reorderable="false"/>
-                    <TableColumn fx:id="archiveDishColCategory" text="CATEGORY" prefWidth="140" sortable="false" reorderable="false"/>
-                    <TableColumn fx:id="archiveDishColPrice" text="PRICE" prefWidth="110" sortable="false" reorderable="false"/>
-                    <TableColumn fx:id="archiveDishColQuantity" text="QUANTITY" prefWidth="100" sortable="false" reorderable="false"/>
-                    <TableColumn fx:id="archiveDishColActions" text="ACTIONS" prefWidth="120" styleClass="col-center" sortable="false" reorderable="false"/>
+                    <TableColumn fx:id="archiveDishColName" text="NAME" prefWidth="250" styleClass="col-first" sortable="false" reorderable="false"/>
+                    <TableColumn fx:id="archiveDishColCategory" text="CATEGORY" prefWidth="160" sortable="false" reorderable="false"/>
+                    <TableColumn fx:id="archiveDishColPrice" text="PRICE" prefWidth="130" sortable="false" reorderable="false"/>
+                    <TableColumn fx:id="archiveDishColQuantity" text="QUANTITY" prefWidth="120" sortable="false" reorderable="false"/>
+                    <TableColumn fx:id="archiveDishColActions" text="ACTIONS" prefWidth="140" styleClass="col-center" sortable="false" reorderable="false"/>
                 </columns>
             </TableView>
         </VBox>

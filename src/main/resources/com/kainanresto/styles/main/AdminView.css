@@ -1448,6 +1448,26 @@
 }
 .accounts-clear-btn:hover { -fx-text-fill: #7A5738; }
 
+.archive-back-btn {
+    -fx-background-color: #8C6343;
+    -fx-background-insets: 0;
+    -fx-background-radius: 8;
+    -fx-padding: 9 18;
+    -fx-font-family: 'Inter';
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.archive-back-btn:hover {
+    -fx-background-color: #7A5738;
+}
+.archive-back-btn:pressed {
+    -fx-background-color: #6B4C31;
+}
+
 .accounts-table {
     -fx-background-color: transparent;
     -fx-background-insets: 0;

@@ -49,7 +49,7 @@ public class MenuController {
     @FXML private VBox archivedDishesContainer, archivedCategoriesContainer;
 
     @FXML private TableView<Dishes> archiveDishesTable;
-    @FXML private TableColumn<Dishes, Dishes> archiveDishColImage, archiveDishColName, archiveDishColCategory, archiveDishColPrice, archiveDishColQuantity, archiveDishColActions;
+    @FXML private TableColumn<Dishes, Dishes> archiveDishColName, archiveDishColCategory, archiveDishColPrice, archiveDishColQuantity, archiveDishColActions;
 
     @FXML private TableView<ProductDAO.ArchivedCategory> archiveCategoriesTable;
     @FXML private TableColumn<ProductDAO.ArchivedCategory, ProductDAO.ArchivedCategory> archiveCategoryColName, archiveCategoryColDishCount, archiveCategoryColActions;
@@ -831,39 +831,11 @@ public class MenuController {
         archiveDishesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         archiveDishesTable.setFixedCellSize(57.0);
         archiveDishesTable.setItems(archivedDishesMaster);
-
-        archiveDishColImage.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue()));
         archiveDishColName.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue()));
         archiveDishColCategory.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue()));
         archiveDishColPrice.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue()));
         archiveDishColQuantity.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue()));
         archiveDishColActions.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue()));
-
-        archiveDishColImage.setCellFactory(col -> new TableCell<>() {
-            private final ImageView iv = new ImageView();
-            {
-                iv.setFitWidth(36);
-                iv.setFitHeight(36);
-                iv.setPreserveRatio(true);
-                Circle clip = new Circle(18, 18, 18);
-                iv.setClip(clip);
-                setAlignment(Pos.CENTER);
-            }
-            @Override
-            protected void updateItem(Dishes d, boolean empty) {
-                super.updateItem(d, empty);
-                if (empty || d == null) {
-                    setGraphic(null);
-                } else {
-                    if (d.imageUrl() != null && !d.imageUrl().isBlank()) {
-                        iv.setImage(DishImageLoader.load(d.imageUrl(), 72));
-                    } else {
-                        iv.setImage(null);
-                    }
-                    setGraphic(iv);
-                }
-            }
-        });
 
         archiveDishColName.setCellFactory(col -> createDishTextCell(d -> d.name() == null ? "—" : d.name(), "accounts-name"));
         archiveDishColCategory.setCellFactory(col -> createDishTextCell(d -> d.category() == null ? "—" : d.category(), "accounts-username"));

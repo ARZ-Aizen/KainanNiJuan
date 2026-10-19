@@ -71,7 +71,7 @@
                     <Label text="View, restore, or permanently delete deactivated accounts." styleClass="page-subtitle"/>
                 </VBox>
                 <Region HBox.hgrow="ALWAYS" />
-                <Button text="Back to Active Accounts" styleClass="accounts-clear-btn" onAction="#onShowActiveAccounts" mnemonicParsing="false"/>
+                <Button text="Back to Active Accounts" styleClass="archive-back-btn" onAction="#onShowActiveAccounts" mnemonicParsing="false"/>
             </HBox>
         </VBox>
 
