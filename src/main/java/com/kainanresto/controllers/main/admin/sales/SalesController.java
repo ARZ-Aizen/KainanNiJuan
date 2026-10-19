@@ -25,13 +25,21 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.*;
 import java.util.function.Function;
 
@@ -59,6 +67,8 @@ public class SalesController {
     @FXML private Label paginationInfoLabel;
     @FXML private Button prevPageBtn, nextPageBtn;
     @FXML private HBox pageNumbersBox;
+    @FXML private Button exportSalesBtn;
+    @FXML private SVGPath exportSalesIcon;
 
     private static final PseudoClass FIELD_FOCUSED = PseudoClass.getPseudoClass("field-focused");
     private static final DateTimeFormatter ORDER_TIME_FORMAT = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
@@ -90,6 +100,7 @@ public class SalesController {
         setIconAndScale(ordersTotalIcon, Icons.SHOPPING_BAG, 18.0);
         setIconAndScale(ordersVoidsIcon, Icons.ROTATE_CCW, 18.0);
         setIconAndScale(ordersAvgSpendIcon, Icons.TRENDING_UP, 18.0);
+        setIconAndScale(exportSalesIcon, Icons.DOWNLOAD, 16.0);
 
         for (Node node : salesRoot.lookupAll(".filter-chevron")) {
             if (node instanceof SVGPath chevron) {
@@ -646,5 +657,67 @@ public class SalesController {
             menu.getItems().setAll(items);
             if (notify) onChange.run();
         }
+    }
+
+    @FXML
+    private void onExportSales() {
+        Optional<YearMonth> picked = MonthFilterController.show(
+                salesRoot.getScene().getWindow(), "Export Sales History");
+        if (picked.isEmpty()) return;
+        YearMonth ym = picked.get();
+
+        LocalDateTime start = ym.atDay(1).atStartOfDay();
+        LocalDateTime endExclusive = ym.plusMonths(1).atDay(1).atStartOfDay();
+
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Export Sales History");
+        chooser.setInitialFileName("Sales_" + ym + ".csv");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel/CSV File", "*.csv"));
+
+        File file = chooser.showSaveDialog(salesRoot.getScene().getWindow());
+        if (file == null) return;
+
+        Thread t = new Thread(() -> {
+            try {
+                List<Transaction> sales = orderDAO.getTransactions(start, endExclusive);
+
+                if (sales.isEmpty()) {
+                    Platform.runLater(() -> AlertUtil.showInfo("No Data",
+                            "There are no transactions for "
+                                    + ym.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+                                    + " " + ym.getYear() + "."));
+                    return;
+                }
+
+                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM d yyyy h:mm a", Locale.ENGLISH);
+                try (PrintWriter writer = new PrintWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
+                    writer.print('\uFEFF');
+                    writer.println("Order ID,Created At,Last Activity,Staff,Total Amount,Order Status,Payment Status");
+                    for (Transaction tx : sales) {
+                        writer.println(String.join(",",
+                                csv(tx.orderId()),
+                                csv(tx.createdAt() != null ? tx.createdAt().format(fmt) : ""),
+                                csv(tx.lastActivityAt() != null ? tx.lastActivityAt().format(fmt) : ""),
+                                csv(tx.staffName()),
+                                tx.total() == null ? "0.00" : tx.total().setScale(2, RoundingMode.HALF_UP).toPlainString(),
+                                csv(tx.status()),
+                                csv(tx.paymentStatus())));
+                    }
+                }
+
+                Platform.runLater(() -> AlertUtil.showInfo("Export Successful",
+                        sales.size() + " transactions exported to:\n" + file.getAbsolutePath()));
+            } catch (Exception e) {
+                Platform.runLater(() -> AlertUtil.showError("Export Error",
+                        "Could not create the file:\n" + e.getMessage()));
+            }
+        });
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private static String csv(String s) {
+        if (s == null) return "\"\"";
+        return "\"" + s.replace("\"", "\"\"") + "\"";
     }
 }

@@ -10,7 +10,7 @@
 
 <!-- Dim backdrop (fills the owner window). Clicking it cancels. -->
 <StackPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="com.kainanresto.controllers.main.admin.settings.MonthFilterController"
+           fx:controller="com.kainanresto.controllers.main.admin.sales.MonthFilterController"
            alignment="CENTER" styleClass="mf-backdrop"
            onMouseClicked="#onBackdropClicked">
 

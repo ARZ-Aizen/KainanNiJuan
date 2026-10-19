@@ -60,27 +60,23 @@ public class MainAdminController {
     @FXML private Button navMenuBtn;
     @FXML private Button navSalesOrdersBtn;
     @FXML private Button navAccountManagementBtn;
-    @FXML private Button navSettingsBtn;
     @FXML private HBox topbar;
 
     @FXML private Button expNavDashboardBtn;
     @FXML private Button expNavMenuBtn;
     @FXML private Button expNavSalesOrdersBtn;
     @FXML private Button expNavAccountManagementBtn;
-    @FXML private Button expNavSettingsBtn;
 
     @FXML private SVGPath dashboardIcon;
     @FXML private SVGPath menuIcon;
     @FXML private SVGPath salesOrdersIcon;
     @FXML private SVGPath accountManagementIcon;
-    @FXML private SVGPath settingsIcon;
     @FXML private SVGPath logoutIcon;
     @FXML private SVGPath calendarIcon;
     @FXML private SVGPath expDashboardIcon;
     @FXML private SVGPath expMenuIcon;
     @FXML private SVGPath expSalesOrdersIcon;
     @FXML private SVGPath expAccountManagementIcon;
-    @FXML private SVGPath expSettingsIcon;
     @FXML private SVGPath expLogoutIcon;
 
     private static final String NAV_ACTIVE = "nav-item-active";
@@ -90,7 +86,6 @@ public class MainAdminController {
     private static final int NAV_MENU = 1;
     private static final int NAV_SALES = 2;
     private static final int NAV_ACCOUNTS = 3;
-    private static final int NAV_SETTINGS = 4;
 
     private static final double COMPACT_WIDTH = 93.0;
     private static final double EXPANDED_WIDTH = 304.0;
@@ -143,16 +138,14 @@ public class MainAdminController {
                 navDashboardBtn,
                 navMenuBtn,
                 navSalesOrdersBtn,
-                navAccountManagementBtn,
-                navSettingsBtn
+                navAccountManagementBtn
         };
 
         expandedNav = new Button[]{
                 expNavDashboardBtn,
                 expNavMenuBtn,
                 expNavSalesOrdersBtn,
-                expNavAccountManagementBtn,
-                expNavSettingsBtn
+                expNavAccountManagementBtn
         };
 
         initializeIcons();
@@ -292,12 +285,6 @@ public class MainAdminController {
         );
 
         setIconAndScale(
-                settingsIcon,
-                Icons.NAV_SETTINGS,
-                34.0
-        );
-
-        setIconAndScale(
                 expSwitchIcon,
                 Icons.RECEIPT_TEXT,
                 30.0);
@@ -335,12 +322,6 @@ public class MainAdminController {
         setIconAndScale(
                 expAccountManagementIcon,
                 Icons.NAV_ACCOUNTS,
-                30.0
-        );
-
-        setIconAndScale(
-                expSettingsIcon,
-                Icons.NAV_SETTINGS,
                 30.0
         );
 
@@ -639,16 +620,7 @@ public class MainAdminController {
         );
     }
 
-    @FXML
-    private void onNavSettings() {
 
-        switchView(
-                "/com/kainanresto/views/main/admin/settings/SettingsView.fxml",
-                "Settings",
-                "Configure your restaurant preferences, system defaults, and security configurations",
-                NAV_SETTINGS
-        );
-    }
 
     @FXML private void onSwitchToPos(ActionEvent event) {
         User u = SessionManager.getCurrentUser();

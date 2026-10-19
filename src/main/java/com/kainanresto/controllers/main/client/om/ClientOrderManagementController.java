@@ -6,9 +6,13 @@ import com.kainanresto.model.transac.ReceiptLine;
 import com.kainanresto.model.transac.ReceiptTotals;
 import com.kainanresto.model.util.Icons;
 import com.kainanresto.util.AlertUtil;
+import com.kainanresto.dao.OrderDAO;
+import com.kainanresto.model.transac.PaymentResult;
+import com.kainanresto.util.ReceiptPdfGenerator;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
@@ -17,9 +21,17 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.*;
 import javafx.scene.shape.SVGPath;
+import javafx.scene.layout.*;
+import com.kainanresto.controllers.main.client.pos.AdminAuthDialog;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 import javafx.util.Duration;
+import java.awt.Desktop;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -58,6 +70,7 @@ public class ClientOrderManagementController {
     @FXML private Label omrTotalLabel;
     @FXML private Button omrCompleteBtn;
     @FXML private Button omrCancelBtn;
+    @FXML private Button omrPdfBtn;
 
     public static final String OM_SUBTITLE = "Monitor and manage current restaurant orders.";
     private static final int OM_COLUMNS = 3;
@@ -213,6 +226,16 @@ public class ClientOrderManagementController {
                 "Cancel order #" + order.orderNumber() + "?",
                 "This will cancel the order and cannot be undone.");
         if (!yes) return;
+
+        Window owner = (omReceiptPanel != null && omReceiptPanel.getScene() != null)
+                ? omReceiptPanel.getScene().getWindow() : null;
+        boolean isAuthorized = AdminAuthDialog.show(
+                owner,
+                "Authorize Order Cancellation (#" + order.orderNumber() + ")"
+        );
+        if (!isAuthorized) {
+            return;
+        }
 
         if (onCancelOrder != null) onCancelOrder.accept(order);
         updateOrderStatus(order.orderNumber(), OrderStatus.CANCELLED);
@@ -503,6 +526,12 @@ public class ClientOrderManagementController {
         omrCompleteBtn.setManaged(preparing);
         omrCancelBtn.setVisible(preparing);
         omrCancelBtn.setManaged(preparing);
+
+        if (omrPdfBtn != null) {
+            boolean hasReceipt = detail != null;
+            omrPdfBtn.setVisible(hasReceipt);
+            omrPdfBtn.setManaged(hasReceipt);
+        }
     }
 
     private Node createOmReceiptRow(ReceiptLine line) {
@@ -526,6 +555,78 @@ public class ClientOrderManagementController {
 
     @FXML private void onOmReceiptCancel() {
         cancelOrder(findOmOrder(omSelectedOrderNo));
+    }
+
+    @FXML
+    private void onOmReceiptPdf() {
+        if (omReceiptDetails == null) {
+            AlertUtil.showError("Generate PDF", "No receipt details available for this order.");
+            return;
+        }
+
+        Stage owner = (Stage) omReceiptPanel.getScene().getWindow();
+
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Save Receipt PDF");
+
+        String rawNo = omReceiptDetails.orderNumber();
+        String safeNo = (rawNo == null || rawNo.isBlank()) ? "order" : rawNo.replaceAll("[^A-Za-z0-9_-]", "_");
+        chooser.setInitialFileName("receipt-" + safeNo + ".pdf");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Documents (*.pdf)", "*.pdf"));
+
+        Path defaultDir = Path.of(System.getProperty("user.home"), "Documents", "KainanNiJuan", "Receipts");
+        try {
+            Files.createDirectories(defaultDir);
+            if (Files.exists(defaultDir)) {
+                chooser.setInitialDirectory(defaultDir.toFile());
+            }
+        } catch (Exception ignored) {}
+
+        File selectedFile = chooser.showSaveDialog(owner);
+        if (selectedFile == null) return;
+
+        if (!selectedFile.getName().toLowerCase().endsWith(".pdf")) {
+            selectedFile = new File(selectedFile.getParentFile(), selectedFile.getName() + ".pdf");
+        }
+
+        final File targetFile = selectedFile;
+        if (omrPdfBtn != null) omrPdfBtn.setDisable(true);
+
+        Thread worker = new Thread(() -> {
+            try {
+                PaymentResult pay = new OrderDAO().findPayment(omReceiptDetails.orderNumber());
+                ReceiptPdfGenerator.generate(omReceiptDetails, pay, targetFile);
+                Platform.runLater(() -> {
+                    if (omrPdfBtn != null) omrPdfBtn.setDisable(false);
+                    boolean openNow = AlertUtil.showYesNoConfirmation(
+                            "PDF Generated",
+                            "Receipt PDF Generated",
+                            "Receipt successfully saved to:\n" + targetFile.getAbsolutePath() + "\n\nWould you like to open it now?"
+                    );
+                    if (openNow && Desktop.isDesktopSupported()) {
+                        try {
+                            Desktop desktop = Desktop.getDesktop();
+                            if (desktop.isSupported(Desktop.Action.OPEN)) {
+                                desktop.open(targetFile);
+                            }
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                });
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                Platform.runLater(() -> {
+                    if (omrPdfBtn != null) omrPdfBtn.setDisable(false);
+                    AlertUtil.showError(
+                            "PDF Generation Failed",
+                            "Could not generate receipt PDF:\n" + ex.getMessage()
+                    );
+                });
+            }
+        });
+        worker.setDaemon(true);
+        worker.start();
     }
 
     private static String badgeClass(OrderStatus status) {

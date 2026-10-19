@@ -1,5 +1,6 @@
 package com.kainanresto.controllers.main.admin.menu;
 
+import com.kainanresto.controllers.main.admin.accounts.AdminAuthDialog;
 import com.kainanresto.dao.ProductDAO;
 import com.kainanresto.model.dish.Dishes;
 import com.kainanresto.model.util.Icons;
@@ -7,6 +8,7 @@ import com.kainanresto.util.AlertUtil;
 import com.kainanresto.util.DishImageLoader;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
@@ -23,6 +25,7 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
+import javafx.stage.Window;
 import javafx.util.Duration;
 import java.io.File;
 import java.math.BigDecimal;
@@ -30,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.function.Function;
 
 public class MenuController {
 
@@ -37,6 +41,18 @@ public class MenuController {
 
     @FXML private VBox menuGridView;
     @FXML private VBox addDishView;
+
+    @FXML private Button viewArchiveBtn;
+    @FXML private VBox archiveMenuView;
+    @FXML private ToggleButton archiveDishesToggle, archiveCategoriesToggle;
+    @FXML private ToggleGroup archiveSubNavGroup;
+    @FXML private VBox archivedDishesContainer, archivedCategoriesContainer;
+
+    @FXML private TableView<Dishes> archiveDishesTable;
+    @FXML private TableColumn<Dishes, Dishes> archiveDishColImage, archiveDishColName, archiveDishColCategory, archiveDishColPrice, archiveDishColQuantity, archiveDishColActions;
+
+    @FXML private TableView<ProductDAO.ArchivedCategory> archiveCategoriesTable;
+    @FXML private TableColumn<ProductDAO.ArchivedCategory, ProductDAO.ArchivedCategory> archiveCategoryColName, archiveCategoryColDishCount, archiveCategoryColActions;
 
     @FXML private HBox menuSearchBox;
     @FXML private TextField menuSearchField;
@@ -69,6 +85,11 @@ public class MenuController {
     private final ObservableList<Dishes> dishItems = FXCollections.observableArrayList();
     private final List<String> categoryNames = new ArrayList<>();
 
+    private final ObservableList<Dishes> archivedDishesMaster = FXCollections.observableArrayList();
+    private final ObservableList<ProductDAO.ArchivedCategory> archivedCategoriesMaster = FXCollections.observableArrayList();
+    private final Label archiveDishesEmptyLabel = new Label("No archived dishes.");
+    private final Label archiveCategoriesEmptyLabel = new Label("No archived categories.");
+
     private String selectedCategory = null;
     private boolean rebuildingChips = false;
     private boolean loading = false;
@@ -91,6 +112,7 @@ public class MenuController {
         setupIcons();
         setupMenuPage();
         setupAddDishPage();
+        setupArchivePage();
         loadMenuManagementData();
         showMenuGrid();
     }
@@ -125,6 +147,10 @@ public class MenuController {
     }
 
     private void showMenuGrid() {
+        if (archiveMenuView != null) {
+            archiveMenuView.setVisible(false);
+            archiveMenuView.setManaged(false);
+        }
         addDishView.setVisible(false);
         addDishView.setManaged(false);
         menuGridView.setVisible(true);
@@ -666,13 +692,17 @@ public class MenuController {
     private void onDeleteDish() {
         if (currentEditingDish == null) return;
 
-        if (AlertUtil.showYesNoConfirmation("Delete Dish", "Are you sure you want to delete \"" + currentEditingDish.name() + "\"?", "This action cannot be undone.")) {
-            if (productDAO.deleteDish(currentEditingDish.id())) {
-                AlertUtil.showInfo("Deleted", currentEditingDish.name() + " has been removed from the menu.");
+        if (AlertUtil.showYesNoConfirmation("Archive Dish", "Are you sure you want to archive \"" + currentEditingDish.name() + "\"?",
+                "This dish will be moved to the archive and will no longer appear on the menu.")) {
+            Window window = menuGridView.getScene().getWindow();
+            if (!AdminAuthDialog.show(window, "Authorize Dish Archiving")) return;
+
+            if (productDAO.archiveDish(currentEditingDish.id())) {
+                AlertUtil.showInfo("Archived", currentEditingDish.name() + " has been moved to the archive.");
                 loadMenuManagementData();
                 showMenuGrid();
             } else {
-                setAddDishError("Failed to delete the menu item from the database.");
+                setAddDishError("Failed to archive the menu item.");
             }
         }
     }
@@ -704,14 +734,17 @@ public class MenuController {
 
     private void deleteCategory(String name) {
         if (dishItems.stream().anyMatch(d -> name.equalsIgnoreCase(d.category()))) {
-            AlertUtil.showError("Category In Use", "\"" + name + "\" still has dishes assigned to it.");
+            AlertUtil.showError("Category In Use", "\"" + name + "\" still has active dishes assigned to it.");
             return;
         }
-        if (AlertUtil.showYesNoConfirmation("Delete Category", "Delete \"" + name + "\"?", "This cannot be undone.")) {
-            if (productDAO.deleteCategory(name)) {
+        if (AlertUtil.showYesNoConfirmation("Archive Category", "Archive \"" + name + "\"?", "This category will be moved to the archive.")) {
+            Window window = menuGridView.getScene().getWindow();
+            if (!AdminAuthDialog.show(window, "Authorize Category Archiving")) return;
+
+            if (productDAO.archiveCategory(name)) {
                 loadMenuManagementData();
             } else {
-                AlertUtil.showError("Database Error", "Failed to delete category.");
+                AlertUtil.showError("Database Error", "Failed to archive category.");
             }
         }
     }
@@ -790,5 +823,270 @@ public class MenuController {
         setInvalid(field, true);
         setAddDishError(message);
         field.requestFocus();
+    }
+
+    private void setupArchivePage() {
+        archiveDishesEmptyLabel.getStyleClass().add("accounts-empty-label");
+        archiveDishesTable.setPlaceholder(archiveDishesEmptyLabel);
+        archiveDishesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        archiveDishesTable.setFixedCellSize(57.0);
+        archiveDishesTable.setItems(archivedDishesMaster);
+
+        archiveDishColImage.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue()));
+        archiveDishColName.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue()));
+        archiveDishColCategory.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue()));
+        archiveDishColPrice.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue()));
+        archiveDishColQuantity.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue()));
+        archiveDishColActions.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue()));
+
+        archiveDishColImage.setCellFactory(col -> new TableCell<>() {
+            private final ImageView iv = new ImageView();
+            {
+                iv.setFitWidth(36);
+                iv.setFitHeight(36);
+                iv.setPreserveRatio(true);
+                Circle clip = new Circle(18, 18, 18);
+                iv.setClip(clip);
+                setAlignment(Pos.CENTER);
+            }
+            @Override
+            protected void updateItem(Dishes d, boolean empty) {
+                super.updateItem(d, empty);
+                if (empty || d == null) {
+                    setGraphic(null);
+                } else {
+                    if (d.imageUrl() != null && !d.imageUrl().isBlank()) {
+                        iv.setImage(DishImageLoader.load(d.imageUrl(), 72));
+                    } else {
+                        iv.setImage(null);
+                    }
+                    setGraphic(iv);
+                }
+            }
+        });
+
+        archiveDishColName.setCellFactory(col -> createDishTextCell(d -> d.name() == null ? "—" : d.name(), "accounts-name"));
+        archiveDishColCategory.setCellFactory(col -> createDishTextCell(d -> d.category() == null ? "—" : d.category(), "accounts-username"));
+        archiveDishColPrice.setCellFactory(col -> createDishTextCell(d -> d.price() == null ? "—" : "₱" + d.price().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(), "accounts-meta"));
+        archiveDishColQuantity.setCellFactory(col -> createDishTextCell(d -> String.valueOf(d.quantity()), "accounts-meta"));
+        archiveDishColActions.setCellFactory(col -> archiveDishActionsCell());
+
+        archiveCategoriesEmptyLabel.getStyleClass().add("accounts-empty-label");
+        archiveCategoriesTable.setPlaceholder(archiveCategoriesEmptyLabel);
+        archiveCategoriesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        archiveCategoriesTable.setFixedCellSize(57.0);
+        archiveCategoriesTable.setItems(archivedCategoriesMaster);
+
+        archiveCategoryColName.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue()));
+        archiveCategoryColDishCount.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue()));
+        archiveCategoryColActions.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue()));
+
+        archiveCategoryColName.setCellFactory(col -> createCategoryTextCell(c -> c.name() == null ? "—" : c.name(), "accounts-name"));
+        archiveCategoryColDishCount.setCellFactory(col -> createCategoryTextCell(c -> String.valueOf(c.dishCount()), "accounts-meta"));
+        archiveCategoryColActions.setCellFactory(col -> archiveCategoryActionsCell());
+    }
+
+    private TableCell<Dishes, Dishes> createDishTextCell(Function<Dishes, String> textExtractor, String styleClass) {
+        return new TableCell<>() {
+            private final Label label = new Label();
+            {
+                label.getStyleClass().add(styleClass);
+            }
+            @Override
+            protected void updateItem(Dishes item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    label.setText(textExtractor.apply(item));
+                    setGraphic(label);
+                }
+            }
+        };
+    }
+
+    private TableCell<ProductDAO.ArchivedCategory, ProductDAO.ArchivedCategory> createCategoryTextCell(Function<ProductDAO.ArchivedCategory, String> textExtractor, String styleClass) {
+        return new TableCell<>() {
+            private final Label label = new Label();
+            {
+                label.getStyleClass().add(styleClass);
+            }
+            @Override
+            protected void updateItem(ProductDAO.ArchivedCategory item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    label.setText(textExtractor.apply(item));
+                    setGraphic(label);
+                }
+            }
+        };
+    }
+
+    private TableCell<Dishes, Dishes> archiveDishActionsCell() {
+        return new TableCell<>() {
+            private Dishes current;
+            private final Button restoreBtn = menuIconButton(Icons.ARROWS_CLOCKWISE, "icon-brand", "Restore dish");
+            private final Button deleteBtn = menuIconButton(Icons.TRASH_2, "icon-danger", "Permanently delete");
+            private final HBox box = new HBox(8.0, restoreBtn, deleteBtn);
+            {
+                box.setAlignment(Pos.CENTER);
+                restoreBtn.setOnAction(e -> {
+                    if (current == null) return;
+                    if (AlertUtil.showYesNoConfirmation("Restore Dish", "Restore \"" + current.name() + "\"?",
+                            "This dish will be restored and made visible in the active menu.")) {
+                        Window window = archiveDishesTable.getScene().getWindow();
+                        if (!AdminAuthDialog.show(window, "Authorize Dish Restoration")) return;
+                        if (productDAO.restoreDish(current.id())) {
+                            AlertUtil.showInfo("Restored", current.name() + " has been restored to the menu.");
+                            loadArchiveData();
+                            loadMenuManagementData();
+                        } else {
+                            AlertUtil.showError("Database Error", "Failed to restore dish.");
+                        }
+                    }
+                });
+                deleteBtn.setOnAction(e -> {
+                    if (current == null) return;
+                    if (AlertUtil.showYesNoConfirmation("Permanently Delete Dish", "Permanently delete \"" + current.name() + "\"?",
+                            "This cannot be undone! The dish and its associated image will be permanently removed.")) {
+                        Window window = archiveDishesTable.getScene().getWindow();
+                        if (!AdminAuthDialog.show(window, "Authorize Permanent Deletion")) return;
+                        if (productDAO.permanentDeleteDish(current.id())) {
+                            AlertUtil.showInfo("Permanently Deleted", current.name() + " has been deleted permanently.");
+                            loadArchiveData();
+                            loadMenuManagementData();
+                        } else {
+                            AlertUtil.showError("Database Error", "Failed to permanently delete dish.");
+                        }
+                    }
+                });
+            }
+            @Override
+            protected void updateItem(Dishes item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    current = null;
+                    setGraphic(null);
+                } else {
+                    current = item;
+                    setGraphic(box);
+                }
+            }
+        };
+    }
+
+    private TableCell<ProductDAO.ArchivedCategory, ProductDAO.ArchivedCategory> archiveCategoryActionsCell() {
+        return new TableCell<>() {
+            private ProductDAO.ArchivedCategory current;
+            private final Button restoreBtn = menuIconButton(Icons.ARROWS_CLOCKWISE, "icon-brand", "Restore category");
+            private final Button deleteBtn = menuIconButton(Icons.TRASH_2, "icon-danger", "Permanently delete");
+            private final HBox box = new HBox(8.0, restoreBtn, deleteBtn);
+            {
+                box.setAlignment(Pos.CENTER);
+                restoreBtn.setOnAction(e -> {
+                    if (current == null) return;
+                    if (AlertUtil.showYesNoConfirmation("Restore Category", "Restore \"" + current.name() + "\"?",
+                            "This category will be restored to the active menu.")) {
+                        Window window = archiveCategoriesTable.getScene().getWindow();
+                        if (!AdminAuthDialog.show(window, "Authorize Category Restoration")) return;
+                        if (productDAO.restoreCategory(current.name())) {
+                            AlertUtil.showInfo("Restored", current.name() + " category has been restored.");
+                            loadArchiveData();
+                            loadMenuManagementData();
+                        } else {
+                            AlertUtil.showError("Database Error", "Failed to restore category.");
+                        }
+                    }
+                });
+                deleteBtn.setOnAction(e -> {
+                    if (current == null) return;
+                    if (current.dishCount() > 0) {
+                        AlertUtil.showError("Category In Use", "Cannot permanently delete \"" + current.name() + "\" because it still has " + current.dishCount() + " active dishes assigned to it.");
+                        return;
+                    }
+                    if (AlertUtil.showYesNoConfirmation("Permanently Delete Category", "Permanently delete \"" + current.name() + "\"?",
+                            "This cannot be undone! The category folder and all its contents will be permanently deleted.")) {
+                        Window window = archiveCategoriesTable.getScene().getWindow();
+                        if (!AdminAuthDialog.show(window, "Authorize Permanent Deletion")) return;
+                        if (productDAO.permanentDeleteCategory(current.name())) {
+                            AlertUtil.showInfo("Permanently Deleted", current.name() + " has been deleted permanently.");
+                            loadArchiveData();
+                            loadMenuManagementData();
+                        } else {
+                            AlertUtil.showError("Database Error", "Failed to permanently delete category.");
+                        }
+                    }
+                });
+            }
+            @Override
+            protected void updateItem(ProductDAO.ArchivedCategory item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    current = null;
+                    setGraphic(null);
+                } else {
+                    current = item;
+                    setGraphic(box);
+                }
+            }
+        };
+    }
+
+    private Button menuIconButton(String pathData, String colorClass, String tooltip) {
+        SVGPath icon = new SVGPath();
+        icon.setContent(pathData);
+        icon.getStyleClass().addAll("phosphor-icon", colorClass);
+        double scale = 14.0 / 24.0;
+        icon.setScaleX(scale);
+        icon.setScaleY(scale);
+        icon.setStyle("-fx-stroke-width: " + (1.5 / scale) + ";");
+        StackPane host = new StackPane(icon);
+        host.setPrefSize(14.0, 14.0);
+        Button b = new Button();
+        b.setGraphic(host);
+        b.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        b.setMnemonicParsing(false);
+        b.getStyleClass().add("accounts-icon-btn");
+        b.setTooltip(new Tooltip(tooltip));
+        return b;
+    }
+
+    @FXML
+    public void onShowArchive() {
+        menuGridView.setVisible(false);
+        menuGridView.setManaged(false);
+        addDishView.setVisible(false);
+        addDishView.setManaged(false);
+        archiveMenuView.setVisible(true);
+        archiveMenuView.setManaged(true);
+        loadArchiveData();
+    }
+
+    @FXML
+    public void onBackToMenu() {
+        showMenuGrid();
+        loadMenuManagementData();
+    }
+
+    @FXML
+    public void onToggleArchiveTab() {
+        boolean showDishes = archiveDishesToggle.isSelected();
+        archivedDishesContainer.setVisible(showDishes);
+        archivedDishesContainer.setManaged(showDishes);
+        archivedCategoriesContainer.setVisible(!showDishes);
+        archivedCategoriesContainer.setManaged(!showDishes);
+    }
+
+    private void loadArchiveData() {
+        new Thread(() -> {
+            List<Dishes> archivedDishes = productDAO.getArchivedDishes();
+            List<ProductDAO.ArchivedCategory> archivedCategories = productDAO.getArchivedCategories();
+            Platform.runLater(() -> {
+                archivedDishesMaster.setAll(archivedDishes);
+                archivedCategoriesMaster.setAll(archivedCategories);
+            });
+        }).start();
     }
 }

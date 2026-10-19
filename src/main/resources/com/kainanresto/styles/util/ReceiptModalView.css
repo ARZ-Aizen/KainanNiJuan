@@ -45,3 +45,36 @@
     -fx-pref-height: 0;
     -fx-opacity: 0;
 }
+
+/* Modal Action Buttons */
+.receipt-pdf-btn {
+    -fx-background-color: #8C6343;
+    -fx-text-fill: white;
+    -fx-font-family: 'Inter';
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-padding: 10 22;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.receipt-pdf-btn:hover {
+    -fx-background-color: #745136;
+}
+
+.receipt-close-btn {
+    -fx-background-color: transparent;
+    -fx-border-color: #8C6343;
+    -fx-border-width: 1.5;
+    -fx-text-fill: #8C6343;
+    -fx-font-family: 'Inter';
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-padding: 8.5 22;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+}
+
+.receipt-close-btn:hover {
+    -fx-background-color: rgba(140, 99, 67, 0.08);
+}

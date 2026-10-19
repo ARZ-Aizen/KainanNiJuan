@@ -19,7 +19,7 @@
                     </StackPane>
                     <TextField fx:id="menuSearchField" promptText="Search dishes..." styleClass="search-input" HBox.hgrow="ALWAYS" />
                 </HBox>
-                <!-- removed: <Region HBox.hgrow="ALWAYS" /> -->
+                <Button fx:id="viewArchiveBtn" text="View Archive" onAction="#onShowArchive" styleClass="accounts-clear-btn" mnemonicParsing="false" />
                 <Button fx:id="addDishBtn" text="Add New Dish" onAction="#onAddDish" styleClass="btn-primary" mnemonicParsing="false" contentDisplay="LEFT" graphicTextGap="8.0">
                     <graphic>
                         <StackPane styleClass="icon-host-16">
@@ -160,10 +160,56 @@
                 <Label fx:id="addDishErrorLabel" styleClass="settings-error" visible="false" managed="false"/>
 
                 <!-- Buttons grouped on the right -->
-                <Button fx:id="deleteDishBtn" text="Delete Dish" onAction="#onDeleteDish" styleClass="add-delete-btn" mnemonicParsing="false" visible="false" managed="false"/>
+                <Button fx:id="deleteDishBtn" text="Archive Dish" onAction="#onDeleteDish" styleClass="add-delete-btn" mnemonicParsing="false" visible="false" managed="false"/>
                 <Button text="Cancel" onAction="#onAddDishCancel" styleClass="add-cancel-btn" mnemonicParsing="false"/>
                 <Button fx:id="saveDishBtn" text="Save Menu Item" onAction="#onAddDishSave" styleClass="add-save-btn" mnemonicParsing="false"/>
             </HBox>
+        </VBox>
+    </VBox>
+
+    <!-- ============================== ARCHIVE MENU LIST ============================== -->
+    <VBox fx:id="archiveMenuView" spacing="24" styleClass="menu-page" visible="false" managed="false">
+        <VBox styleClass="menu-toolbar-card" spacing="14.0">
+            <HBox alignment="CENTER_LEFT" spacing="16">
+                <VBox spacing="2" alignment="CENTER_LEFT">
+                    <Label text="Archived Items &amp; Categories" styleClass="page-title"/>
+                    <Label text="View, restore, or permanently delete archived dishes and categories." styleClass="page-subtitle"/>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS" />
+                <Button text="Back to Active Menu" styleClass="accounts-clear-btn" onAction="#onBackToMenu" mnemonicParsing="false"/>
+            </HBox>
+            <Region styleClass="toolbar-divider" />
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <ToggleButton fx:id="archiveDishesToggle" text="Archived Dishes" styleClass="category-chip" selected="true" mnemonicParsing="false" onAction="#onToggleArchiveTab">
+                    <toggleGroup><ToggleGroup fx:id="archiveSubNavGroup"/></toggleGroup>
+                </ToggleButton>
+                <ToggleButton fx:id="archiveCategoriesToggle" text="Archived Categories" styleClass="category-chip" toggleGroup="$archiveSubNavGroup" mnemonicParsing="false" onAction="#onToggleArchiveTab"/>
+            </HBox>
+        </VBox>
+
+        <!-- Archived Dishes View -->
+        <VBox fx:id="archivedDishesContainer" styleClass="accounts-card, accounts-table-card" VBox.vgrow="ALWAYS">
+            <TableView fx:id="archiveDishesTable" styleClass="accounts-table" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="archiveDishColImage" text="PREVIEW" prefWidth="90" styleClass="col-center" sortable="false" reorderable="false"/>
+                    <TableColumn fx:id="archiveDishColName" text="NAME" prefWidth="200" styleClass="col-first" sortable="false" reorderable="false"/>
+                    <TableColumn fx:id="archiveDishColCategory" text="CATEGORY" prefWidth="140" sortable="false" reorderable="false"/>
+                    <TableColumn fx:id="archiveDishColPrice" text="PRICE" prefWidth="110" sortable="false" reorderable="false"/>
+                    <TableColumn fx:id="archiveDishColQuantity" text="QUANTITY" prefWidth="100" sortable="false" reorderable="false"/>
+                    <TableColumn fx:id="archiveDishColActions" text="ACTIONS" prefWidth="120" styleClass="col-center" sortable="false" reorderable="false"/>
+                </columns>
+            </TableView>
+        </VBox>
+
+        <!-- Archived Categories View -->
+        <VBox fx:id="archivedCategoriesContainer" styleClass="accounts-card, accounts-table-card" VBox.vgrow="ALWAYS" visible="false" managed="false">
+            <TableView fx:id="archiveCategoriesTable" styleClass="accounts-table" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="archiveCategoryColName" text="CATEGORY NAME" prefWidth="300" styleClass="col-first" sortable="false" reorderable="false"/>
+                    <TableColumn fx:id="archiveCategoryColDishCount" text="ACTIVE DISHES" prefWidth="160" sortable="false" reorderable="false"/>
+                    <TableColumn fx:id="archiveCategoryColActions" text="ACTIONS" prefWidth="140" styleClass="col-center" sortable="false" reorderable="false"/>
+                </columns>
+            </TableView>
         </VBox>
     </VBox>
 </StackPane>

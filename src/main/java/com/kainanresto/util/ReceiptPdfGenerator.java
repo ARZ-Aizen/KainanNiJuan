@@ -43,15 +43,22 @@ public final class ReceiptPdfGenerator {
     private ReceiptPdfGenerator() {}
 
     public static File generate(OrderReceipt r, PaymentResult pay) throws IOException {
+        Path dir = Path.of(System.getProperty("user.home"), "Documents", "KainanNiJuan", "Receipts");
+        Files.createDirectories(dir);
+        String safeNo = String.valueOf(r.orderNumber()).replaceAll("[^A-Za-z0-9_-]", "_");
+        File out = dir.resolve("receipt-" + safeNo + ".pdf").toFile();
+        return generate(r, pay, out);
+    }
+
+    public static File generate(OrderReceipt r, PaymentResult pay, File out) throws IOException {
         List<Element> elements = build(r, pay);
         float contentH = 0;
         for (Element e : elements) contentH += e.height();
         float pageH = Math.max(200f, contentH + (MARGIN * 2f));
 
-        Path dir = Path.of(System.getProperty("user.home"), "Documents", "KainanNiJuan", "Receipts");
-        Files.createDirectories(dir);
-        String safeNo = String.valueOf(r.orderNumber()).replaceAll("[^A-Za-z0-9_-]", "_");
-        File out = dir.resolve("receipt-" + safeNo + ".pdf").toFile();
+        if (out.getParentFile() != null) {
+            Files.createDirectories(out.getParentFile().toPath());
+        }
 
         try (PDDocument doc = new PDDocument()) {
             PDPage page = new PDPage(new PDRectangle(PAGE_W, pageH));
@@ -84,30 +91,38 @@ public final class ReceiptPdfGenerator {
         els.add(dash());
 
         els.add(itemHeader());
-        for (ReceiptLine l : r.lines()) els.add(itemRow(l));
+        if (r.lines() != null) {
+            for (ReceiptLine l : r.lines()) els.add(itemRow(l));
+        }
         els.add(dash());
 
-        els.add(kv("Subtotal", money(t.subtotal()), REGULAR, 9f));
-        boolean hasDiscount = r.discountName() != null && !r.discountName().isBlank() && !"None".equalsIgnoreCase(r.discountName());
-        BigDecimal discount = hasDiscount ? t.subtotal().add(t.serviceCharge()).subtract(t.total()) : BigDecimal.ZERO;
-        if (hasDiscount && discount.signum() > 0) {
-            String label = "Discount - " + r.discountName();
-            els.add(kv(label, "-" + money(discount), REGULAR, 9f));
+        if (t != null) {
+            BigDecimal subtotal = t.subtotal() != null ? t.subtotal() : BigDecimal.ZERO;
+            BigDecimal sc = t.serviceCharge() != null ? t.serviceCharge() : BigDecimal.ZERO;
+            BigDecimal total = t.total() != null ? t.total() : BigDecimal.ZERO;
+
+            els.add(kv("Subtotal", money(subtotal), REGULAR, 9f));
+            boolean hasDiscount = r.discountName() != null && !r.discountName().isBlank() && !"None".equalsIgnoreCase(r.discountName());
+            BigDecimal discount = hasDiscount ? subtotal.add(sc).subtract(total) : BigDecimal.ZERO;
+            if (hasDiscount && discount.signum() > 0) {
+                String label = "Discount - " + r.discountName();
+                els.add(kv(label, "-" + money(discount), REGULAR, 9f));
+            }
+            els.add(kv("Service charge" + rateSuffix(t.serviceChargeRate()), money(sc), REGULAR, 9f));
+            boolean isSeniorOrPwd = hasDiscount && (r.discountName().toLowerCase().contains("senior") || r.discountName().toLowerCase().contains("pwd"));
+            String vatLabel;
+            if (isSeniorOrPwd) {
+                vatLabel = (t.vat() == null || t.vat().signum() == 0)
+                        ? "VAT (0% - VAT Exempt)"
+                        : "VAT (12% on regular items)";
+            } else {
+                vatLabel = "VAT" + rateSuffix(t.vatRate());
+            }
+            els.add(kv(vatLabel, money(t.vat()), REGULAR, 9f));
+            els.add(solid());
+            els.add(kv("TOTAL", money(total), BOLD, 12f, 20f));
+            els.add(dash());
         }
-        els.add(kv("Service charge" + rateSuffix(t.serviceChargeRate()), money(t.serviceCharge()), REGULAR, 9f));
-        boolean isSeniorOrPwd = hasDiscount && (r.discountName().toLowerCase().contains("senior") || r.discountName().toLowerCase().contains("pwd"));
-        String vatLabel;
-        if (isSeniorOrPwd) {
-            vatLabel = (t.vat() == null || t.vat().signum() == 0)
-                    ? "VAT (0% - VAT Exempt)"
-                    : "VAT (12% on regular items)";
-        } else {
-            vatLabel = "VAT" + rateSuffix(t.vatRate());
-        }
-        els.add(kv(vatLabel, money(t.vat()), REGULAR, 9f));
-        els.add(solid());
-        els.add(kv("TOTAL", money(t.total()), BOLD, 12f, 20f));
-        els.add(dash());
 
         if (pay != null) {
             els.add(kv("Cash", money(pay.cashTendered()), REGULAR, 9f));

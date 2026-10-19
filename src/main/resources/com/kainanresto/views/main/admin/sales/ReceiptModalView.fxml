@@ -101,9 +101,11 @@
     </ScrollPane>
 
     <!-- Footer -->
-    <HBox alignment="CENTER"
-          style="-fx-background-color: #F9F4EC; -fx-background-radius: 0 0 20 20; -fx-border-color: #EAE1D4; -fx-border-width: 1 0 0 0; -fx-padding: 14 0 18 0;">
+    <HBox alignment="CENTER" spacing="12"
+          style="-fx-background-color: #F9F4EC; -fx-background-radius: 0 0 20 20; -fx-border-color: #EAE1D4; -fx-border-width: 1 0 0 0; -fx-padding: 14 20 18 20;">
+        <Button fx:id="generatePdfBtn" text="Generate into PDF" onAction="#onGeneratePdf"
+                styleClass="receipt-pdf-btn"/>
         <Button text="Close Receipt" onAction="#onClose"
-                style="-fx-background-color: #8C6343; -fx-text-fill: white; -fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-font-weight: 700; -fx-padding: 10 36; -fx-background-radius: 8; -fx-cursor: hand;"/>
+                styleClass="receipt-close-btn"/>
     </HBox>
 </VBox>

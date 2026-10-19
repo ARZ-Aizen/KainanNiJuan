@@ -49,9 +49,29 @@ public class ProductDAO {
 
     public enum UploadResult { SERVER, LOCAL_ONLY, FAILED }
 
+    public record ArchivedCategory(String name, int dishCount) {}
+
+    static {
+        ensureArchiveColumns();
+    }
+
+    private static void ensureArchiveColumns() {
+        try (Connection conn = DatabaseConfig.getConnection();
+             Statement stmt = conn.createStatement()) {
+            try {
+                stmt.executeUpdate("ALTER TABLE categories ADD COLUMN is_deleted TINYINT(1) NOT NULL DEFAULT 0");
+            } catch (SQLException ignored) { }
+            try {
+                stmt.executeUpdate("ALTER TABLE dishes ADD COLUMN is_deleted TINYINT(1) NOT NULL DEFAULT 0");
+            } catch (SQLException ignored) { }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public List<String> getAllCategories() {
         List<String> categories = new ArrayList<>();
-        String query = "SELECT name FROM categories ORDER BY name ASC";
+        String query = "SELECT name FROM categories WHERE is_deleted = 0 ORDER BY name ASC";
 
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query);
@@ -135,6 +155,36 @@ public class ProductDAO {
     }
 
     public boolean deleteCategory(String categoryName) {
+        return archiveCategory(categoryName);
+    }
+
+    public boolean archiveCategory(String categoryName) {
+        String query = "UPDATE categories SET is_deleted = 1 WHERE name = ?";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, categoryName);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean restoreCategory(String categoryName) {
+        String query = "UPDATE categories SET is_deleted = 0 WHERE name = ?";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, categoryName);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean permanentDeleteCategory(String categoryName) {
         String query = "DELETE FROM categories WHERE name = ?";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -147,6 +197,28 @@ public class ProductDAO {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public List<ArchivedCategory> getArchivedCategories() {
+        List<ArchivedCategory> list = new ArrayList<>();
+        String query = """
+            SELECT c.name, COUNT(d.id) AS dish_count
+            FROM categories c
+            LEFT JOIN dishes d ON c.id = d.category_id AND d.is_deleted = 0
+            WHERE c.is_deleted = 1
+            GROUP BY c.id, c.name
+            ORDER BY c.name ASC
+        """;
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                list.add(new ArchivedCategory(rs.getString("name"), rs.getInt("dish_count")));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 
     private int getCategoryIdByName(String categoryName, Connection conn) throws SQLException {
@@ -374,14 +446,21 @@ public class ProductDAO {
     }
 
     public List<Dishes> getAllDishes() {
+        return queryDishes("WHERE d.is_deleted = 0 AND c.is_deleted = 0");
+    }
+
+    public List<Dishes> getArchivedDishes() {
+        return queryDishes("WHERE d.is_deleted = 1");
+    }
+
+    private List<Dishes> queryDishes(String whereClause) {
         List<Dishes> dishesList = new ArrayList<>();
         categoryCache = getAllCategories();
         String query = """
             SELECT d.id, d.name, c.name AS category_name, d.price, d.image_url, d.available, d.description, d.quantity
             FROM dishes d
             JOIN categories c ON d.category_id = c.id
-            ORDER BY d.name ASC
-        """;
+            """ + " " + whereClause + " ORDER BY d.name ASC";
 
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query);
@@ -491,6 +570,40 @@ public class ProductDAO {
     }
 
     public boolean deleteDish(long id) {
+        return archiveDish(id);
+    }
+
+    public boolean archiveDish(long id) {
+        String query = "UPDATE dishes SET is_deleted = 1 WHERE id = ?";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setLong(1, id);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean restoreDish(long id) {
+        String query = "UPDATE dishes SET is_deleted = 0 WHERE id = ?";
+        String restoreCat = "UPDATE categories SET is_deleted = 0 WHERE id = (SELECT category_id FROM dishes WHERE id = ?)";
+        try (Connection conn = DatabaseConfig.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(restoreCat)) {
+                stmt.setLong(1, id);
+                stmt.executeUpdate();
+            }
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setLong(1, id);
+                return stmt.executeUpdate() > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean permanentDeleteDish(long id) {
         String select = "SELECT d.image_url, c.name FROM dishes d JOIN categories c ON d.category_id = c.id WHERE d.id = ?";
         String delete = "DELETE FROM dishes WHERE id = ?";
 

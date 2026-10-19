@@ -1,4 +1,4 @@
-package com.kainanresto.controllers.main.admin.settings;
+package com.kainanresto.controllers.main.admin.sales;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;

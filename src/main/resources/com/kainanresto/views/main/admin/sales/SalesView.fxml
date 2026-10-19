@@ -98,6 +98,13 @@
                 <StackPane styleClass="icon-host-14"><SVGPath styleClass="phosphor-icon, icon-muted, filter-chevron" /></StackPane>
             </HBox>
             <Button fx:id="clearOrderFiltersBtn" text="Clear Filters" onAction="#onClearOrderFilters" styleClass="btn-text" mnemonicParsing="false" />
+            <Button fx:id="exportSalesBtn" text="Export Sales" onAction="#onExportSales" styleClass="btn-primary" mnemonicParsing="false" contentDisplay="LEFT" graphicTextGap="8.0">
+                <graphic>
+                    <StackPane styleClass="icon-host-16">
+                        <SVGPath fx:id="exportSalesIcon" styleClass="phosphor-icon" />
+                    </StackPane>
+                </graphic>
+            </Button>
         </HBox>
     </HBox>
 

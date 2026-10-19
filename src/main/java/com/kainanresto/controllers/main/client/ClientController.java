@@ -218,19 +218,6 @@ public class ClientController {
         });
 
         posViewController.setOnReceiptQuantityChange((line, newQty) -> {
-            if (newQty < line.quantity()) {
-                if (isPinRequiredForVoid()) {
-                    boolean isAuthorized = AdminAuthDialog.show(
-                            appRoot.getScene().getWindow(),
-                            "Authorize Item Void / Reduction"
-                    );
-
-                    if (!isAuthorized) {
-                        return;
-                    }
-                }
-            }
-
             if (newQty <= 0) {
                 currentCart.remove(line);
             } else {
@@ -611,15 +598,4 @@ public class ClientController {
     public void setCategories(List<String> categories) { posViewController.setCategories(categories); }
     public void setDishes(List<Dishes> dishes) { posViewController.setDishes(dishes); }
     public void setDiscountOptions(List<String> options) { posViewController.setDiscountOptions(options); }
-
-    private boolean isPinRequiredForVoid() {
-        java.util.Properties props = new java.util.Properties();
-        try (java.io.InputStream input = new java.io.FileInputStream("config.properties")) {
-            props.load(input);
-            return Boolean.parseBoolean(props.getProperty("requirePinForVoid", "false"));
-        } catch (java.io.IOException e) {
-            return false;
-        }
-    }
-
 }

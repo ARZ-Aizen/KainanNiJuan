@@ -119,6 +119,8 @@
                     styleClass="omr-complete-btn" maxWidth="Infinity" onAction="#onOmReceiptComplete"/>
             <Button fx:id="omrCancelBtn" text="CANCEL ORDER" mnemonicParsing="false"
                     styleClass="omr-cancel-btn" maxWidth="Infinity" onAction="#onOmReceiptCancel"/>
+            <Button fx:id="omrPdfBtn" text="GENERATE INTO PDF" mnemonicParsing="false"
+                    styleClass="omr-pdf-btn" maxWidth="Infinity" onAction="#onOmReceiptPdf"/>
         </VBox>
     </VBox>
 </HBox>

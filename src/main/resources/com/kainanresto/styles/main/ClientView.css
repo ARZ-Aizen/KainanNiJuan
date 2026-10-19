@@ -560,6 +560,22 @@
 }
 .omr-cancel-btn:hover { -fx-background-color: #FDF3F2; }
 
+.omr-pdf-btn {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 12;
+    -fx-border-color: #8C6343;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 12;
+    -fx-padding: 11 0;
+    -fx-alignment: CENTER;
+    -fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-font-weight: 700;
+    -fx-text-fill: #8C6343;
+    -fx-focus-color: transparent; -fx-faint-focus-color: transparent;
+    -fx-cursor: hand;
+}
+.omr-pdf-btn:hover { -fx-background-color: rgba(140, 99, 67, 0.08); }
+
 /* ================= PAYMENT DIALOG ================= */
 .pay-card {
     -fx-min-width: 440; -fx-pref-width: 440; -fx-max-width: 440;
