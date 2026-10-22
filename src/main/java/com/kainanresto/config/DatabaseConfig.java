@@ -17,13 +17,16 @@ public final class DatabaseConfig {
 
     private static HikariDataSource dataSource = null;
     private static Throwable initError = null;
+    private static Properties loadedProperties = new Properties();
+    private static String serverHost = "localhost";
 
     static {
         initPool();
     }
 
     private static synchronized void initPool() {
-        if (dataSource != null && !dataSource.isClosed()) return;
+        if (dataSource != null && !dataSource.isClosed())
+            return;
 
         Properties properties = new Properties();
 
@@ -32,7 +35,8 @@ public final class DatabaseConfig {
             if (input != null) {
                 properties.load(input);
             }
-        } catch (IOException ignored) {}
+        } catch (IOException ignored) {
+        }
 
         // 2. Candidate external locations for db.properties:
         // a) Current working directory: "db.properties"
@@ -41,7 +45,8 @@ public final class DatabaseConfig {
         File externalFile = new File("db.properties");
         if (!externalFile.exists()) {
             try {
-                File codeLocation = new File(DatabaseConfig.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+                File codeLocation = new File(
+                        DatabaseConfig.class.getProtectionDomain().getCodeSource().getLocation().toURI());
                 File jarDir = codeLocation.getParentFile();
                 if (jarDir != null) {
                     File rootDir = jarDir.getParentFile();
@@ -51,30 +56,53 @@ public final class DatabaseConfig {
                         externalFile = new File(jarDir, "db.properties");
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         if (!externalFile.exists()) {
             String appData = System.getenv("APPDATA");
             if (appData != null) {
-                File appDataFile = new File(appData + File.separator + "KainanNiJuan" + File.separator + "db.properties");
-                if (appDataFile.exists()) externalFile = appDataFile;
+                File appDataFile = new File(
+                        appData + File.separator + "KainanNiJuan" + File.separator + "db.properties");
+                if (appDataFile.exists())
+                    externalFile = appDataFile;
+            }
+        }
+
+        if (!externalFile.exists()) {
+            File distFile = new File("dist" + File.separator + "KainanNiJuan" + File.separator + "db.properties");
+            if (distFile.exists()) {
+                externalFile = distFile;
             }
         }
 
         if (externalFile.exists()) {
             try (FileInputStream fis = new FileInputStream(externalFile)) {
                 properties.load(fis);
-                System.out.println("DatabaseConfig: Loaded external configuration from " + externalFile.getAbsolutePath());
+                System.out.println(
+                        "DatabaseConfig: Loaded external configuration from " + externalFile.getAbsolutePath());
             } catch (IOException e) {
                 System.err.println("DatabaseConfig: Error reading external db.properties: " + e.getMessage());
             }
         }
 
-        String host = properties.getProperty("db.host", "192.168.1.15");
+        String sysHost = System.getProperty("kainan.server", System.getProperty("db.host"));
+        if (sysHost != null && !sysHost.isBlank()) {
+            properties.setProperty("db.host", sysHost.trim());
+            properties.setProperty("server.host", sysHost.trim());
+            properties.setProperty("image.host", sysHost.trim());
+        }
+
+        loadedProperties = properties;
+        serverHost = properties.getProperty("image.host",
+                properties.getProperty("server.host",
+                properties.getProperty("db.host", "192.168.141.130"))).trim();
+
+        String host = properties.getProperty("db.host", "192.168.141.130");
         String port = properties.getProperty("db.port", "3306");
         String dbName = properties.getProperty("db.name", "kainan_pos");
-        String user = properties.getProperty("db.user", "pos_user");
+        String user = properties.getProperty("db.user", "userpos");
         String password = properties.getProperty("db.password", "pos123");
 
         HikariConfig config = new HikariConfig();
@@ -97,6 +125,20 @@ public final class DatabaseConfig {
             initError = e;
             System.err.println("DatabaseConfig: Pool initialization failed: " + e.getMessage());
         }
+    }
+
+    public static String getServerHost() {
+        if (dataSource == null || dataSource.isClosed()) {
+            initPool();
+        }
+        return serverHost;
+    }
+
+    public static Properties getProperties() {
+        if (dataSource == null || dataSource.isClosed()) {
+            initPool();
+        }
+        return loadedProperties;
     }
 
     private DatabaseConfig() {

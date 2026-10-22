@@ -2,7 +2,8 @@ package com.kainanresto.controllers.main.admin.sales;
 
 import com.kainanresto.dao.OrderDAO;
 import com.kainanresto.model.order.OrderReceipt;
-import com.kainanresto.model.order.OrderStats;
+import com.kainanresto.model.order.SalesAnalyticsData;
+import com.kainanresto.model.order.SalesPeriod;
 import com.kainanresto.model.transac.PaymentResult;
 import com.kainanresto.model.transac.Transaction;
 import com.kainanresto.model.util.Icons;
@@ -13,14 +14,21 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
+import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -45,18 +53,15 @@ import java.util.function.Function;
 
 public class SalesController {
 
+    @FXML private ScrollPane salesRootScroll;
     @FXML private VBox salesRoot;
 
-    @FXML private Label ordersRevenueValueLabel, ordersRevenueNoteLabel;
-    @FXML private Label ordersTotalValueLabel, ordersTotalNoteLabel;
-    @FXML private Label ordersVoidsValueLabel, ordersVoidsNoteLabel;
-    @FXML private Label ordersAvgSpendValueLabel, ordersAvgSpendNoteLabel;
-
+    // Orders History Elements
     @FXML private HBox ordersSearchBox, orderDatePill, orderStatusPill, orderPaymentPill, orderSortPill;
     @FXML private TextField ordersSearchField;
     @FXML private Label orderDateValueLabel, orderStatusValueLabel, orderPaymentValueLabel, orderSortValueLabel;
-
-    @FXML private SVGPath ordersSearchIcon, ordersRevenueIcon, ordersTotalIcon, ordersVoidsIcon, ordersAvgSpendIcon;
+    @FXML private SVGPath ordersSearchIcon, exportSalesIcon;
+    @FXML private Button clearOrderFiltersBtn, exportSalesBtn;
 
     @FXML private TableView<Transaction> ordersTable;
     @FXML private Label ordersTablePlaceholder;
@@ -67,9 +72,8 @@ public class SalesController {
     @FXML private Label paginationInfoLabel;
     @FXML private Button prevPageBtn, nextPageBtn;
     @FXML private HBox pageNumbersBox;
-    @FXML private Button exportSalesBtn;
-    @FXML private SVGPath exportSalesIcon;
 
+    // Constants & Formatters
     private static final PseudoClass FIELD_FOCUSED = PseudoClass.getPseudoClass("field-focused");
     private static final DateTimeFormatter ORDER_TIME_FORMAT = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
     private static final DateTimeFormatter ORDER_DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy, h:mm a", Locale.ENGLISH);
@@ -78,6 +82,7 @@ public class SalesController {
     private final ObservableList<Transaction> orderItems = FXCollections.observableArrayList();
     private FilterPill orderDateFilter, orderStatusFilter, orderPaymentFilter, orderSortFilter;
 
+    // 10 items per page
     private static final int PAGE_SIZE = 10;
     private int currentPage = 1;
     private int totalPages = 1;
@@ -96,10 +101,6 @@ public class SalesController {
 
     private void setupIcons() {
         setIconAndScale(ordersSearchIcon, Icons.SEARCH, 14.0);
-        setIconAndScale(ordersRevenueIcon, Icons.DOLLAR_SIGN, 18.0);
-        setIconAndScale(ordersTotalIcon, Icons.SHOPPING_BAG, 18.0);
-        setIconAndScale(ordersVoidsIcon, Icons.ROTATE_CCW, 18.0);
-        setIconAndScale(ordersAvgSpendIcon, Icons.TRENDING_UP, 18.0);
         setIconAndScale(exportSalesIcon, Icons.DOWNLOAD, 16.0);
 
         for (Node node : salesRoot.lookupAll(".filter-chevron")) {
@@ -119,12 +120,16 @@ public class SalesController {
         }
     }
 
+    // =========================================================================
+    // ORDERS HISTORY LOGIC & RENDERING
+    // =========================================================================
+
     public void refreshData() {
         loadSalesData();
     }
 
     public void refresh() {
-        loadSalesData();
+        refreshData();
     }
 
     private void loadSalesData() {
@@ -136,11 +141,7 @@ public class SalesController {
         LocalDateTime[] range = dateRange(orderDateFilter == null ? null : orderDateFilter.selected);
         Thread t = new Thread(() -> {
             List<Transaction> tx = orderDAO.getTransactions(range[0], range[1]);
-            OrderStats stats = orderDAO.getOrderStats();
-            Platform.runLater(() -> {
-                setOrderStats(stats);
-                setOrders(tx);
-            });
+            Platform.runLater(() -> setOrders(tx));
         });
         t.setDaemon(true);
         t.start();
@@ -197,6 +198,20 @@ public class SalesController {
 
         ordersTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         ordersTable.setItems(displayedPageItems);
+
+        // Fixed height for 10 rows (10 * 58px = 580px + 38px header = 618px)
+        ordersTable.setFixedCellSize(58.0);
+        ordersTable.setPrefHeight(618.0);
+        ordersTable.setMinHeight(618.0);
+        ordersTable.setMaxHeight(618.0);
+
+        // Forward scroll events to outer ScrollPane so scrolling over the table smoothly scrolls the page
+        ordersTable.addEventFilter(ScrollEvent.ANY, event -> {
+            if (salesRootScroll != null) {
+                salesRootScroll.fireEvent(event.copyFor(salesRootScroll, salesRootScroll));
+                event.consume();
+            }
+        });
 
         ordersTable.skinProperty().addListener((obs, o, n) -> disableTableScrollbars());
     }
@@ -465,24 +480,6 @@ public class SalesController {
         }
     }
 
-    public void setOrderStats(OrderStats stats) {
-        if (stats == null) {
-            ordersRevenueValueLabel.setText("—"); ordersRevenueNoteLabel.setText("—");
-            ordersTotalValueLabel.setText("—"); ordersTotalNoteLabel.setText("—");
-            ordersVoidsValueLabel.setText("—"); ordersVoidsNoteLabel.setText("—");
-            ordersAvgSpendValueLabel.setText("—"); ordersAvgSpendNoteLabel.setText("—");
-            return;
-        }
-        ordersRevenueValueLabel.setText(formatPesoCompact(stats.todaysRevenue()));
-        ordersRevenueNoteLabel.setText(valueOrDash(stats.todaysRevenueNote()));
-        ordersTotalValueLabel.setText(String.format(Locale.ENGLISH, "%,d", stats.totalOrders()));
-        ordersTotalNoteLabel.setText(valueOrDash(stats.totalOrdersNote()));
-        ordersVoidsValueLabel.setText(String.format(Locale.ENGLISH, "%,d", stats.voidsAndRefunds()));
-        ordersVoidsNoteLabel.setText(valueOrDash(stats.voidsAndRefundsNote()));
-        ordersAvgSpendValueLabel.setText(formatPesoCompact(stats.averageSpend()));
-        ordersAvgSpendNoteLabel.setText(valueOrDash(stats.averageSpendNote()));
-    }
-
     public void setOrders(List<Transaction> orders) {
         List<Transaction> incoming = orders == null ? List.of() : orders;
         if (!orderItems.equals(incoming)) {
@@ -493,10 +490,6 @@ public class SalesController {
 
     private static String formatPesoCompact(BigDecimal amount) {
         return amount == null ? "—" : String.format(Locale.ENGLISH, "₱%,.2f", amount);
-    }
-
-    private static String valueOrDash(String value) {
-        return (value == null || value.isBlank()) ? "—" : value;
     }
 
     private static String formatOrderTimestamp(LocalDateTime timestamp) {
@@ -519,145 +512,13 @@ public class SalesController {
     private static String paymentChipClass(String payment) {
         String s = payment.trim().toLowerCase(Locale.ENGLISH);
         if (s.startsWith("paid")) return "chip-success";
-        if (s.startsWith("unpaid")) return "chip-danger";
+        if (s.startsWith("refund")) return "chip-danger";
         return "chip-neutral";
     }
 
-    private static final class StaffCell extends TableCell<Transaction, Transaction> {
-        private final Label name = new Label();
-        private final Label role = new Label();
-        private final VBox box = new VBox(2.0, name, role);
-
-        private StaffCell() {
-            box.setAlignment(Pos.CENTER_LEFT);
-            box.maxWidthProperty().bind(widthProperty().subtract(12.0));
-            name.getStyleClass().add("staff-name");
-            role.getStyleClass().add("staff-role");
-            setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-        }
-
-        @Override protected void updateItem(Transaction order, boolean empty) {
-            super.updateItem(order, empty);
-            setText(null);
-            if (empty || order == null) { setGraphic(null); return; }
-            name.setText(order.staffName());
-            boolean hasRole = order.staffRole() != null && !order.staffRole().isBlank();
-            role.setText(hasRole ? order.staffRole() : "");
-            role.setVisible(hasRole); role.setManaged(hasRole);
-            setGraphic(box);
-        }
-    }
-
-    private static final class ChipCell extends TableCell<Transaction, String> {
-        private final Region dot = new Region();
-        private final Label text = new Label();
-        private final HBox chip = new HBox(6.0);
-        private final HBox holder = new HBox(chip);
-        private final Function<String, String> styleResolver;
-        private String appliedStyle;
-
-        private ChipCell(boolean withDot, Function<String, String> styleResolver) {
-            this.styleResolver = styleResolver;
-
-            chip.setAlignment(Pos.CENTER_LEFT);
-            chip.getStyleClass().add("chip");
-            chip.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-            chip.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-
-            dot.getStyleClass().add("chip-dot");
-            text.getStyleClass().add("chip-text");
-            if (withDot) chip.getChildren().add(dot);
-            chip.getChildren().add(text);
-
-            holder.setAlignment(Pos.CENTER_LEFT);
-            setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-        }
-
-        @Override protected void updateItem(String value, boolean empty) {
-            super.updateItem(value, empty);
-            setText(null);
-            if (empty || value == null || value.isBlank()) { setGraphic(null); return; }
-            text.setText(value.trim());
-            if (appliedStyle != null) chip.getStyleClass().remove(appliedStyle);
-            appliedStyle = styleResolver.apply(value);
-            chip.getStyleClass().add(appliedStyle);
-            setGraphic(holder);
-        }
-    }
-
-    private final class ActionsCell extends TableCell<Transaction, Transaction> {
-        private final Button button = new Button();
-
-        private ActionsCell() {
-            SVGPath icon = new SVGPath();
-            icon.setContent(Icons.ELLIPSIS_VERTICAL);
-            icon.getStyleClass().addAll("phosphor-icon", "icon-brand");
-            double scale = 14.0 / 24.0;
-            icon.setScaleX(scale); icon.setScaleY(scale); icon.setStyle("-fx-stroke-width: " + (1.5 / scale) + ";");
-
-            StackPane host = new StackPane(icon);
-            host.getStyleClass().add("icon-host-14");
-
-            button.setGraphic(host);
-            button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-            button.setMnemonicParsing(false);
-            button.getStyleClass().add("row-action-btn");
-            button.setOnAction(e -> {
-                Transaction order = getItem();
-                if (order != null) onOrderActions(order, button);
-            });
-            setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-        }
-
-        @Override protected void updateItem(Transaction order, boolean empty) {
-            super.updateItem(order, empty);
-            setText(null);
-            setGraphic(empty || order == null ? null : button);
-        }
-    }
-
-    private static final class FilterPill {
-        private static final PseudoClass OPEN = PseudoClass.getPseudoClass("open");
-        private final Label valueLabel;
-        private final Runnable onChange;
-        private final ContextMenu menu = new ContextMenu();
-        private List<String> options = List.of();
-        private String selected;
-
-        private FilterPill(HBox pill, Label valueLabel, Runnable onChange) {
-            this.valueLabel = valueLabel;
-            this.onChange = onChange;
-            menu.getStyleClass().add("filter-menu");
-            menu.showingProperty().addListener((obs, was, showing) -> pill.pseudoClassStateChanged(OPEN, showing));
-            pill.setOnMouseClicked(e -> {
-                if (options.isEmpty()) return;
-                if (menu.isShowing()) menu.hide(); else menu.show(pill, Side.BOTTOM, 0.0, 4.0);
-            });
-        }
-
-        private void setOptions(List<String> newOptions) {
-            options = newOptions == null ? List.of() : List.copyOf(newOptions);
-            select(options.isEmpty() ? null : options.get(0), false);
-        }
-        private boolean isDefault() { return options.isEmpty() || Objects.equals(selected, options.get(0)); }
-        private boolean accepts(String value) { return isDefault() || (value != null && value.equalsIgnoreCase(selected)); }
-        private void reset() { if (!options.isEmpty()) select(options.get(0), false); }
-
-        private void select(String value, boolean notify) {
-            selected = value;
-            valueLabel.setText(value == null ? "—" : value);
-            List<MenuItem> items = new ArrayList<>();
-            for (String option : options) {
-                MenuItem item = new MenuItem(option);
-                item.setMnemonicParsing(false);
-                if (option.equals(selected)) item.getStyleClass().add("filter-option-selected");
-                item.setOnAction(e -> { if (!option.equals(selected)) select(option, true); });
-                items.add(item);
-            }
-            menu.getItems().setAll(items);
-            if (notify) onChange.run();
-        }
-    }
+    // =========================================================================
+    // EXPORT SALES LOGIC
+    // =========================================================================
 
     @FXML
     private void onExportSales() {
@@ -719,5 +580,175 @@ public class SalesController {
     private static String csv(String s) {
         if (s == null) return "\"\"";
         return "\"" + s.replace("\"", "\"\"") + "\"";
+    }
+
+    // =========================================================================
+    // INNER CLASSES & CELL FACTORIES
+    // =========================================================================
+
+    private static final class StaffCell extends TableCell<Transaction, Transaction> {
+        private final Label nameLabel = new Label();
+        private final Label roleLabel = new Label();
+        private final VBox box = new VBox(1.0, nameLabel, roleLabel);
+
+        StaffCell() {
+            nameLabel.getStyleClass().add("staff-name");
+            roleLabel.getStyleClass().add("staff-role");
+            box.setAlignment(Pos.CENTER_LEFT);
+        }
+
+        @Override
+        protected void updateItem(Transaction item, boolean empty) {
+            super.updateItem(item, empty);
+            if (empty || item == null) {
+                setGraphic(null);
+            } else {
+                nameLabel.setText(item.staffName());
+                roleLabel.setText(item.staffRole());
+                setGraphic(box);
+            }
+        }
+    }
+
+    private static final class ChipCell extends TableCell<Transaction, String> {
+        private final boolean showDot;
+        private final Function<String, String> styleResolver;
+        private final Region dot = new Region();
+        private final Label text = new Label();
+        private final HBox chip = new HBox(6.0);
+
+        ChipCell(boolean showDot, Function<String, String> styleResolver) {
+            this.showDot = showDot;
+            this.styleResolver = styleResolver;
+            dot.getStyleClass().add("chip-dot");
+            text.getStyleClass().add("chip-text");
+            chip.setAlignment(Pos.CENTER_LEFT);
+            chip.getStyleClass().add("chip");
+            chip.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+            chip.setMinHeight(24.0);
+            chip.setPrefHeight(24.0);
+            chip.setMaxHeight(24.0);
+            if (showDot) {
+                chip.getChildren().addAll(dot, text);
+            } else {
+                chip.getChildren().add(text);
+            }
+            setAlignment(Pos.CENTER_LEFT);
+            setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        }
+
+        @Override
+        protected void updateItem(String val, boolean empty) {
+            super.updateItem(val, empty);
+            setText(null);
+            if (empty || val == null || val.isBlank()) {
+                setGraphic(null);
+            } else {
+                text.setText(val.trim());
+                chip.getStyleClass().removeIf(c -> c.startsWith("chip-") && !c.equals("chip"));
+                chip.getStyleClass().add(styleResolver.apply(val));
+                setGraphic(chip);
+            }
+        }
+    }
+
+    private final class ActionsCell extends TableCell<Transaction, Transaction> {
+        private final Button btn = new Button();
+        private final StackPane iconHost = new StackPane();
+        private final SVGPath icon = new SVGPath();
+
+        ActionsCell() {
+            btn.getStyleClass().add("row-action-btn");
+            btn.setFocusTraversable(false);
+            btn.setMnemonicParsing(false);
+            icon.getStyleClass().addAll("phosphor-icon", "icon-muted");
+            setIconAndScale(icon, Icons.ELLIPSIS_VERTICAL, 14.0);
+            iconHost.getChildren().add(icon);
+            btn.setGraphic(iconHost);
+            btn.setOnAction(e -> {
+                Transaction tx = getItem();
+                if (tx != null) {
+                    onOrderActions(tx, btn);
+                }
+            });
+            setAlignment(Pos.CENTER);
+        }
+
+        @Override
+        protected void updateItem(Transaction item, boolean empty) {
+            super.updateItem(item, empty);
+            setGraphic((empty || item == null) ? null : btn);
+        }
+    }
+
+    private static final class FilterPill {
+        private final HBox node;
+        private final Label valueLabel;
+        private final Runnable onChange;
+        private String selected;
+        private String defaultOption;
+        private final List<String> options = new ArrayList<>();
+
+        FilterPill(HBox node, Label valueLabel, Runnable onChange) {
+            this.node = node;
+            this.valueLabel = valueLabel;
+            this.onChange = onChange;
+            this.node.setOnMouseClicked(e -> showMenu());
+        }
+
+        void setOptions(List<String> list) {
+            options.clear();
+            options.addAll(list);
+            if (!options.isEmpty()) {
+                defaultOption = options.get(0);
+                setSelected(defaultOption, false);
+            }
+        }
+
+        void setSelected(String val, boolean notify) {
+            selected = val;
+            valueLabel.setText(val);
+            if (!val.equals(defaultOption)) {
+                if (!node.getStyleClass().contains("filter-pill-active")) {
+                    node.getStyleClass().add("filter-pill-active");
+                }
+            } else {
+                node.getStyleClass().remove("filter-pill-active");
+            }
+            if (notify && onChange != null) {
+                onChange.run();
+            }
+        }
+
+        boolean isDefault() {
+            return Objects.equals(selected, defaultOption);
+        }
+
+        void reset() {
+            if (defaultOption != null) {
+                setSelected(defaultOption, false);
+            }
+        }
+
+        boolean accepts(String target) {
+            if (selected == null || selected.equals(defaultOption)) return true;
+            if (target == null) return false;
+            return target.equalsIgnoreCase(selected);
+        }
+
+        private void showMenu() {
+            ContextMenu menu = new ContextMenu();
+            menu.getStyleClass().add("filter-menu");
+            for (String opt : options) {
+                MenuItem item = new MenuItem(opt);
+                item.setMnemonicParsing(false);
+                if (opt.equals(selected)) {
+                    item.getStyleClass().add("filter-option-selected");
+                }
+                item.setOnAction(e -> setSelected(opt, true));
+                menu.getItems().add(item);
+            }
+            menu.show(node, Side.BOTTOM, 0.0, 4.0);
+        }
     }
 }

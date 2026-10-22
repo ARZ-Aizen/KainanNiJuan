@@ -112,7 +112,7 @@
                     maxWidth="Infinity" mnemonicParsing="false" contentDisplay="LEFT">
                 <graphic><StackPane styleClass="exp-icon-host"><SVGPath fx:id="expHistoryIcon" styleClass="phosphor-icon" /></StackPane></graphic>
             </Button>
-            <Button fx:id="expNavSwitchBtn" text="Switch to POS" onAction="#onSwitchToAdmin" styleClass="exp-nav-item"
+            <Button fx:id="expNavSwitchBtn" text="Switch to Admin" onAction="#onSwitchToAdmin" styleClass="exp-nav-item"
                     maxWidth="Infinity" mnemonicParsing="false" contentDisplay="LEFT" visible="false" managed="false">
                 <graphic><StackPane styleClass="exp-icon-host"><SVGPath fx:id="expSwitchIcon" styleClass="phosphor-icon" /></StackPane></graphic>
             </Button>

@@ -188,9 +188,9 @@ public class AccountController {
             return;
         }
         Platform.runLater(() -> {
-            accountsMaster.setAll(latestUsers);
+            accountsMaster.setAll(filterVisibleAccounts(latestUsers));
             if (archiveAccountsView.isVisible()) {
-                archiveMaster.setAll(userDAO.getArchivedAccounts());
+                archiveMaster.setAll(filterVisibleArchiveAccounts(userDAO.getArchivedAccounts()));
             }
         });
     }
@@ -222,13 +222,13 @@ public class AccountController {
     }
 
     private void loadAccountManagementData() {
-        accountsMaster.setAll(userDAO.getAllAccounts());
+        accountsMaster.setAll(filterVisibleAccounts(userDAO.getAllAccounts()));
         applyAccountsFilter();
     }
 
     @FXML
     private void onShowArchive() {
-        archiveMaster.setAll(userDAO.getArchivedAccounts());
+        archiveMaster.setAll(filterVisibleArchiveAccounts(userDAO.getArchivedAccounts()));
 
         if (archiveTable.getItems().isEmpty() && archiveMaster.isEmpty()) {
             Label emptyLabel = new Label("No archived accounts.");
@@ -274,6 +274,7 @@ public class AccountController {
         bindAccountColumn(archiveColRole, this::accountRoleCell);
         bindAccountColumn(archiveColActions, this::archiveActionsCell);
 
+        archiveMaster.setAll(filterVisibleArchiveAccounts(userDAO.getArchivedAccounts()));
         archiveTable.setItems(archiveMaster);
     }
 
@@ -318,10 +319,14 @@ public class AccountController {
                 .addListener((obs, was, is) -> accountsSearchBox.pseudoClassStateChanged(FIELD_FOCUSED, is));
         accountsSearchField.textProperty().addListener((obs, oldText, newText) -> applyAccountsFilter());
 
+        AccountRole currentRole = getCurrentUserRole();
         LinkedHashMap<String, AccountRole> roleOptions = new LinkedHashMap<>();
         roleOptions.put(ACCOUNTS_ALL_ROLES, null);
-        for (AccountRole r : AccountRole.values())
-            roleOptions.put(r.getDisplayName(), r);
+        for (AccountRole r : AccountRole.values()) {
+            if (canViewRole(currentRole, r)) {
+                roleOptions.put(r.getDisplayName(), r);
+            }
+        }
         wireAccountsPill(accountsRolePill, accountsRoleValueLabel, roleOptions, v -> {
             accountsRoleFilter = v;
             applyAccountsFilter();
@@ -407,8 +412,10 @@ public class AccountController {
             return;
         String q = accountsSearchField.getText() == null ? ""
                 : accountsSearchField.getText().trim().toLowerCase(Locale.ROOT);
+        AccountRole currentRole = getCurrentUserRole();
 
-        accountsFiltered.setPredicate(a -> (accountsRoleFilter == null || a.role() == accountsRoleFilter)
+        accountsFiltered.setPredicate(a -> canViewAccount(currentRole, a)
+                && (accountsRoleFilter == null || a.role() == accountsRoleFilter)
                 && (accountsStatusFilter == null || a.status() == accountsStatusFilter)
                 && matchesAccountsLastLogin(a)
                 && (q.isEmpty() || (a.fullName() != null && a.fullName().toLowerCase(Locale.ROOT).contains(q))
@@ -436,6 +443,95 @@ public class AccountController {
     private AccountRole getCurrentUserRole() {
         User currentUser = SessionManager.getCurrentUser();
         return currentUser != null ? currentUser.getRole() : null;
+    }
+
+    public static boolean canViewRole(AccountRole viewerRole, AccountRole targetRole) {
+        if (targetRole == null) {
+            return false;
+        }
+        if (viewerRole == null || viewerRole == AccountRole.ADMIN) {
+            return true;
+        }
+        if (targetRole == AccountRole.ADMIN) {
+            return false;
+        }
+        if (viewerRole == AccountRole.SUPERVISOR) {
+            return true; // Supervisor sees Supervisor, Manager, Cashier
+        }
+        if (viewerRole == AccountRole.MANAGER) {
+            return targetRole == AccountRole.MANAGER || targetRole == AccountRole.CASHIER;
+        }
+        return false;
+    }
+
+    public boolean canViewAccount(AccountRole viewerRole, AccountRow target) {
+        return canViewAccount(viewerRole, target, isSelf(target));
+    }
+
+    public static boolean canViewAccount(AccountRole viewerRole, AccountRow target, boolean isSelf) {
+        if (target == null) {
+            return false;
+        }
+        if (viewerRole == null || viewerRole == AccountRole.ADMIN) {
+            return true;
+        }
+
+        boolean isTargetAdmin = target.role() == AccountRole.ADMIN
+                || "admin".equalsIgnoreCase(target.username());
+
+        if (viewerRole == AccountRole.SUPERVISOR) {
+            // Supervisor cannot see admin and co-supervisor
+            if (isTargetAdmin) {
+                return false;
+            }
+            if (target.role() == AccountRole.SUPERVISOR) {
+                return isSelf;
+            }
+            return true;
+        }
+
+        if (viewerRole == AccountRole.MANAGER) {
+            // Manager cannot see admin, supervisor, and co manager
+            if (isTargetAdmin || target.role() == AccountRole.SUPERVISOR) {
+                return false;
+            }
+            if (target.role() == AccountRole.MANAGER) {
+                return isSelf;
+            }
+            return true;
+        }
+
+        return isSelf;
+    }
+
+    private List<AccountRow> filterVisibleAccounts(List<AccountRow> list) {
+        if (list == null) return List.of();
+        AccountRole currentRole = getCurrentUserRole();
+        if (currentRole == null || currentRole == AccountRole.ADMIN) {
+            return list;
+        }
+        List<AccountRow> result = new ArrayList<>();
+        for (AccountRow a : list) {
+            if (canViewAccount(currentRole, a)) {
+                result.add(a);
+            }
+        }
+        return result;
+    }
+
+    private List<AccountRow> filterVisibleArchiveAccounts(List<AccountRow> list) {
+        if (list == null) return List.of();
+        AccountRole currentRole = getCurrentUserRole();
+        if (currentRole == null || currentRole == AccountRole.ADMIN) {
+            return list;
+        }
+        List<AccountRow> result = new ArrayList<>();
+        for (AccountRow a : list) {
+            if (canViewAccount(currentRole, a, false)) {
+                result.add(a);
+            }
+        }
+        return result;
     }
 
     public static List<AccountRole> getAssignableRoles(AccountRole actorRole) {

@@ -4,6 +4,9 @@ import com.kainanresto.config.DatabaseConfig;
 import com.kainanresto.model.order.OrderReceipt;
 import com.kainanresto.model.order.OrderStats;
 import com.kainanresto.model.order.OrderStatus;
+import com.kainanresto.model.order.SalesAnalyticsData;
+import com.kainanresto.model.order.SalesAnalyticsData.SalesChartPoint;
+import com.kainanresto.model.order.SalesPeriod;
 import com.kainanresto.model.transac.PaymentResult;
 import com.kainanresto.model.transac.ReceiptLine;
 import com.kainanresto.model.transac.ReceiptTotals;
@@ -11,9 +14,12 @@ import com.kainanresto.model.transac.Transaction;
 
 import java.math.BigDecimal;
 import java.sql.*;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.security.SecureRandom;
 
@@ -186,9 +192,11 @@ public class OrderDAO {
                 ps.setTimestamp(1, Timestamp.valueOf(since));
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
+                        String rawImg = rs.getString("image_url");
+                        String resolvedImg = ProductDAO.resolveImageUrl(rawImg, null);
                         linesByOrder.computeIfAbsent(rs.getLong("order_id"), k -> new ArrayList<>())
                                 .add(new ReceiptLine(rs.getLong("dish_id"), rs.getString("dish_name"),
-                                        rs.getString("image_url"), rs.getBigDecimal("unit_price"), rs.getInt("quantity")));
+                                        resolvedImg, rs.getBigDecimal("unit_price"), rs.getInt("quantity")));
                     }
                 }
             }
@@ -256,8 +264,10 @@ public class OrderDAO {
                 ps.setLong(1, orderId);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
+                        String rawImg = rs.getString("image_url");
+                        String resolvedImg = ProductDAO.resolveImageUrl(rawImg, null);
                         lines.add(new ReceiptLine(rs.getLong("dish_id"), rs.getString("dish_name"),
-                                rs.getString("image_url"), rs.getBigDecimal("unit_price"), rs.getInt("quantity")));
+                                resolvedImg, rs.getBigDecimal("unit_price"), rs.getInt("quantity")));
                     }
                 }
             }
@@ -299,6 +309,36 @@ public class OrderDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setTimestamp(1, Timestamp.valueOf(from));
             ps.setTimestamp(2, Timestamp.valueOf(to));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    OrderStatus st = OrderStatus.fromString(rs.getString("status"));
+                    list.add(new Transaction(
+                            rs.getString("order_number"), rs.getString("order_type"), null,
+                            rs.getString("cashier_name"), rs.getString("cashier_role"),
+                            rs.getTimestamp("created_at").toLocalDateTime(),
+                            rs.getTimestamp("last_activity").toLocalDateTime(),
+                            rs.getBigDecimal("total"),
+                            st == null ? rs.getString("status") : st.getDisplayName(),
+                            rs.getString("payment_status")));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<Transaction> getRecentTransactions(int limit) {
+        String sql = """
+            SELECT order_number, order_type, cashier_name, cashier_role,
+                   created_at, COALESCE(updated_at, created_at) AS last_activity,
+                   total, status, payment_status
+            FROM orders ORDER BY created_at DESC LIMIT ?
+        """;
+        List<Transaction> list = new ArrayList<>();
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, limit);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     OrderStatus st = OrderStatus.fromString(rs.getString("status"));
@@ -364,6 +404,368 @@ public class OrderDAO {
                     total, preparing + " active in kitchen",
                     voids, "Cancelled today",
                     avg, "Per completed transaction");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public SalesAnalyticsData getSalesAnalytics(SalesPeriod period) {
+        LocalDate today = LocalDate.now();
+        LocalDateTime startDateTime;
+        LocalDateTime endDateTime;
+        String rangeLabel;
+
+        switch (period) {
+            case DAILY -> {
+                startDateTime = today.atStartOfDay();
+                endDateTime = today.plusDays(1).atStartOfDay();
+                rangeLabel = today.format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.ENGLISH));
+            }
+            case WEEKLY -> {
+                LocalDate monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+                LocalDate sunday = monday.plusDays(6);
+                startDateTime = monday.atStartOfDay();
+                endDateTime = sunday.plusDays(1).atStartOfDay();
+                rangeLabel = monday.format(DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH)) + " - " +
+                             sunday.format(DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH));
+            }
+            case MONTHLY -> {
+                LocalDate firstDay = today.withDayOfMonth(1);
+                LocalDate lastDay = today.withDayOfMonth(today.lengthOfMonth());
+                startDateTime = firstDay.atStartOfDay();
+                endDateTime = lastDay.plusDays(1).atStartOfDay();
+                rangeLabel = today.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH));
+            }
+            case QUARTERLY -> {
+                int currentMonth = today.getMonthValue();
+                int qStartMonth = ((currentMonth - 1) / 3) * 3 + 1;
+                int quarter = (currentMonth - 1) / 3 + 1;
+                LocalDate qStart = LocalDate.of(today.getYear(), qStartMonth, 1);
+                LocalDate qEnd = qStart.plusMonths(3).minusDays(1);
+                startDateTime = qStart.atStartOfDay();
+                endDateTime = qEnd.plusDays(1).atStartOfDay();
+                rangeLabel = "Q" + quarter + " " + today.getYear() + " (" +
+                             qStart.format(DateTimeFormatter.ofPattern("MMM", Locale.ENGLISH)) + " - " +
+                             qEnd.format(DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH)) + ")";
+            }
+            case YEARLY -> {
+                LocalDate yearStart = LocalDate.of(today.getYear(), 1, 1);
+                LocalDate yearEnd = LocalDate.of(today.getYear(), 12, 31);
+                startDateTime = yearStart.atStartOfDay();
+                endDateTime = yearEnd.plusDays(1).atStartOfDay();
+                rangeLabel = "Year " + today.getYear();
+            }
+            default -> {
+                startDateTime = today.atStartOfDay();
+                endDateTime = today.plusDays(1).atStartOfDay();
+                rangeLabel = today.toString();
+            }
+        }
+
+        BigDecimal profit = BigDecimal.ZERO;
+        BigDecimal loss = BigDecimal.ZERO;
+        BigDecimal grossSales = BigDecimal.ZERO;
+        BigDecimal averageSpend = BigDecimal.ZERO;
+        int totalOrdersCount = 0;
+        int completedOrdersCount = 0;
+        int cancelledOrdersCount = 0;
+        int totalItemsSold = 0;
+
+        String aggSql = """
+            SELECT 
+                COALESCE(SUM(CASE WHEN status = 'COMPLETED' THEN total ELSE 0 END), 0) AS profit,
+                COALESCE(SUM(CASE WHEN status = 'CANCELLED' THEN total ELSE 0 END), 0) AS loss,
+                COALESCE(SUM(CASE WHEN status <> 'CANCELLED' THEN total ELSE 0 END), 0) AS gross_sales,
+                COALESCE(AVG(CASE WHEN status = 'COMPLETED' THEN total END), 0) AS avg_spend,
+                COUNT(CASE WHEN status = 'COMPLETED' THEN 1 END) AS completed_orders,
+                COUNT(CASE WHEN status = 'CANCELLED' THEN 1 END) AS cancelled_orders,
+                COUNT(*) AS total_orders
+            FROM orders
+            WHERE created_at >= ? AND created_at < ?
+        """;
+
+        String itemsSoldSql = """
+            SELECT COALESCE(SUM(oi.quantity), 0)
+            FROM order_items oi
+            JOIN orders o ON o.id = oi.order_id
+            WHERE o.status = 'COMPLETED' AND o.created_at >= ? AND o.created_at < ?
+        """;
+
+        try (Connection conn = DatabaseConfig.getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement(aggSql)) {
+                ps.setTimestamp(1, Timestamp.valueOf(startDateTime));
+                ps.setTimestamp(2, Timestamp.valueOf(endDateTime));
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        profit = rs.getBigDecimal("profit");
+                        loss = rs.getBigDecimal("loss");
+                        grossSales = rs.getBigDecimal("gross_sales");
+                        averageSpend = rs.getBigDecimal("avg_spend");
+                        completedOrdersCount = rs.getInt("completed_orders");
+                        cancelledOrdersCount = rs.getInt("cancelled_orders");
+                        totalOrdersCount = rs.getInt("total_orders");
+                    }
+                }
+            }
+
+            try (PreparedStatement ps = conn.prepareStatement(itemsSoldSql)) {
+                ps.setTimestamp(1, Timestamp.valueOf(startDateTime));
+                ps.setTimestamp(2, Timestamp.valueOf(endDateTime));
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        totalItemsSold = rs.getInt(1);
+                    }
+                }
+            }
+
+            // Sales by order type
+            Map<String, BigDecimal> salesByOrderType = new LinkedHashMap<>();
+            String orderTypeSql = """
+                SELECT order_type, COALESCE(SUM(total), 0) AS type_total
+                FROM orders
+                WHERE status = 'COMPLETED' AND created_at >= ? AND created_at < ?
+                GROUP BY order_type
+            """;
+            try (PreparedStatement ps = conn.prepareStatement(orderTypeSql)) {
+                ps.setTimestamp(1, Timestamp.valueOf(startDateTime));
+                ps.setTimestamp(2, Timestamp.valueOf(endDateTime));
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        String type = rs.getString("order_type");
+                        salesByOrderType.put(type == null ? "Standard" : type, rs.getBigDecimal("type_total"));
+                    }
+                }
+            }
+
+            // Chart points & Min/Max calculation
+            List<SalesChartPoint> points = new ArrayList<>();
+            String minDate = "—";
+            BigDecimal minAmount = null;
+            String maxDate = "—";
+            BigDecimal maxAmount = null;
+
+            if (period == SalesPeriod.DAILY) {
+                String hourlySql = """
+                    SELECT HOUR(created_at) AS hr, COALESCE(SUM(total), 0) AS sales, COUNT(*) AS cnt
+                    FROM orders
+                    WHERE status = 'COMPLETED' AND created_at >= ? AND created_at < ?
+                    GROUP BY HOUR(created_at)
+                """;
+                Map<Integer, BigDecimal> salesByHour = new HashMap<>();
+                Map<Integer, Integer> countByHour = new HashMap<>();
+                try (PreparedStatement ps = conn.prepareStatement(hourlySql)) {
+                    ps.setTimestamp(1, Timestamp.valueOf(startDateTime));
+                    ps.setTimestamp(2, Timestamp.valueOf(endDateTime));
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            int hr = rs.getInt("hr");
+                            salesByHour.put(hr, rs.getBigDecimal("sales"));
+                            countByHour.put(hr, rs.getInt("cnt"));
+                        }
+                    }
+                }
+                for (int h = 8; h <= 22; h += 2) {
+                    String label = (h % 12 == 0 ? 12 : h % 12) + (h < 12 ? " AM" : " PM");
+                    BigDecimal val1 = salesByHour.getOrDefault(h, BigDecimal.ZERO);
+                    BigDecimal val2 = salesByHour.getOrDefault(h + 1, BigDecimal.ZERO);
+                    int c1 = countByHour.getOrDefault(h, 0);
+                    int c2 = countByHour.getOrDefault(h + 1, 0);
+                    BigDecimal totalH = val1.add(val2);
+                    int totalC = c1 + c2;
+                    points.add(new SalesChartPoint(label, totalH, totalC));
+                    if (totalC > 0) {
+                        if (maxAmount == null || totalH.compareTo(maxAmount) > 0) {
+                            maxAmount = totalH;
+                            maxDate = label;
+                        }
+                        if (minAmount == null || totalH.compareTo(minAmount) < 0) {
+                            minAmount = totalH;
+                            minDate = label;
+                        }
+                    }
+                }
+            } else if (period == SalesPeriod.WEEKLY) {
+                String weeklySql = """
+                    SELECT DATE(created_at) AS dt, COALESCE(SUM(total), 0) AS sales, COUNT(*) AS cnt
+                    FROM orders
+                    WHERE status = 'COMPLETED' AND created_at >= ? AND created_at < ?
+                    GROUP BY DATE(created_at)
+                """;
+                Map<LocalDate, BigDecimal> salesByDay = new HashMap<>();
+                Map<LocalDate, Integer> countByDay = new HashMap<>();
+                try (PreparedStatement ps = conn.prepareStatement(weeklySql)) {
+                    ps.setTimestamp(1, Timestamp.valueOf(startDateTime));
+                    ps.setTimestamp(2, Timestamp.valueOf(endDateTime));
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            LocalDate dt = rs.getDate("dt").toLocalDate();
+                            salesByDay.put(dt, rs.getBigDecimal("sales"));
+                            countByDay.put(dt, rs.getInt("cnt"));
+                        }
+                    }
+                }
+                LocalDate monday = startDateTime.toLocalDate();
+                DateTimeFormatter dayFmt = DateTimeFormatter.ofPattern("EEE (MMM d)", Locale.ENGLISH);
+                for (int i = 0; i < 7; i++) {
+                    LocalDate d = monday.plusDays(i);
+                    String label = d.format(dayFmt);
+                    BigDecimal s = salesByDay.getOrDefault(d, BigDecimal.ZERO);
+                    int c = countByDay.getOrDefault(d, 0);
+                    points.add(new SalesChartPoint(label, s, c));
+                    if (c > 0) {
+                        if (maxAmount == null || s.compareTo(maxAmount) > 0) {
+                            maxAmount = s;
+                            maxDate = d.format(DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH));
+                        }
+                        if (minAmount == null || s.compareTo(minAmount) < 0) {
+                            minAmount = s;
+                            minDate = d.format(DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH));
+                        }
+                    }
+                }
+            } else if (period == SalesPeriod.MONTHLY) {
+                String monthlySql = """
+                    SELECT DATE(created_at) AS dt, COALESCE(SUM(total), 0) AS sales, COUNT(*) AS cnt
+                    FROM orders
+                    WHERE status = 'COMPLETED' AND created_at >= ? AND created_at < ?
+                    GROUP BY DATE(created_at)
+                    ORDER BY dt ASC
+                """;
+                Map<LocalDate, BigDecimal> salesByDay = new HashMap<>();
+                Map<LocalDate, Integer> countByDay = new HashMap<>();
+                try (PreparedStatement ps = conn.prepareStatement(monthlySql)) {
+                    ps.setTimestamp(1, Timestamp.valueOf(startDateTime));
+                    ps.setTimestamp(2, Timestamp.valueOf(endDateTime));
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            LocalDate dt = rs.getDate("dt").toLocalDate();
+                            salesByDay.put(dt, rs.getBigDecimal("sales"));
+                            countByDay.put(dt, rs.getInt("cnt"));
+                        }
+                    }
+                }
+                LocalDate start = startDateTime.toLocalDate();
+                int daysInMonth = start.lengthOfMonth();
+                DateTimeFormatter dayFmt = DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH);
+                for (int i = 1; i <= daysInMonth; i++) {
+                    LocalDate d = start.withDayOfMonth(i);
+                    String label = String.valueOf(i);
+                    BigDecimal s = salesByDay.getOrDefault(d, BigDecimal.ZERO);
+                    int c = countByDay.getOrDefault(d, 0);
+                    points.add(new SalesChartPoint(label, s, c));
+                    if (c > 0) {
+                        if (maxAmount == null || s.compareTo(maxAmount) > 0) {
+                            maxAmount = s;
+                            maxDate = d.format(dayFmt);
+                        }
+                        if (minAmount == null || s.compareTo(minAmount) < 0) {
+                            minAmount = s;
+                            minDate = d.format(dayFmt);
+                        }
+                    }
+                }
+            } else if (period == SalesPeriod.QUARTERLY) {
+                String qSql = """
+                    SELECT MONTH(created_at) AS m, COALESCE(SUM(total), 0) AS sales, COUNT(*) AS cnt
+                    FROM orders
+                    WHERE status = 'COMPLETED' AND created_at >= ? AND created_at < ?
+                    GROUP BY MONTH(created_at)
+                """;
+                Map<Integer, BigDecimal> salesByMonth = new HashMap<>();
+                Map<Integer, Integer> countByMonth = new HashMap<>();
+                try (PreparedStatement ps = conn.prepareStatement(qSql)) {
+                    ps.setTimestamp(1, Timestamp.valueOf(startDateTime));
+                    ps.setTimestamp(2, Timestamp.valueOf(endDateTime));
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            salesByMonth.put(rs.getInt("m"), rs.getBigDecimal("sales"));
+                            countByMonth.put(rs.getInt("m"), rs.getInt("cnt"));
+                        }
+                    }
+                }
+                int qStartMonth = startDateTime.getMonthValue();
+                for (int i = 0; i < 3; i++) {
+                    int m = qStartMonth + i;
+                    String label = java.time.Month.of(m).getDisplayName(TextStyle.FULL, Locale.ENGLISH);
+                    BigDecimal s = salesByMonth.getOrDefault(m, BigDecimal.ZERO);
+                    int c = countByMonth.getOrDefault(m, 0);
+                    points.add(new SalesChartPoint(label, s, c));
+                    if (c > 0) {
+                        if (maxAmount == null || s.compareTo(maxAmount) > 0) {
+                            maxAmount = s;
+                            maxDate = label;
+                        }
+                        if (minAmount == null || s.compareTo(minAmount) < 0) {
+                            minAmount = s;
+                            minDate = label;
+                        }
+                    }
+                }
+            } else if (period == SalesPeriod.YEARLY) {
+                String yrSql = """
+                    SELECT MONTH(created_at) AS m, COALESCE(SUM(total), 0) AS sales, COUNT(*) AS cnt
+                    FROM orders
+                    WHERE status = 'COMPLETED' AND created_at >= ? AND created_at < ?
+                    GROUP BY MONTH(created_at)
+                """;
+                Map<Integer, BigDecimal> salesByMonth = new HashMap<>();
+                Map<Integer, Integer> countByMonth = new HashMap<>();
+                try (PreparedStatement ps = conn.prepareStatement(yrSql)) {
+                    ps.setTimestamp(1, Timestamp.valueOf(startDateTime));
+                    ps.setTimestamp(2, Timestamp.valueOf(endDateTime));
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            salesByMonth.put(rs.getInt("m"), rs.getBigDecimal("sales"));
+                            countByMonth.put(rs.getInt("m"), rs.getInt("cnt"));
+                        }
+                    }
+                }
+                for (int m = 1; m <= 12; m++) {
+                    String label = java.time.Month.of(m).getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
+                    BigDecimal s = salesByMonth.getOrDefault(m, BigDecimal.ZERO);
+                    int c = countByMonth.getOrDefault(m, 0);
+                    points.add(new SalesChartPoint(label, s, c));
+                    if (c > 0) {
+                        if (maxAmount == null || s.compareTo(maxAmount) > 0) {
+                            maxAmount = s;
+                            maxDate = java.time.Month.of(m).getDisplayName(TextStyle.FULL, Locale.ENGLISH);
+                        }
+                        if (minAmount == null || s.compareTo(minAmount) < 0) {
+                            minAmount = s;
+                            minDate = java.time.Month.of(m).getDisplayName(TextStyle.FULL, Locale.ENGLISH);
+                        }
+                    }
+                }
+            }
+
+            int activeCount = 0;
+            for (SalesChartPoint p : points) {
+                if (p.sales().compareTo(BigDecimal.ZERO) > 0) activeCount++;
+            }
+            BigDecimal averageDaily = activeCount > 0
+                    ? profit.divide(BigDecimal.valueOf(activeCount), 2, java.math.RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
+
+            return new SalesAnalyticsData(
+                    period,
+                    rangeLabel,
+                    profit,
+                    loss,
+                    grossSales,
+                    averageSpend,
+                    averageDaily,
+                    totalOrdersCount,
+                    completedOrdersCount,
+                    cancelledOrdersCount,
+                    totalItemsSold,
+                    minDate,
+                    minAmount == null ? BigDecimal.ZERO : minAmount,
+                    maxDate,
+                    maxAmount == null ? BigDecimal.ZERO : maxAmount,
+                    points,
+                    salesByOrderType
+            );
         } catch (SQLException e) {
             e.printStackTrace();
             return null;

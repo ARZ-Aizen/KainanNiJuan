@@ -72,7 +72,11 @@ if %errorlevel% neq 0 (
 
 :: Copy local configs if present
 if exist "config.properties" copy "config.properties" "dist\KainanNiJuan\" >nul
-if exist "src\main\resources\db.properties" copy "src\main\resources\db.properties" "dist\KainanNiJuan\" >nul
+if exist "db.properties" (
+    copy "db.properties" "dist\KainanNiJuan\" >nul
+) else if exist "src\main\resources\db.properties" (
+    copy "src\main\resources\db.properties" "dist\KainanNiJuan\" >nul
+)
 
 echo.
 echo ========================================================

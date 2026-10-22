@@ -110,12 +110,20 @@ public class ClientPosController {
 
     public void refreshData(List<Dishes> latestDishes) {
         if (loading) return;
-        dishItems.setAll(latestDishes == null ? List.of() : latestDishes);
+        List<Dishes> incoming = latestDishes == null ? List.of() : latestDishes;
+        if (incoming.equals(dishItems)) {
+            return;
+        }
+        dishItems.setAll(incoming);
         applyPosFilter();
     }
 
     public void setCategories(List<String> categories) {
-        suppliedCategories = categories == null ? new ArrayList<>() : new ArrayList<>(categories);
+        List<String> incoming = categories == null ? List.of() : categories;
+        if (incoming.equals(suppliedCategories)) {
+            return;
+        }
+        suppliedCategories = new ArrayList<>(incoming);
         rebuildCategoryChips();
     }
 

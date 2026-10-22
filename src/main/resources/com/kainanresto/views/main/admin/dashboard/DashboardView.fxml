@@ -4,122 +4,201 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.SVGPath?>
 
-<ScrollPane fx:id="dashboardView" fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
+<ScrollPane fx:id="dashboardView" fitToWidth="true" fitToHeight="false" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
             styleClass="dashboard-scroll" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.kainanresto.controllers.main.admin.dashboard.DashboardController">
     <content>
         <VBox styleClass="dashboard-content" spacing="28.0">
-            <!-- Stat Cards -->
-            <HBox spacing="20.0" styleClass="stat-cards-row" fillHeight="true">
-                <!-- Today's Sales -->
-                <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-                    <HBox alignment="CENTER_LEFT"><Label text="Today's Sales" styleClass="stat-label" /><Region HBox.hgrow="ALWAYS" />
-                        <StackPane styleClass="stat-icon-shell"><SVGPath fx:id="salesStatIcon" styleClass="phosphor-icon, accent-icon" /></StackPane>
-                    </HBox>
-                    <VBox spacing="4.0"><Label fx:id="todaysSalesValueLabel" text="—" styleClass="stat-value" /><Label fx:id="todaysSalesDeltaLabel" text="—" styleClass="stat-subtext" /></VBox>
-                </VBox>
-                <!-- Transactions -->
-                <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-                    <HBox alignment="CENTER_LEFT"><Label text="Transactions" styleClass="stat-label" /><Region HBox.hgrow="ALWAYS" />
-                        <StackPane styleClass="stat-icon-shell"><SVGPath fx:id="transactionsStatIcon" styleClass="phosphor-icon, accent-icon" /></StackPane>
-                    </HBox>
-                    <VBox spacing="4.0"><Label fx:id="transactionsValueLabel" text="—" styleClass="stat-value" /><Label fx:id="transactionsSubLabel" text="—" styleClass="stat-subtext" /></VBox>
-                </VBox>
-                <!-- Completed Orders -->
-                <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-                    <HBox alignment="CENTER_LEFT"><Label text="Completed Orders" styleClass="stat-label" /><Region HBox.hgrow="ALWAYS" />
-                        <StackPane styleClass="stat-icon-shell"><SVGPath fx:id="completedOrdersStatIcon" styleClass="phosphor-icon,accent-icon" /></StackPane>
-                    </HBox>
-                    <VBox spacing="4.0"><Label fx:id="completedOrdersValueLabel" text="—" styleClass="stat-value" /><Label fx:id="completedOrdersSubLabel" text="—" styleClass="stat-subtext" /></VBox>
-                </VBox>
-                <!-- Menu Items -->
-                <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-                    <HBox alignment="CENTER_LEFT"><Label text="Total Menu Items" styleClass="stat-label" /><Region HBox.hgrow="ALWAYS" />
-                        <StackPane styleClass="stat-icon-shell"><SVGPath fx:id="menuStatIcon" styleClass="phosphor-icon, accent-icon" /></StackPane>
-                    </HBox>
-                    <VBox spacing="4.0"><Label fx:id="totalMenuItemsValueLabel" text="—" styleClass="stat-value" /><Label fx:id="totalMenuItemsSubLabel" text="—" styleClass="stat-subtext" /></VBox>
-                </VBox>
-            </HBox>
 
-            <!-- Sales Analytics -->
-            <VBox styleClass="section-card, analytics-card" spacing="24.0" VBox.vgrow="ALWAYS">
+            <!-- ================= SALES ANALYTICS ================= -->
+            <VBox fx:id="salesAnalyticsSection" spacing="22.0">
+                <!-- Range Toggles -->
                 <HBox alignment="CENTER_LEFT">
-                    <VBox spacing="4.0">
-                        <Label fx:id="chartTitleLabel" text="Weekly Sales Analytics" styleClass="section-title" />
-                        <Label fx:id="chartSubtitleLabel" text="Visualizing net revenue trends over the past 7 days" styleClass="section-subtitle" />
-                    </VBox>
-                    <Region HBox.hgrow="ALWAYS" />
-                    <HBox styleClass="range-toggle" spacing="8.0">
-                        <Button fx:id="rangeTodayBtn" text="Today" onAction="#onRangeToday" styleClass="range-btn" />
-                        <Button fx:id="rangeWeekBtn" text="This Week" onAction="#onRangeWeek" styleClass="range-btn, range-btn-active" />
-                        <Button fx:id="rangeMonthBtn" text="This Month" onAction="#onRangeMonth" styleClass="range-btn" />
+                    <!-- Period Toggle Box: Daily, Weekly, Monthly, Quarterly, Yearly -->
+                    <HBox fx:id="periodToggleBox" styleClass="range-toggle" alignment="CENTER_LEFT" spacing="8.0">
+                        <ToggleButton fx:id="dailyRangeBtn" text="Daily" styleClass="range-btn" onAction="#onDailyRangeSelected">
+                            <toggleGroup><ToggleGroup fx:id="analyticsPeriodGroup" /></toggleGroup>
+                        </ToggleButton>
+                        <ToggleButton fx:id="weeklyRangeBtn" text="Weekly" styleClass="range-btn, range-btn-active" selected="true" toggleGroup="$analyticsPeriodGroup" onAction="#onWeeklyRangeSelected" />
+                        <ToggleButton fx:id="monthlyRangeBtn" text="Monthly" styleClass="range-btn" toggleGroup="$analyticsPeriodGroup" onAction="#onMonthlyRangeSelected" />
+                        <ToggleButton fx:id="quarterlyRangeBtn" text="Quarterly" styleClass="range-btn" toggleGroup="$analyticsPeriodGroup" onAction="#onQuarterlyRangeSelected" />
+                        <ToggleButton fx:id="yearlyRangeBtn" text="Yearly" styleClass="range-btn" toggleGroup="$analyticsPeriodGroup" onAction="#onYearlyRangeSelected" />
                     </HBox>
                 </HBox>
-                <HBox spacing="32.0" alignment="CENTER_LEFT">
-                    <StackPane HBox.hgrow="ALWAYS" prefHeight="280.0" styleClass="chart-wrapper">
-                        <BarChart fx:id="weeklySalesChart" prefHeight="280.0" minHeight="260.0" legendVisible="false" animated="false" horizontalGridLinesVisible="false" verticalGridLinesVisible="false" alternativeRowFillVisible="false" horizontalZeroLineVisible="false" verticalZeroLineVisible="false" barGap="0.0" categoryGap="34.0" styleClass="weekly-sales-chart">
-                            <xAxis><CategoryAxis fx:id="weeklySalesXAxis" side="BOTTOM" tickMarkVisible="false" /></xAxis>
-                            <yAxis><NumberAxis fx:id="weeklySalesYAxis" side="LEFT" forceZeroInRange="true" autoRanging="true" tickLabelsVisible="false" tickMarkVisible="false" minorTickVisible="false" /></yAxis>
+
+                <!-- Stat cards: Profit, Loss, Count, Total Menu Items (Replacing Average Spend) -->
+                <HBox spacing="16.0" fillHeight="true">
+                    <!-- Profit Card -->
+                    <VBox styleClass="stat-card, stat-card-outlined" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT">
+                            <Label text="Profit (Net Sales)" styleClass="stat-label" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <StackPane styleClass="stat-icon-shell">
+                                <SVGPath fx:id="profitSalesIcon" styleClass="phosphor-icon, accent-icon" />
+                            </StackPane>
+                        </HBox>
+                        <VBox spacing="4.0">
+                            <Label fx:id="profitSalesValueLabel" text="—" styleClass="stat-value" />
+                            <Label fx:id="profitSalesNoteLabel" text="Revenue from completed orders" styleClass="stat-subtext" />
+                        </VBox>
+                    </VBox>
+
+                    <!-- Loss Card -->
+                    <VBox styleClass="stat-card, stat-card-outlined" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT">
+                            <Label text="Loss (Cancelled)" styleClass="stat-label" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <StackPane styleClass="stat-icon-shell">
+                                <SVGPath fx:id="lossSalesIcon" styleClass="phosphor-icon, accent-icon" />
+                            </StackPane>
+                        </HBox>
+                        <VBox spacing="4.0">
+                            <Label fx:id="lossSalesValueLabel" text="—" styleClass="stat-value" />
+                            <Label fx:id="lossSalesNoteLabel" text="Value of cancelled transactions" styleClass="stat-subtext" />
+                        </VBox>
+                    </VBox>
+
+                    <!-- Orders Count Card -->
+                    <VBox styleClass="stat-card, stat-card-outlined" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT">
+                            <Label text="Orders Count" styleClass="stat-label" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <StackPane styleClass="stat-icon-shell">
+                                <SVGPath fx:id="orderCountIcon" styleClass="phosphor-icon, accent-icon" />
+                            </StackPane>
+                        </HBox>
+                        <VBox spacing="4.0">
+                            <Label fx:id="orderCountValueLabel" text="—" styleClass="stat-value" />
+                            <Label fx:id="orderCountNoteLabel" text="Total orders recorded in period" styleClass="stat-subtext" />
+                        </VBox>
+                    </VBox>
+
+                    <!-- Total Menu Items Card (Retained from Dashboard, replaces Average Spend) -->
+                    <VBox styleClass="stat-card, stat-card-outlined" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT">
+                            <Label text="Total Menu Items" styleClass="stat-label" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <StackPane styleClass="stat-icon-shell">
+                                <SVGPath fx:id="menuStatIcon" styleClass="phosphor-icon, accent-icon" />
+                            </StackPane>
+                        </HBox>
+                        <VBox spacing="4.0">
+                            <Label fx:id="totalMenuItemsValueLabel" text="—" styleClass="stat-value" />
+                            <Label fx:id="totalMenuItemsSubLabel" text="—" styleClass="stat-subtext" />
+                        </VBox>
+                    </VBox>
+                </HBox>
+
+                <!-- Min & Max Date Sales Highlights -->
+                <HBox spacing="16.0" fillHeight="true">
+                    <!-- Peak Sales Record -->
+                    <VBox styleClass="stat-card-highlight" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                            <Label text="PEAK SALES RECORD" styleClass="highlight-badge-peak" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <StackPane styleClass="stat-icon-shell">
+                                <SVGPath fx:id="peakSalesIcon" styleClass="phosphor-icon, accent-icon" />
+                            </StackPane>
+                        </HBox>
+                        <VBox spacing="4.0">
+                            <Label fx:id="maxSalesValueLabel" text="—" styleClass="highlight-card-value" />
+                            <Label fx:id="maxSalesDateLabel" text="—" styleClass="highlight-card-sub" />
+                            <Label text="Highest sales interval recorded in this period" styleClass="highlight-card-note" />
+                        </VBox>
+                    </VBox>
+
+                    <!-- Lowest Sales Record -->
+                    <VBox styleClass="stat-card-highlight" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                            <Label text="LOWEST SALES RECORD" styleClass="highlight-badge-low" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <StackPane styleClass="stat-icon-shell">
+                                <SVGPath fx:id="lowestSalesIcon" styleClass="phosphor-icon, accent-icon" />
+                            </StackPane>
+                        </HBox>
+                        <VBox spacing="4.0">
+                            <Label fx:id="minSalesValueLabel" text="—" styleClass="highlight-card-value" />
+                            <Label fx:id="minSalesDateLabel" text="—" styleClass="highlight-card-sub" />
+                            <Label text="Lowest sales interval recorded in this period" styleClass="highlight-card-note" />
+                        </VBox>
+                    </VBox>
+                </HBox>
+
+                <!-- Graphs & Period Data Overview -->
+                <HBox spacing="20.0" fillHeight="true">
+                    <!-- Left: Sales BarChart -->
+                    <VBox styleClass="section-card, analytics-card, stat-card-outlined" spacing="16.0" HBox.hgrow="ALWAYS">
+                        <VBox spacing="4.0">
+                            <Label fx:id="salesChartTitleLabel" text="Weekly Sales Analytics Trend" styleClass="section-title" />
+                            <Label fx:id="salesChartSubtitleLabel" text="Sales performance over selected period" styleClass="section-subtitle" />
+                        </VBox>
+                        <BarChart fx:id="salesBarChart" prefHeight="350.0" minHeight="300.0" legendVisible="false" animated="false"
+                                  horizontalGridLinesVisible="false" verticalGridLinesVisible="false" barGap="4.0" categoryGap="28.0"
+                                  styleClass="weekly-sales-chart, sales-bar-chart">
+                            <xAxis><CategoryAxis fx:id="salesXAxis" side="BOTTOM" tickMarkVisible="false" /></xAxis>
+                            <yAxis><NumberAxis fx:id="salesYAxis" side="LEFT" forceZeroInRange="true" autoRanging="true" tickMarkVisible="false" /></yAxis>
                         </BarChart>
-                    </StackPane>
-                    <VBox prefWidth="380.0" styleClass="analytics-summary-card" spacing="20.0">
-                        <VBox spacing="4.0"><Label fx:id="totalSalesCaptionLabel" text="Total Weekly Sales" styleClass="summary-label" /><Label fx:id="totalWeeklySalesLabel" text="—" styleClass="summary-value" /></VBox>
-                        <Region styleClass="summary-divider" />
-                        <VBox spacing="4.0"><Label fx:id="ordersCountCaptionLabel" text="Weekly Orders Count" styleClass="summary-label" /><Label fx:id="weeklyOrdersCountLabel" text="—" styleClass="summary-value" /></VBox>
-                        <Region styleClass="summary-divider" />
-                        <VBox spacing="4.0"><Label text="Avg Order Value" styleClass="summary-label" /><Label fx:id="avgOrderValueLabel" text="—" styleClass="summary-value" /></VBox>
+                    </VBox>
+
+                    <!-- Right: Period Overview & Breakdown -->
+                    <VBox styleClass="section-card, analytics-card, stat-card-outlined" prefWidth="340.0" minWidth="300.0" maxWidth="380.0" spacing="16.0">
+                        <Label text="Period Overview &amp; Data" styleClass="lower-title" />
+                        <VBox spacing="12.0">
+                            <VBox spacing="2.0">
+                                <Label text="Gross Period Sales" styleClass="summary-label" />
+                                <Label fx:id="grossSalesValueLabel" text="—" styleClass="summary-value" />
+                            </VBox>
+                            <VBox spacing="2.0">
+                                <Label text="Periodic Average Sales" styleClass="summary-label" />
+                                <Label fx:id="avgPeriodicSalesLabel" text="—" styleClass="summary-value" />
+                            </VBox>
+                            <VBox spacing="2.0">
+                                <Label text="Total Items Sold" styleClass="summary-label" />
+                                <Label fx:id="totalItemsSoldLabel" text="—" styleClass="summary-value" />
+                            </VBox>
+                            <Region styleClass="summary-divider" />
+                            <Label text="Sales by Order Type" styleClass="summary-label" />
+                            <VBox fx:id="orderTypesBreakdownBox" spacing="8.0" />
+                        </VBox>
                     </VBox>
                 </HBox>
             </VBox>
 
-            <!-- Best Sellers + Sales Overview (Replaced Inventory Alerts) -->
-            <HBox spacing="24.0" alignment="TOP_LEFT">
-                <VBox HBox.hgrow="ALWAYS" styleClass="section-card, lower-card" spacing="16.0">
-                    <HBox alignment="CENTER_LEFT">
-                        <Label text="Best-Selling Menu Items" styleClass="lower-title" />
-                        <Region HBox.hgrow="ALWAYS" />
-                        <Label text="Volume Ranked" styleClass="volume-badge" />
-                    </HBox>
-                    <VBox fx:id="bestSellingItemsContainer" styleClass="best-seller-list" spacing="0.0">
-                        <Label text="No dashboard data loaded." styleClass="dashboard-placeholder" />
-                    </VBox>
+            <!-- ================= LOWER SECTION: BEST SELLERS ================= -->
+            <VBox styleClass="section-card, lower-card" spacing="16.0">
+                <HBox alignment="CENTER_LEFT">
+                    <Label text="Best-Selling Menu Items" styleClass="lower-title" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Label text="Volume Ranked" styleClass="volume-badge" />
+                </HBox>
+                <VBox fx:id="bestSellingItemsContainer" styleClass="best-seller-list" spacing="0.0">
+                    <Label text="No dashboard data loaded." styleClass="dashboard-placeholder" />
                 </VBox>
+            </VBox>
 
-                <!-- Sales Overview Card -->
-                <VBox HBox.hgrow="ALWAYS" styleClass="section-card, lower-card" spacing="16.0">
-                    <HBox alignment="CENTER_LEFT">
-                        <Label text="Sales Overview" styleClass="lower-title" />
-                        <Region HBox.hgrow="ALWAYS" />
-                        <Label text="Periodic Revenue" styleClass="volume-badge" />
-                    </HBox>
-                    <VBox spacing="12.0" styleClass="best-seller-list">
-                        <!-- Weekly Sales -->
-                        <HBox alignment="CENTER_LEFT" styleClass="best-seller-row">
-                            <VBox spacing="2.0" HBox.hgrow="ALWAYS">
-                                <Label text="Weekly Sales" styleClass="best-seller-name" />
-                                <Label text="Past 7 days revenue" styleClass="stat-subtext" />
-                            </VBox>
-                            <Label fx:id="weeklySalesSummaryLabel" text="—" styleClass="summary-value" />
-                        </HBox>
-                        <!-- Monthly Sales -->
-                        <HBox alignment="CENTER_LEFT" styleClass="best-seller-row">
-                            <VBox spacing="2.0" HBox.hgrow="ALWAYS">
-                                <Label text="Monthly Sales" styleClass="best-seller-name" />
-                                <Label text="Current month revenue" styleClass="stat-subtext" />
-                            </VBox>
-                            <Label fx:id="monthlySalesSummaryLabel" text="—" styleClass="summary-value" />
-                        </HBox>
-                        <!-- Yearly Sales -->
-                        <HBox alignment="CENTER_LEFT" styleClass="best-seller-row">
-                            <VBox spacing="2.0" HBox.hgrow="ALWAYS">
-                                <Label text="Yearly Sales" styleClass="best-seller-name" />
-                                <Label text="Current year total" styleClass="stat-subtext" />
-                            </VBox>
-                            <Label fx:id="yearlySalesSummaryLabel" text="—" styleClass="summary-value" />
-                        </HBox>
-                    </VBox>
-                </VBox>
-            </HBox>
+            <!-- ================= LOWER SECTION: RECENT TRANSACTIONS ================= -->
+            <VBox styleClass="section-card, lower-card" spacing="14.0">
+                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                    <Label text="Recent Transactions" styleClass="lower-title" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button fx:id="viewAllOrdersBtn" text="View All in Sales &amp; Orders →" styleClass="view-all-btn" onAction="#onViewAllOrders" />
+                </HBox>
+                <TableView fx:id="recentOrdersTable" styleClass="orders-table, orders-table-fixed" fixedCellSize="52.0" prefHeight="298.0" minHeight="298.0" maxHeight="298.0" focusTraversable="false">
+                    <placeholder>
+                        <Label text="No recent transactions found." styleClass="dashboard-placeholder" />
+                    </placeholder>
+                    <columns>
+                        <TableColumn fx:id="recentOrderIdColumn" text="ORDER ID" prefWidth="100.0" minWidth="90.0" sortable="false" reorderable="false" styleClass="col-first, col-id" />
+                        <TableColumn fx:id="recentOrderTypeColumn" text="TYPE" prefWidth="85.0" minWidth="75.0" sortable="false" reorderable="false" styleClass="col-type" />
+                        <TableColumn fx:id="recentOrderStaffColumn" text="STAFF" prefWidth="200.0" minWidth="160.0" sortable="false" reorderable="false" />
+                        <TableColumn fx:id="recentOrderCreatedColumn" text="CREATED / LAST EDIT" prefWidth="170.0" minWidth="140.0" sortable="false" reorderable="false" styleClass="col-time" />
+                        <TableColumn fx:id="recentOrderTotalColumn" text="TOTAL" prefWidth="100.0" minWidth="90.0" sortable="false" reorderable="false" styleClass="col-total" />
+                        <TableColumn fx:id="recentOrderStatusColumn" text="STATUS" prefWidth="120.0" minWidth="100.0" sortable="false" reorderable="false" />
+                        <TableColumn fx:id="recentOrderPaymentColumn" text="PAYMENT" prefWidth="110.0" minWidth="90.0" sortable="false" reorderable="false" />
+                    </columns>
+                </TableView>
+            </VBox>
+
         </VBox>
     </content>
 </ScrollPane>

@@ -9,7 +9,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.util.Objects;
 
-public class    Launcher extends Application {
+public class Launcher extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -19,7 +19,8 @@ public class    Launcher extends Application {
         stage.setResizable(false);
 
         try {
-            stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/kainanresto/images/id/KainanNiJuanLogo.png"))));
+            stage.getIcons().add(new Image(Objects.requireNonNull(
+                    getClass().getResourceAsStream("/com/kainanresto/images/id/KainanNiJuanLogo.png"))));
         } catch (Exception e) {
             System.err.println("Launcher: Could not load application icon - " + e.getMessage());
         }

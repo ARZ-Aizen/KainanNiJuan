@@ -46,6 +46,7 @@ import java.util.function.Consumer;
 
 public class ClientOrderManagementController {
 
+    @FXML private VBox omHeaderTitleBox;
     @FXML private Label omSubtitleLabel;
     @FXML private HBox omSearchBox;
     @FXML private SVGPath omSearchIcon;
@@ -185,6 +186,13 @@ public class ClientOrderManagementController {
         updateOmChipCounts();
         updateOmReceiptPanel();
         applyOmFilter();
+    }
+
+    public void setHeaderVisible(boolean visible) {
+        if (omHeaderTitleBox != null) {
+            omHeaderTitleBox.setVisible(visible);
+            omHeaderTitleBox.setManaged(visible);
+        }
     }
 
     public void setOnCompleteOrder(Consumer<OrderCard> handler) { this.onCompleteOrder = handler; }

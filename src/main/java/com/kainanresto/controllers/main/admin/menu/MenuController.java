@@ -136,12 +136,14 @@ public class MenuController {
 
     public void refreshData(List<Dishes> latestDishes) {
         if (addDishView.isVisible()) return;
+        List<Dishes> incoming = latestDishes == null ? List.of() : latestDishes;
+        if (incoming.equals(dishItems)) return;
 
         new Thread(() -> {
             List<String> cats = productDAO.getAllCategories();
             Platform.runLater(() -> {
                 setMenuCategories(cats);
-                setDishes(latestDishes);
+                setDishes(incoming);
             });
         }).start();
     }
@@ -270,7 +272,10 @@ public class MenuController {
     }
 
     private void setMenuCategories(List<String> categories) {
-        List<String> safeCategories = categories == null ? new ArrayList<>() : categories;
+        List<String> safeCategories = categories == null ? List.of() : categories;
+        if (safeCategories.equals(categoryNames)) {
+            return;
+        }
 
         String previousChip = selectedCategory;
         String previousComboValue = addDishCategoryCombo != null ? addDishCategoryCombo.getValue() : null;
@@ -306,7 +311,11 @@ public class MenuController {
     }
 
     private void setDishes(List<Dishes> dishes) {
-        dishItems.setAll(dishes == null ? List.of() : dishes);
+        List<Dishes> incoming = dishes == null ? List.of() : dishes;
+        if (incoming.equals(dishItems)) {
+            return;
+        }
+        dishItems.setAll(incoming);
         applyMenuFilter();
     }
 
@@ -431,10 +440,13 @@ public class MenuController {
         };
 
         if (image.getProgress() >= 1.0) {
-            finish.run();
+            if (Platform.isFxApplicationThread()) finish.run();
+            else Platform.runLater(finish);
         } else {
             image.progressProperty().addListener((obs, was, now) -> {
-                if (now.doubleValue() >= 1.0) finish.run();
+                if (now.doubleValue() >= 1.0) {
+                    Platform.runLater(finish);
+                }
             });
         }
     }

@@ -138,7 +138,7 @@
         private void navigateToDashboard(ActionEvent event, User user) {
             String fxmlPath;
 
-            if (user.getRole() == AccountRole.ADMIN || RoleAccess.canUseBoth(user)) {
+            if (user.getRole() == AccountRole.ADMIN || user.getRole() == AccountRole.SUPERVISOR || RoleAccess.canUseBoth(user)) {
                 fxmlPath = "/com/kainanresto/views/main/admin/MainAdminView.fxml";
             } else {
                 fxmlPath = "/com/kainanresto/views/main/client/ClientView.fxml";

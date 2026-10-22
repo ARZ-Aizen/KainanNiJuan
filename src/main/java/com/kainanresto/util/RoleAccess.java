@@ -7,7 +7,6 @@ public final class RoleAccess {
     private RoleAccess() {}
 
     public static boolean canUseBoth(User user) {
-        return user != null && (user.getRole() == AccountRole.MANAGER
-                || user.getRole() == AccountRole.SUPERVISOR);
+        return user != null && user.getRole() == AccountRole.MANAGER;
     }
 }

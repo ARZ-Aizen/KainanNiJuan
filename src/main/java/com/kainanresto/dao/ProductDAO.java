@@ -24,32 +24,66 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ProductDAO {
 
+    public static String getServerHost() {
+        String sys = System.getProperty("kainan.server");
+        if (sys != null && !sys.isBlank()) {
+            return sys.trim();
+        }
+        java.util.Properties props = DatabaseConfig.getProperties();
+        String host = props.getProperty("image.host",
+                props.getProperty("server.host",
+                props.getProperty("db.host", DatabaseConfig.getServerHost())));
+        if (host != null && !host.isBlank()) {
+            return host.trim();
+        }
+        return "localhost";
+    }
 
-    private static final String IMAGE_HOST    = System.getProperty("kainan.server", "192.168.1.15");
-    private static final String BASE_URL      = "http://" + IMAGE_HOST + "/kainan/";
-    private static final String IMAGE_SERVER  = BASE_URL + "kainan_images/";
-    private static final String UPLOAD_URL    = BASE_URL + "upload.php";
-    private static final String CATEGORY_URL  = BASE_URL + "make_category.php";
-    private static final String DELETE_CATEGORY_URL = BASE_URL + "delete_category.php";
-    private static final String DELETE_IMAGE_URL = BASE_URL + "delete_image.php";
+    public static String getBaseUrl() {
+        java.util.Properties props = DatabaseConfig.getProperties();
+        String customUrl = props.getProperty("image.url");
+        if (customUrl != null && !customUrl.isBlank()) {
+            String u = customUrl.trim();
+            return u.endsWith("/") ? u : u + "/";
+        }
+        String host = getServerHost();
+        String port = props.getProperty("image.port", props.getProperty("http.port", "80")).trim();
+        String hostPort = (port.isEmpty() || port.equals("80")) ? host : host + ":" + port;
+        return "http://" + hostPort + "/kainan/";
+    }
 
+    public static String getImageServerUrl() {
+        return getBaseUrl() + "kainan_images/";
+    }
 
+    public static String getUploadUrl() {
+        return getBaseUrl() + "upload.php";
+    }
 
+    public static String getCategoryUrl() {
+        return getBaseUrl() + "make_category.php";
+    }
+
+    public static String getDeleteCategoryUrl() {
+        return getBaseUrl() + "delete_category.php";
+    }
+
+    public static String getDeleteImageUrl() {
+        return getBaseUrl() + "delete_image.php";
+    }
 
     private static final Path LOCAL_IMAGE_DIR = Paths.get(
             System.getProperty("kainan.localImages", System.getProperty("user.home") + "/kainan_images"));
 
     private static final String RESOURCE_BASE = "/com/kainanresto/images/main/PreloadDish/";
 
-    private static final long RETRY_AFTER_MS = 30_000;
-    private static volatile long serverDownUntil = 0;
-    private static final Map<String, String> serverHits = new ConcurrentHashMap<>();
 
-    private List<String> categoryCache = null;
+    public enum UploadResult {
+        SERVER, LOCAL_ONLY, FAILED
+    }
 
-    public enum UploadResult { SERVER, LOCAL_ONLY, FAILED }
-
-    public record ArchivedCategory(String name, int dishCount) {}
+    public record ArchivedCategory(String name, int dishCount) {
+    }
 
     static {
         ensureArchiveColumns();
@@ -57,13 +91,15 @@ public class ProductDAO {
 
     private static void ensureArchiveColumns() {
         try (Connection conn = DatabaseConfig.getConnection();
-             Statement stmt = conn.createStatement()) {
+                Statement stmt = conn.createStatement()) {
             try {
                 stmt.executeUpdate("ALTER TABLE categories ADD COLUMN is_deleted TINYINT(1) NOT NULL DEFAULT 0");
-            } catch (SQLException ignored) { }
+            } catch (SQLException ignored) {
+            }
             try {
                 stmt.executeUpdate("ALTER TABLE dishes ADD COLUMN is_deleted TINYINT(1) NOT NULL DEFAULT 0");
-            } catch (SQLException ignored) { }
+            } catch (SQLException ignored) {
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -74,8 +110,8 @@ public class ProductDAO {
         String query = "SELECT name FROM categories WHERE is_deleted = 0 ORDER BY name ASC";
 
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query);
-             ResultSet rs = stmt.executeQuery()) {
+                PreparedStatement stmt = conn.prepareStatement(query);
+                ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 categories.add(rs.getString("name"));
@@ -89,11 +125,12 @@ public class ProductDAO {
     public boolean addCategory(String categoryName) {
         String query = "INSERT INTO categories (name) VALUES (?)";
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+                PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setString(1, categoryName);
             boolean ok = stmt.executeUpdate() > 0;
-            if (ok) ensureCategoryFolder(categoryName);
+            if (ok)
+                ensureCategoryFolder(categoryName);
             return ok;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -104,7 +141,7 @@ public class ProductDAO {
     private boolean folderStillReferenced(String folder) {
         String q = "SELECT COUNT(*) FROM dishes WHERE image_url LIKE ?";
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement st = conn.prepareStatement(q)) {
+                PreparedStatement st = conn.prepareStatement(q)) {
             st.setString(1, folder + "/%");
             try (ResultSet rs = st.executeQuery()) {
                 return rs.next() && rs.getInt(1) > 0;
@@ -117,37 +154,41 @@ public class ProductDAO {
 
     public void deleteCategoryFolder(String categoryName) {
         String folder = safeFolder(categoryName);
-        if (folder.isEmpty() || folderStillReferenced(folder)) return;
+        if (folder.isEmpty() || folderStillReferenced(folder))
+            return;
 
         deleteFolderOnServer(folder);
         deleteLocalFolder(folder);
-        serverHits.clear();
+        com.kainanresto.util.DishImageLoader.clearCache();
     }
 
     private boolean deleteFolderOnServer(String folder) {
-        if (System.currentTimeMillis() < serverDownUntil) return false;
-
         HttpURLConnection conn = null;
         try {
-            conn = (HttpURLConnection) new URL(DELETE_CATEGORY_URL + "?category=" + encodePath(folder)).openConnection();
+            conn = (HttpURLConnection) new URL(getDeleteCategoryUrl() + "?category=" + encodePath(folder))
+                    .openConnection();
             conn.setRequestMethod("POST");
             conn.setConnectTimeout(3000);
             conn.setReadTimeout(5000);
             return conn.getResponseCode() == 200;
         } catch (IOException e) {
-            serverDownUntil = System.currentTimeMillis() + RETRY_AFTER_MS;
             return false;
         } finally {
-            if (conn != null) conn.disconnect();
+            if (conn != null)
+                conn.disconnect();
         }
     }
 
     private void deleteLocalFolder(String folder) {
         Path dir = LOCAL_IMAGE_DIR.resolve(folder);
-        if (!Files.isDirectory(dir)) return;
+        if (!Files.isDirectory(dir))
+            return;
         try (var walk = Files.walk(dir)) {
             walk.sorted(java.util.Comparator.reverseOrder()).forEach(p -> {
-                try { Files.delete(p); } catch (IOException ignored) { }
+                try {
+                    Files.delete(p);
+                } catch (IOException ignored) {
+                }
             });
         } catch (IOException e) {
             e.printStackTrace();
@@ -161,7 +202,7 @@ public class ProductDAO {
     public boolean archiveCategory(String categoryName) {
         String query = "UPDATE categories SET is_deleted = 1 WHERE name = ?";
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+                PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setString(1, categoryName);
             return stmt.executeUpdate() > 0;
@@ -174,7 +215,7 @@ public class ProductDAO {
     public boolean restoreCategory(String categoryName) {
         String query = "UPDATE categories SET is_deleted = 0 WHERE name = ?";
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+                PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setString(1, categoryName);
             return stmt.executeUpdate() > 0;
@@ -187,11 +228,12 @@ public class ProductDAO {
     public boolean permanentDeleteCategory(String categoryName) {
         String query = "DELETE FROM categories WHERE name = ?";
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+                PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setString(1, categoryName);
             boolean ok = stmt.executeUpdate() > 0;
-            if (ok) deleteCategoryFolder(categoryName);
+            if (ok)
+                deleteCategoryFolder(categoryName);
             return ok;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -202,16 +244,16 @@ public class ProductDAO {
     public List<ArchivedCategory> getArchivedCategories() {
         List<ArchivedCategory> list = new ArrayList<>();
         String query = """
-            SELECT c.name, COUNT(d.id) AS dish_count
-            FROM categories c
-            LEFT JOIN dishes d ON c.id = d.category_id AND d.is_deleted = 0
-            WHERE c.is_deleted = 1
-            GROUP BY c.id, c.name
-            ORDER BY c.name ASC
-        """;
+                    SELECT c.name, COUNT(d.id) AS dish_count
+                    FROM categories c
+                    LEFT JOIN dishes d ON c.id = d.category_id AND d.is_deleted = 0
+                    WHERE c.is_deleted = 1
+                    GROUP BY c.id, c.name
+                    ORDER BY c.name ASC
+                """;
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query);
-             ResultSet rs = stmt.executeQuery()) {
+                PreparedStatement stmt = conn.prepareStatement(query);
+                ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
                 list.add(new ArchivedCategory(rs.getString("name"), rs.getInt("dish_count")));
             }
@@ -248,87 +290,66 @@ public class ProductDAO {
         return i >= 0 ? f.substring(i + 1) : f;
     }
 
-    private String resolveImageUrl(String rawImageUri, String categoryName) {
-        if (rawImageUri == null || rawImageUri.isBlank()) return null;
-        String raw = rawImageUri.trim();
+    public static String resolveImageUrl(String rawImageUri, String categoryName) {
+        if (rawImageUri == null || rawImageUri.isBlank())
+            return null;
+        String raw = rawImageUri.trim().replace('\\', '/');
 
-        if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
+        if (raw.startsWith("http://") || raw.startsWith("https://") || raw.startsWith("file:")) {
+            return raw.replace(" ", "%20");
+        }
 
         String fileName = fileNameOf(raw);
-        String cat = categoryName == null ? "" : categoryName;
-
-        String url = findOnServer(cat, fileName);
-        if (url == null) url = findInClasspath(cat, fileName);
-        if (url == null) url = findInLocalFolder(cat, fileName);
-        if (url == null) url = findStoredPath(raw);
-
-        if (url == null) {
-            List<String> others = categoryCache != null ? categoryCache : getAllCategories();
-            for (String other : others) {
-                if (other.equals(cat)) continue;
-                url = findOnServer(other, fileName);
-                if (url == null) url = findInClasspath(other, fileName);
-                if (url == null) url = findInLocalFolder(other, fileName);
-                if (url != null) break;
-            }
+        String folderFromRaw = "";
+        int slashIdx = raw.lastIndexOf('/');
+        if (slashIdx >= 0) {
+            folderFromRaw = raw.substring(0, slashIdx).trim();
         }
 
-        return url == null ? raw : url;
-    }
+        String cat = categoryName == null ? "" : categoryName.trim();
+        String targetFolder = !folderFromRaw.isEmpty() ? folderFromRaw : cat;
 
-    private String findOnServer(String category, String fileName) {
-        if (category.isEmpty()) return null;
-
-        String key = category + "/" + fileName;
-        String cached = serverHits.get(key);
-        if (cached != null) return cached;
-
-        if (System.currentTimeMillis() < serverDownUntil) return null;
-
-        String serverUrl = IMAGE_SERVER + encodePath(category) + "/" + encodePath(fileName);
-
-        for (String method : new String[]{"HEAD", "GET"}) {
-            HttpURLConnection c = null;
-            try {
-                c = (HttpURLConnection) new URL(serverUrl).openConnection();
-                c.setRequestMethod(method);
-                c.setConnectTimeout(2000);
-                c.setReadTimeout(2000);
-
-                int code = c.getResponseCode();
-                if (code == 200) {
-                    serverHits.put(key, serverUrl);
-                    return serverUrl;
-                }
-                if (code != 405 && code != 501 && code != 403) return null;
-            } catch (IOException e) {
-                serverDownUntil = System.currentTimeMillis() + RETRY_AFTER_MS;
-                return null;
-            } finally {
-                if (c != null) c.disconnect();
-            }
+        // Quick check in classpath resources
+        if (!targetFolder.isEmpty()) {
+            String cp = findInClasspath(targetFolder, fileName);
+            if (cp != null) return cp;
+            String loc = findInLocalFolder(targetFolder, fileName);
+            if (loc != null) return loc;
         }
-        return null;
+
+        String stored = findStoredPath(raw);
+        if (stored != null) return stored;
+
+        // Direct HTTP URL on the image server
+        if (!targetFolder.isEmpty() && !fileName.isEmpty()) {
+            return getImageServerUrl() + encodePath(targetFolder) + "/" + encodePath(fileName);
+        } else if (!fileName.isEmpty()) {
+            return getImageServerUrl() + encodePath(fileName);
+        }
+
+        return raw;
     }
 
-    private String findInClasspath(String category, String fileName) {
+    private static String findInClasspath(String category, String fileName) {
         String[] candidates = {
                 RESOURCE_BASE + category + "/" + fileName,
                 RESOURCE_BASE + category + "/" + fileName.toLowerCase(),
                 RESOURCE_BASE + fileName
         };
         for (String path : candidates) {
-            URL res = getClass().getResource(path);
-            if (res != null) return res.toExternalForm();
+            URL res = ProductDAO.class.getResource(path);
+            if (res != null)
+                return res.toExternalForm();
         }
         return null;
     }
 
-    private String findInLocalFolder(String category, String fileName) {
+    private static String findInLocalFolder(String category, String fileName) {
         try {
             Path dir = LOCAL_IMAGE_DIR.resolve(category);
             Path exact = dir.resolve(fileName);
-            if (Files.isRegularFile(exact)) return exact.toUri().toString();
+            if (Files.isRegularFile(exact))
+                return exact.toUri().toString();
 
             if (Files.isDirectory(dir)) {
                 try (var stream = Files.list(dir)) {
@@ -342,7 +363,7 @@ public class ProductDAO {
         return null;
     }
 
-    private String findStoredPath(String raw) {
+    private static String findStoredPath(String raw) {
         try {
             File f;
             if (raw.startsWith("file:")) {
@@ -350,14 +371,17 @@ public class ProductDAO {
             } else {
                 f = new File(raw);
             }
-            if (f.isFile()) return f.toURI().toString();
-        } catch (Exception ignored) { }
+            if (f.isFile())
+                return f.toURI().toString();
+        } catch (Exception ignored) {
+        }
         return null;
     }
 
     public void ensureCategoryFolder(String categoryName) {
         String folder = safeFolder(categoryName);
-        if (folder.isEmpty()) return;
+        if (folder.isEmpty())
+            return;
 
         if (!createFolderOnServer(folder)) {
             try {
@@ -369,20 +393,18 @@ public class ProductDAO {
     }
 
     private boolean createFolderOnServer(String folder) {
-        if (System.currentTimeMillis() < serverDownUntil) return false;
-
         HttpURLConnection conn = null;
         try {
-            conn = (HttpURLConnection) new URL(CATEGORY_URL + "?category=" + encodePath(folder)).openConnection();
+            conn = (HttpURLConnection) new URL(getCategoryUrl() + "?category=" + encodePath(folder)).openConnection();
             conn.setRequestMethod("POST");
             conn.setConnectTimeout(3000);
             conn.setReadTimeout(5000);
             return conn.getResponseCode() == 200;
         } catch (IOException e) {
-            serverDownUntil = System.currentTimeMillis() + RETRY_AFTER_MS;
             return false;
         } finally {
-            if (conn != null) conn.disconnect();
+            if (conn != null)
+                conn.disconnect();
         }
     }
 
@@ -391,16 +413,15 @@ public class ProductDAO {
     }
 
     public UploadResult uploadImageResult(File file, String categoryName) {
-        if (uploadToServer(file, categoryName)) return UploadResult.SERVER;
+        if (uploadToServer(file, categoryName))
+            return UploadResult.SERVER;
         return saveToLocalFolder(file, categoryName) ? UploadResult.LOCAL_ONLY : UploadResult.FAILED;
     }
 
     private boolean uploadToServer(File file, String categoryName) {
-        if (System.currentTimeMillis() < serverDownUntil) return false;
-
         HttpURLConnection conn = null;
         try {
-            String url = UPLOAD_URL + "?category=" + encodePath(safeFolder(categoryName))
+            String url = getUploadUrl() + "?category=" + encodePath(safeFolder(categoryName))
                     + "&filename=" + encodePath(file.getName());
 
             conn = (HttpURLConnection) new URL(url).openConnection();
@@ -416,15 +437,15 @@ public class ProductDAO {
 
             int code = conn.getResponseCode();
             if (code == 200) {
-                serverHits.clear();
+                com.kainanresto.util.DishImageLoader.clearCache();
                 return true;
             }
             return false;
         } catch (IOException e) {
-            serverDownUntil = System.currentTimeMillis() + RETRY_AFTER_MS;
             return false;
         } finally {
-            if (conn != null) conn.disconnect();
+            if (conn != null)
+                conn.disconnect();
         }
     }
 
@@ -446,7 +467,7 @@ public class ProductDAO {
     }
 
     public List<Dishes> getAllDishes() {
-        return queryDishes("WHERE d.is_deleted = 0 AND c.is_deleted = 0");
+        return queryDishes("WHERE d.is_deleted = 0 AND (c.is_deleted = 0 OR c.is_deleted IS NULL)");
     }
 
     public List<Dishes> getArchivedDishes() {
@@ -455,16 +476,16 @@ public class ProductDAO {
 
     private List<Dishes> queryDishes(String whereClause) {
         List<Dishes> dishesList = new ArrayList<>();
-        categoryCache = getAllCategories();
         String query = """
-            SELECT d.id, d.name, c.name AS category_name, d.price, d.image_url, d.available, d.description, d.quantity
-            FROM dishes d
-            JOIN categories c ON d.category_id = c.id
-            """ + " " + whereClause + " ORDER BY d.name ASC";
+                SELECT d.id, d.name, c.name AS category_name, d.price, d.image_url, d.available, d.description, d.quantity
+                FROM dishes d
+                LEFT JOIN categories c ON d.category_id = c.id
+                """
+                + " " + whereClause + " ORDER BY d.name ASC";
 
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query);
-             ResultSet rs = stmt.executeQuery()) {
+                PreparedStatement stmt = conn.prepareStatement(query);
+                ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 boolean isAvailable = rs.getBoolean("available") && rs.getInt("quantity") > 0;
@@ -475,32 +496,30 @@ public class ProductDAO {
                 Dishes dish = new Dishes(
                         rs.getLong("id"),
                         rs.getString("name"),
-                        categoryName,
+                        categoryName != null ? categoryName : "",
                         rs.getBigDecimal("price"),
                         validImageUrl,
                         isAvailable,
                         rs.getString("description"),
-                        rs.getInt("quantity")
-                );
+                        rs.getInt("quantity"));
                 dishesList.add(dish);
             }
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            categoryCache = null;
         }
         return dishesList;
     }
 
     public boolean addDish(NewDishForm form) {
         String query = """
-            INSERT INTO dishes (category_id, name, price, description, image_url, quantity, available)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """;
+                    INSERT INTO dishes (category_id, name, price, description, image_url, quantity, available)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """;
 
         try (Connection conn = DatabaseConfig.getConnection()) {
             int categoryId = getCategoryIdByName(form.category(), conn);
-            if (categoryId == -1) return false;
+            if (categoryId == -1)
+                return false;
 
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setInt(1, categoryId);
@@ -521,14 +540,15 @@ public class ProductDAO {
 
     public boolean updateDish(Dishes currentDish, NewDishForm form) {
         String query = """
-            UPDATE dishes
-            SET category_id = ?, name = ?, price = ?, description = ?, image_url = ?, quantity = ?, available = ?
-            WHERE id = ?
-        """;
+                    UPDATE dishes
+                    SET category_id = ?, name = ?, price = ?, description = ?, image_url = ?, quantity = ?, available = ?
+                    WHERE id = ?
+                """;
 
         try (Connection conn = DatabaseConfig.getConnection()) {
             int categoryId = getCategoryIdByName(form.category(), conn);
-            if (categoryId == -1) return false;
+            if (categoryId == -1)
+                return false;
 
             String oldImage = null;
             String oldCategory = null;
@@ -576,7 +596,7 @@ public class ProductDAO {
     public boolean archiveDish(long id) {
         String query = "UPDATE dishes SET is_deleted = 1 WHERE id = ?";
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+                PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setLong(1, id);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -626,7 +646,8 @@ public class ProductDAO {
                 ok = stmt.executeUpdate() > 0;
             }
 
-            if (ok) deleteImageIfUnused(conn, image, category, id);
+            if (ok)
+                deleteImageIfUnused(conn, image, category, id);
             return ok;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -635,16 +656,19 @@ public class ProductDAO {
     }
 
     private void deleteImageIfUnused(Connection conn, String storedPath, String categoryName, long excludeDishId) {
-        if (storedPath == null || storedPath.isBlank()) return;
+        if (storedPath == null || storedPath.isBlank())
+            return;
         String raw = storedPath.trim();
-        if (raw.startsWith("http") || raw.startsWith("file:") || raw.startsWith("jar:")) return;
+        if (raw.startsWith("http") || raw.startsWith("file:") || raw.startsWith("jar:"))
+            return;
 
         String normalized = raw.replace('\\', '/');
         String fileName = fileNameOf(normalized);
         String folder = normalized.contains("/")
                 ? safeFolder(normalized.substring(0, normalized.lastIndexOf('/')))
                 : safeFolder(categoryName);
-        if (fileName.isBlank() || folder.isEmpty()) return;
+        if (fileName.isBlank() || folder.isEmpty())
+            return;
 
         String q = "SELECT COUNT(*) FROM dishes WHERE id <> ? AND (image_url = ? OR image_url = ?)";
         try (PreparedStatement st = conn.prepareStatement(q)) {
@@ -652,7 +676,8 @@ public class ProductDAO {
             st.setString(2, folder + "/" + fileName);
             st.setString(3, fileName);
             try (ResultSet rs = st.executeQuery()) {
-                if (rs.next() && rs.getInt(1) > 0) return;
+                if (rs.next() && rs.getInt(1) > 0)
+                    return;
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -661,15 +686,13 @@ public class ProductDAO {
 
         deleteImageOnServer(folder, fileName);
         deleteLocalImage(folder, fileName);
-        serverHits.remove(folder + "/" + fileName);
+        com.kainanresto.util.DishImageLoader.clearCache();
     }
 
     private boolean deleteImageOnServer(String folder, String fileName) {
-        if (System.currentTimeMillis() < serverDownUntil) return false;
-
         HttpURLConnection conn = null;
         try {
-            String url = DELETE_IMAGE_URL + "?category=" + encodePath(folder)
+            String url = getDeleteImageUrl() + "?category=" + encodePath(folder)
                     + "&filename=" + encodePath(fileName);
             conn = (HttpURLConnection) new URL(url).openConnection();
             conn.setRequestMethod("POST");
@@ -677,10 +700,10 @@ public class ProductDAO {
             conn.setReadTimeout(5000);
             return conn.getResponseCode() == 200;
         } catch (IOException e) {
-            serverDownUntil = System.currentTimeMillis() + RETRY_AFTER_MS;
             return false;
         } finally {
-            if (conn != null) conn.disconnect();
+            if (conn != null)
+                conn.disconnect();
         }
     }
 

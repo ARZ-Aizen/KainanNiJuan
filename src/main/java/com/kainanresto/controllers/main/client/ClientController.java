@@ -3,6 +3,7 @@ package com.kainanresto.controllers.main.client;
 import com.kainanresto.controllers.main.client.pos.AdminAuthDialog;
 import com.kainanresto.dao.OrderDAO;
 import com.kainanresto.dao.ProductDAO;
+import com.kainanresto.model.account.AccountRole;
 import com.kainanresto.model.account.User;
 import com.kainanresto.model.dish.Dishes;
 import com.kainanresto.model.order.OrderReceipt;
@@ -119,9 +120,30 @@ public class ClientController {
         initializeIcons();
         normalizeIcons();
 
+        boolean supervisor = isSupervisor();
+        if (supervisor) {
+            if (posView != null) {
+                posView.setVisible(false);
+                posView.setManaged(false);
+                viewStack.getChildren().remove(posView);
+            }
+            if (navOrderBtn != null) {
+                navOrderBtn.setVisible(false);
+                navOrderBtn.setManaged(false);
+            }
+            if (expNavOrderBtn != null) {
+                expNavOrderBtn.setVisible(false);
+                expNavOrderBtn.setManaged(false);
+            }
+        }
+
         setupCartHandlers();
         wireOrderPersistence();
-        showOrder();
+        if (supervisor) {
+            showOrderManagement();
+        } else {
+            showOrder();
+        }
         loadTodaysOrders();
 
         expandedLogoImage.setClip(new Circle(34, 34, 34));
@@ -137,6 +159,7 @@ public class ClientController {
             navSwitchBtn.setManaged(both);
             expNavSwitchBtn.setVisible(both);
             expNavSwitchBtn.setManaged(both);
+            expNavSwitchBtn.setText("Switch to Admin");
         }
 
         Platform.runLater(() -> {
@@ -170,23 +193,35 @@ public class ClientController {
         if (connectionOverlay != null) connectionOverlay.dispose();
     }
 
+    private final java.util.concurrent.atomic.AtomicBoolean isRefreshing = new java.util.concurrent.atomic.AtomicBoolean(false);
+
     private void refreshActiveClientData() {
         if (!ConnectionMonitor.isConnected()) return;
+        if (!isRefreshing.compareAndSet(false, true)) return;
 
         Thread t = new Thread(() -> {
-            List<OrderReceipt> receipts = orderDAO.loadReceipts(LocalDate.now().atStartOfDay());
-            List<Dishes> dishes = productDAO.getAllDishes();
-            List<String> categories = loadCategories(dishes);
+            try {
+                List<OrderReceipt> receipts = orderDAO.loadReceipts(LocalDate.now().atStartOfDay());
+                List<Dishes> dishes = productDAO.getAllDishes();
+                List<String> categories = loadCategories(dishes);
 
-            Platform.runLater(() -> {
-                if (omViewController != null) {
-                    omViewController.refreshData(receipts);
-                }
-                if (posViewController != null) {
-                    posViewController.setCategories(categories);
-                    posViewController.refreshData(dishes);
-                }
-            });
+                Platform.runLater(() -> {
+                    try {
+                        if (omViewController != null) {
+                            omViewController.refreshData(receipts);
+                        }
+                        if (posViewController != null && !isSupervisor()) {
+                            posViewController.setCategories(categories);
+                            posViewController.refreshData(dishes);
+                        }
+                    } finally {
+                        isRefreshing.set(false);
+                    }
+                });
+            } catch (Exception e) {
+                isRefreshing.set(false);
+                e.printStackTrace();
+            }
         });
         t.setDaemon(true);
         t.start();
@@ -203,6 +238,7 @@ public class ClientController {
     }
 
     private void setupCartHandlers() {
+        if (posViewController == null) return;
         posViewController.setOnAddToOrder(dish -> {
             Optional<ReceiptLine> existingLine = currentCart.stream()
                     .filter(line -> line.dishId() == dish.id())
@@ -407,7 +443,9 @@ public class ClientController {
             if (!orderDAO.updateStatus(order.orderNumber(), OrderStatus.CANCELLED)) {
                 AlertUtil.showError("Error", "Could not cancel the order in the database.");
             } else {
-                loadPosData();
+                if (!isSupervisor()) {
+                    loadPosData();
+                }
             }
         });
     }
@@ -438,7 +476,11 @@ public class ClientController {
         ClientUIHelper.fitGridIcon(expLogoutIcon, 30.0, 2.0);
     }
 
-    @FXML private void onNavOrder()   { showOrder();           collapseSidebar(); }
+    @FXML private void onNavOrder()   {
+        if (isSupervisor()) return;
+        showOrder();
+        collapseSidebar();
+    }
     @FXML private void onNavHistory() { showOrderManagement(); collapseSidebar(); }
 
     @FXML private void onSwitchToAdmin(ActionEvent event) {
@@ -476,7 +518,15 @@ public class ClientController {
         NavigationUtil.switchScene(event, "/com/kainanresto/views/id/LoginView.fxml", "Kainan Ni Juan - Login");
     }
 
+    private boolean isSupervisor() {
+        User user = SessionManager.getCurrentUser();
+        return user != null && user.getRole() == AccountRole.SUPERVISOR;
+    }
+
     private void showView(Node target) {
+        if (isSupervisor() && target == posView) {
+            target = omView;
+        }
         for (Node v : new Node[]{posView, omView}) {
             if (v == null) continue;
             boolean on = (v == target);
@@ -486,12 +536,17 @@ public class ClientController {
     }
 
     private void showOrder() {
+        if (isSupervisor()) {
+            showOrderManagement();
+            return;
+        }
         showView(posView);
         setActiveNav(navOrderBtn);
         loadPosData();
     }
 
     private void loadPosData() {
+        if (isSupervisor() || posViewController == null) return;
         posViewController.setLoading(true);
 
         Thread loadDataThread = new Thread(() -> {
@@ -521,10 +576,14 @@ public class ClientController {
     }
 
     private void setActiveNav(Button active) {
-        boolean order = (active == navOrderBtn);
+        boolean order = (active == navOrderBtn) && !isSupervisor();
 
-        for (Button b : new Button[]{navOrderBtn, navHistoryBtn}) b.getStyleClass().remove(NAV_ACTIVE);
-        for (Button b : new Button[]{expNavOrderBtn, expNavHistoryBtn}) b.getStyleClass().remove(EXP_NAV_ACTIVE);
+        for (Button b : new Button[]{navOrderBtn, navHistoryBtn}) {
+            if (b != null) b.getStyleClass().remove(NAV_ACTIVE);
+        }
+        for (Button b : new Button[]{expNavOrderBtn, expNavHistoryBtn}) {
+            if (b != null) b.getStyleClass().remove(EXP_NAV_ACTIVE);
+        }
 
         (order ? navOrderBtn : navHistoryBtn).getStyleClass().add(NAV_ACTIVE);
         (order ? expNavOrderBtn : expNavHistoryBtn).getStyleClass().add(EXP_NAV_ACTIVE);

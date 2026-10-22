@@ -5,7 +5,7 @@
 <?import javafx.scene.shape.SVGPath?>
 <?import javafx.scene.text.*?>
 
-<HBox styleClass="om-page" visible="false" managed="false" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+<HBox styleClass="om-page" stylesheets="@../../../../styles/main/ClientView.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.kainanresto.controllers.main.client.om.ClientOrderManagementController">
 
     <VBox spacing="24" HBox.hgrow="ALWAYS">
@@ -14,7 +14,7 @@
         </padding>
 
         <HBox alignment="CENTER_LEFT">
-            <VBox spacing="4">
+            <VBox fx:id="omHeaderTitleBox" spacing="4">
                 <TextFlow styleClass="om-title-flow">
                     <Text text="KAINAN NI " styleClass="om-brand-main"/>
                     <Text text="JUAN" styleClass="om-brand-accent"/>

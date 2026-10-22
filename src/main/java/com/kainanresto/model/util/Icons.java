@@ -56,6 +56,8 @@ public class Icons {
             "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8 M3 3v5h5";
 
     public static final String TRENDING_UP = "M22 7l-8.5 8.5-5-5L2 17 M16 7h6v6";
+    public static final String TRENDING_DOWN = "M22 17l-8.5-8.5-5 5L2 7 M16 17h6v-6";
+    public static final String AWARD = "M12 15a7 7 0 1 0 0-14 7 7 0 0 0 0 14z M8.21 13.89L7 23l5-3 5 3-1.21-9.12";
 
     public static final String CIRCLE_CHECK =
             "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M9 12l2 2 4-4";

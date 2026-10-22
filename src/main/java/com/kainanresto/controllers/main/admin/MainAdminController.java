@@ -1,11 +1,14 @@
 package com.kainanresto.controllers.main.admin;
 
+import com.kainanresto.controllers.main.client.om.ClientOrderManagementController;
 import com.kainanresto.dao.OrderDAO;
 import com.kainanresto.dao.ProductDAO;
 import com.kainanresto.dao.UserDAO;
+import com.kainanresto.model.account.AccountRole;
 import com.kainanresto.model.account.User;
 import com.kainanresto.model.dish.Dishes;
 import com.kainanresto.model.order.OrderReceipt;
+import com.kainanresto.model.order.OrderStatus;
 import com.kainanresto.model.util.Icons;
 import com.kainanresto.util.*;
 import javafx.animation.Interpolator;
@@ -59,23 +62,27 @@ public class MainAdminController {
     @FXML private Button navDashboardBtn;
     @FXML private Button navMenuBtn;
     @FXML private Button navSalesOrdersBtn;
+    @FXML private Button navOrderManagementBtn;
     @FXML private Button navAccountManagementBtn;
     @FXML private HBox topbar;
 
     @FXML private Button expNavDashboardBtn;
     @FXML private Button expNavMenuBtn;
     @FXML private Button expNavSalesOrdersBtn;
+    @FXML private Button expNavOrderManagementBtn;
     @FXML private Button expNavAccountManagementBtn;
 
     @FXML private SVGPath dashboardIcon;
     @FXML private SVGPath menuIcon;
     @FXML private SVGPath salesOrdersIcon;
+    @FXML private SVGPath orderManagementIcon;
     @FXML private SVGPath accountManagementIcon;
     @FXML private SVGPath logoutIcon;
     @FXML private SVGPath calendarIcon;
     @FXML private SVGPath expDashboardIcon;
     @FXML private SVGPath expMenuIcon;
     @FXML private SVGPath expSalesOrdersIcon;
+    @FXML private SVGPath expOrderManagementIcon;
     @FXML private SVGPath expAccountManagementIcon;
     @FXML private SVGPath expLogoutIcon;
 
@@ -86,6 +93,7 @@ public class MainAdminController {
     private static final int NAV_MENU = 1;
     private static final int NAV_SALES = 2;
     private static final int NAV_ACCOUNTS = 3;
+    private static final int NAV_ORDER_MANAGEMENT = 4;
 
     private static final double COMPACT_WIDTH = 93.0;
     private static final double EXPANDED_WIDTH = 304.0;
@@ -113,6 +121,11 @@ public class MainAdminController {
     @FXML
     public void initialize() {
 
+        // Store controller reference on appRoot so child controllers can find us
+        if (appRoot != null) {
+            appRoot.getProperties().put("controller", this);
+        }
+
         EntranceAnimation.prepare(sidebarRoot, topbar, contentArea);
 
         if (currentDateLabel != null) {
@@ -138,14 +151,16 @@ public class MainAdminController {
                 navDashboardBtn,
                 navMenuBtn,
                 navSalesOrdersBtn,
-                navAccountManagementBtn
+                navAccountManagementBtn,
+                navOrderManagementBtn
         };
 
         expandedNav = new Button[]{
                 expNavDashboardBtn,
                 expNavMenuBtn,
                 expNavSalesOrdersBtn,
-                expNavAccountManagementBtn
+                expNavAccountManagementBtn,
+                expNavOrderManagementBtn
         };
 
         initializeIcons();
@@ -201,11 +216,24 @@ public class MainAdminController {
 
         RealTimePoller.startPolling(this::refreshCurrentAdminView, 1.0);
 
-        boolean both = RoleAccess.canUseBoth(SessionManager.getCurrentUser());
+        User curUser = SessionManager.getCurrentUser();
+        AccountRole role = curUser != null ? curUser.getRole() : null;
+        boolean isSupervisor = (role == AccountRole.SUPERVISOR);
+        boolean isManager = (role == AccountRole.MANAGER);
+
+        // Only Supervisor has Order Management inside Admin View
+        boolean showOrderManagement = isSupervisor;
+        for (Button b : new Button[]{navOrderManagementBtn, expNavOrderManagementBtn}) {
+            if (b == null) continue;
+            b.setVisible(showOrderManagement);
+            b.setManaged(showOrderManagement);
+        }
+
+        boolean canSwitchToPos = isManager;
         for (Button b : new Button[]{navSwitchBtn, expNavSwitchBtn}) {
             if (b == null) continue;
-            b.setVisible(both);
-            b.setManaged(both);
+            b.setVisible(canSwitchToPos);
+            b.setManaged(canSwitchToPos);
         }
 
         ConnectionMonitor.start();
@@ -221,10 +249,13 @@ public class MainAdminController {
     private final ProductDAO productDAO = new ProductDAO();
     private final UserDAO userDAO = new UserDAO();
 
+    private final java.util.concurrent.atomic.AtomicBoolean isAdminRefreshing = new java.util.concurrent.atomic.AtomicBoolean(false);
+
     private void refreshCurrentAdminView() {
         if (!ConnectionMonitor.isConnected()) return;
         if (appRoot.getScene() == null || appRoot.getScene().getWindow() == null) return;
         if (activeSubController == null) return;
+        if (!isAdminRefreshing.compareAndSet(false, true)) return;
 
         Thread t = new Thread(() -> {
             try {
@@ -242,15 +273,20 @@ public class MainAdminController {
                             ((com.kainanresto.controllers.main.admin.accounts.AccountController) activeSubController).refreshData(users);
                         } else if (activeSubController instanceof com.kainanresto.controllers.main.admin.dashboard.DashboardController) {
                             ((com.kainanresto.controllers.main.admin.dashboard.DashboardController) activeSubController).refreshData();
+                        } else if (activeSubController instanceof ClientOrderManagementController omc) {
+                            omc.refreshData(receipts);
                         }
                     } catch (Exception e) {
                         try {
                             java.lang.reflect.Method fallback = activeSubController.getClass().getMethod("refreshData");
                             fallback.invoke(activeSubController);
                         } catch (Exception ignored) {}
+                    } finally {
+                        isAdminRefreshing.set(false);
                     }
                 });
             } catch (Exception e) {
+                isAdminRefreshing.set(false);
                 e.printStackTrace();
             }
         });
@@ -275,6 +311,12 @@ public class MainAdminController {
         setIconAndScale(
                 salesOrdersIcon,
                 Icons.NAV_SALES_ORDERS,
+                34.0
+        );
+
+        setIconAndScale(
+                orderManagementIcon,
+                Icons.CLOCK,
                 34.0
         );
 
@@ -316,6 +358,12 @@ public class MainAdminController {
         setIconAndScale(
                 expSalesOrdersIcon,
                 Icons.NAV_SALES_ORDERS,
+                30.0
+        );
+
+        setIconAndScale(
+                expOrderManagementIcon,
+                Icons.CLOCK,
                 30.0
         );
 
@@ -609,6 +657,13 @@ public class MainAdminController {
         );
     }
 
+    /**
+     * Public entry point for child controllers (e.g. Dashboard) to navigate to Sales & Orders.
+     */
+    public void navigateToSalesOrders() {
+        onNavSalesOrders();
+    }
+
     @FXML
     private void onNavAccountManagement() {
 
@@ -618,6 +673,56 @@ public class MainAdminController {
                 "Configure system access, roles, and security permissions",
                 NAV_ACCOUNTS
         );
+    }
+
+    @FXML
+    private void onNavOrderManagement() {
+        User curUser = SessionManager.getCurrentUser();
+        if (curUser == null || curUser.getRole() != AccountRole.SUPERVISOR) {
+            return;
+        }
+
+        switchView(
+                "/com/kainanresto/views/main/client/om/ClientOrderManagementView.fxml",
+                "Order Management",
+                "Monitor and manage current restaurant orders",
+                NAV_ORDER_MANAGEMENT
+        );
+
+        if (activeSubController instanceof ClientOrderManagementController omc) {
+            omc.setHeaderVisible(false);
+            wireOrderManagement(omc);
+            loadTodaysOrders(omc);
+        }
+    }
+
+    public void navigateToOrderManagement() {
+        User curUser = SessionManager.getCurrentUser();
+        if (curUser != null && curUser.getRole() == AccountRole.SUPERVISOR) {
+            onNavOrderManagement();
+        }
+    }
+
+    private void wireOrderManagement(ClientOrderManagementController omc) {
+        omc.setOnCompleteOrder(order -> {
+            if (!orderDAO.updateStatus(order.orderNumber(), OrderStatus.COMPLETED)) {
+                AlertUtil.showError("Error", "Could not save the status change.");
+            }
+        });
+        omc.setOnCancelOrder(order -> {
+            if (!orderDAO.updateStatus(order.orderNumber(), OrderStatus.CANCELLED)) {
+                AlertUtil.showError("Error", "Could not cancel the order in the database.");
+            }
+        });
+    }
+
+    private void loadTodaysOrders(ClientOrderManagementController omc) {
+        Thread t = new Thread(() -> {
+            List<OrderReceipt> receipts = orderDAO.loadReceipts(LocalDate.now().atStartOfDay());
+            Platform.runLater(() -> omc.setReceipts(receipts));
+        });
+        t.setDaemon(true);
+        t.start();
     }
 
 
