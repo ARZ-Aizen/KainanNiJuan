@@ -46,7 +46,7 @@
     -fx-background-radius: 14;
     -fx-text-fill: -mf-dark;
     -fx-font-size: 12px;
-    -fx-padding: 4 12 4 12;
+    -fx-padding: 4 10 4 10;
     -fx-cursor: hand;
 }
 .mf-chip:hover {
@@ -83,6 +83,11 @@
     -fx-background-color: -mf-dark;
     -fx-text-fill: -mf-cream;
     -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(140, 99, 67, 0.35), 6, 0.2, 0, 2);
+}
+.mf-month:disabled {
+    -fx-opacity: 0.35;
+    -fx-cursor: default;
 }
 
 /* Footer buttons */
@@ -107,4 +112,8 @@
 }
 .mf-btn-primary:hover {
     -fx-background-color: derive(-mf-dark, -12%);
+}
+.mf-btn-primary:disabled {
+    -fx-opacity: 0.45;
+    -fx-cursor: default;
 }

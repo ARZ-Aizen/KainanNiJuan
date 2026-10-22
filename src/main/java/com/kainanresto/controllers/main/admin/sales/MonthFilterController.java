@@ -20,8 +20,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.time.YearMonth;
 import java.time.format.TextStyle;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class MonthFilterController {
 
@@ -30,19 +30,21 @@ public class MonthFilterController {
     private static final int YEARS_BACK = 10;
 
     @FXML private Label titleLabel;
+    @FXML private Label subtitleLabel;
     @FXML private Label yearLabel;
     @FXML private Button prevYearBtn;
     @FXML private Button nextYearBtn;
+    @FXML private Button selectYearChip;
     @FXML private Button exportBtn;
     @FXML private GridPane monthGrid;
 
     private final YearMonth now = YearMonth.now();
-    private YearMonth selected = now;
+    private final Set<YearMonth> selectedMonths = new TreeSet<>();
     private int year = now.getYear();
-    private YearMonth result;
+    private List<YearMonth> result;
     private Stage stage;
 
-    public static Optional<YearMonth> show(Window owner, String title) {
+    public static List<YearMonth> show(Window owner, String title) {
         URL url = MonthFilterController.class.getResource(FXML_FILE);
         if (url == null) {
             throw new IllegalStateException("Cannot find " + FXML_FILE + " next to "
@@ -57,20 +59,26 @@ public class MonthFilterController {
             return controller.open(owner, root, title);
         } catch (IOException e) {
             e.printStackTrace();
-            return Optional.empty();
+            return List.of();
         }
     }
 
-    public static Optional<YearMonth> show(Window owner) {
+    public static List<YearMonth> show(Window owner) {
         return show(owner, "Export Sales History");
+    }
+
+    public static Optional<YearMonth> showSingle(Window owner, String title) {
+        List<YearMonth> list = show(owner, title);
+        return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
     }
 
     @FXML
     private void initialize() {
+        selectedMonths.add(now);
         refresh();
     }
 
-    private Optional<YearMonth> open(Window owner, StackPane root, String title) {
+    private List<YearMonth> open(Window owner, StackPane root, String title) {
         if (title != null && !title.isBlank()) titleLabel.setText(title);
 
         URL css = MonthFilterController.class.getResource("/com/kainanresto/styles/util/MonthFilterView.css");
@@ -107,7 +115,7 @@ public class MonthFilterController {
         stage.setHeight(h);
         stage.showAndWait();
 
-        return Optional.ofNullable(result);
+        return result == null ? List.of() : Collections.unmodifiableList(result);
     }
 
     private void refresh() {
@@ -115,46 +123,173 @@ public class MonthFilterController {
         prevYearBtn.setDisable(year <= now.getYear() - YEARS_BACK);
         nextYearBtn.setDisable(year >= now.getYear());
 
+        int maxMonthInYear = (year == now.getYear()) ? now.getMonthValue() : 12;
+        boolean allInYearSelected = maxMonthInYear > 0;
+
         for (Node n : monthGrid.getChildren()) {
             if (!(n instanceof Button b)) continue;
-            YearMonth ym = YearMonth.of(year, monthOf(b));
-            b.setDisable(ym.isAfter(now));
+            int m = monthOf(b);
+            YearMonth ym = YearMonth.of(year, m);
+            boolean isFuture = ym.isAfter(now);
+            b.setDisable(isFuture);
             b.getStyleClass().remove(SELECTED_STYLE);
-            if (ym.equals(selected)) b.getStyleClass().add(SELECTED_STYLE);
+
+            if (selectedMonths.contains(ym)) {
+                b.getStyleClass().add(SELECTED_STYLE);
+            } else if (!isFuture) {
+                allInYearSelected = false;
+            }
         }
 
-        exportBtn.setText("Export " + selected.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH)
-                + " " + selected.getYear());
+        if (selectYearChip != null) {
+            selectYearChip.setText(allInYearSelected ? "Deselect " + year : "Select " + year);
+        }
+
+        // Subtitle summary
+        if (subtitleLabel != null) {
+            if (selectedMonths.isEmpty()) {
+                subtitleLabel.setText("Select one or more months to export");
+            } else if (selectedMonths.size() == 1) {
+                YearMonth single = selectedMonths.iterator().next();
+                subtitleLabel.setText("1 month selected: " + formatMonthYear(single));
+            } else if (selectedMonths.size() <= 3) {
+                String summary = selectedMonths.stream()
+                        .map(this::formatMonthYearShort)
+                        .collect(Collectors.joining(", "));
+                subtitleLabel.setText(selectedMonths.size() + " months selected: " + summary);
+            } else {
+                List<YearMonth> sorted = new ArrayList<>(selectedMonths);
+                YearMonth first = sorted.get(0);
+                YearMonth last = sorted.get(sorted.size() - 1);
+                subtitleLabel.setText(selectedMonths.size() + " months selected ("
+                        + formatMonthYearShort(first) + " – " + formatMonthYearShort(last) + ")");
+            }
+        }
+
+        // Export button text & state
+        if (selectedMonths.isEmpty()) {
+            exportBtn.setText("Export (0 selected)");
+            exportBtn.setDisable(true);
+        } else if (selectedMonths.size() == 1) {
+            YearMonth single = selectedMonths.iterator().next();
+            exportBtn.setText("Export " + single.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+                    + " " + single.getYear());
+            exportBtn.setDisable(false);
+        } else {
+            exportBtn.setText("Export " + selectedMonths.size() + " Months");
+            exportBtn.setDisable(false);
+        }
+    }
+
+    private String formatMonthYear(YearMonth ym) {
+        return ym.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + ym.getYear();
+    }
+
+    private String formatMonthYearShort(YearMonth ym) {
+        return ym.getMonth().getDisplayName(TextStyle.SHORT, Locale.ENGLISH) + " " + ym.getYear();
     }
 
     private static int monthOf(Button b) {
         return Integer.parseInt(String.valueOf(b.getUserData()));
     }
 
-    private void select(YearMonth ym) {
-        selected = ym;
-        year = ym.getYear();
+    @FXML
+    private void onMonthClicked(ActionEvent e) {
+        Button b = (Button) e.getSource();
+        YearMonth ym = YearMonth.of(year, monthOf(b));
+        if (ym.isAfter(now)) return;
+
+        if (selectedMonths.contains(ym)) {
+            selectedMonths.remove(ym);
+        } else {
+            selectedMonths.add(ym);
+        }
         refresh();
     }
 
-    @FXML private void onMonthClicked(ActionEvent e) {
-        select(YearMonth.of(year, monthOf((Button) e.getSource())));
+    @FXML
+    private void onThisMonth(ActionEvent e) {
+        selectedMonths.clear();
+        selectedMonths.add(now);
+        year = now.getYear();
+        refresh();
     }
 
-    @FXML private void onThisMonth(ActionEvent e) { select(now); }
-    @FXML private void onLastMonth(ActionEvent e) { select(now.minusMonths(1)); }
+    @FXML
+    private void onLastMonth(ActionEvent e) {
+        selectedMonths.clear();
+        YearMonth lm = now.minusMonths(1);
+        selectedMonths.add(lm);
+        year = lm.getYear();
+        refresh();
+    }
 
-    @FXML private void onPrevYear(ActionEvent e) { year--; refresh(); }
-    @FXML private void onNextYear(ActionEvent e) { year++; refresh(); }
+    @FXML
+    private void onSelectYear(ActionEvent e) {
+        int maxMonth = (year == now.getYear()) ? now.getMonthValue() : 12;
+        boolean allInYearSelected = true;
+        for (int m = 1; m <= maxMonth; m++) {
+            if (!selectedMonths.contains(YearMonth.of(year, m))) {
+                allInYearSelected = false;
+                break;
+            }
+        }
 
-    @FXML private void onConfirm(ActionEvent e) {
-        result = selected;
+        if (allInYearSelected) {
+            for (int m = 1; m <= maxMonth; m++) {
+                selectedMonths.remove(YearMonth.of(year, m));
+            }
+        } else {
+            for (int m = 1; m <= maxMonth; m++) {
+                selectedMonths.add(YearMonth.of(year, m));
+            }
+        }
+        refresh();
+    }
+
+    @FXML
+    private void onClear(ActionEvent e) {
+        selectedMonths.clear();
+        refresh();
+    }
+
+    @FXML
+    private void onPrevYear(ActionEvent e) {
+        if (year > now.getYear() - YEARS_BACK) {
+            year--;
+            refresh();
+        }
+    }
+
+    @FXML
+    private void onNextYear(ActionEvent e) {
+        if (year < now.getYear()) {
+            year++;
+            refresh();
+        }
+    }
+
+    @FXML
+    private void onConfirm(ActionEvent e) {
+        if (selectedMonths.isEmpty()) return;
+        result = new ArrayList<>(selectedMonths);
         stage.close();
     }
 
-    @FXML private void onCancel(ActionEvent e) { stage.close(); }
+    @FXML
+    private void onCancel(ActionEvent e) {
+        result = null;
+        stage.close();
+    }
 
-    @FXML private void onBackdropClicked(MouseEvent e) { stage.close(); }
+    @FXML
+    private void onBackdropClicked(MouseEvent e) {
+        result = null;
+        stage.close();
+    }
 
-    @FXML private void onCardClicked(MouseEvent e) { e.consume(); }
+    @FXML
+    private void onCardClicked(MouseEvent e) {
+        e.consume();
+    }
 }

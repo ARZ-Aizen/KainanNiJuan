@@ -522,17 +522,15 @@ public class SalesController {
 
     @FXML
     private void onExportSales() {
-        Optional<YearMonth> picked = MonthFilterController.show(
+        List<YearMonth> picked = MonthFilterController.show(
                 salesRoot.getScene().getWindow(), "Export Sales History");
-        if (picked.isEmpty()) return;
-        YearMonth ym = picked.get();
+        if (picked == null || picked.isEmpty()) return;
 
-        LocalDateTime start = ym.atDay(1).atStartOfDay();
-        LocalDateTime endExclusive = ym.plusMonths(1).atDay(1).atStartOfDay();
+        String initialFileName = generateExportFileName(picked);
 
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Export Sales History");
-        chooser.setInitialFileName("Sales_" + ym + ".csv");
+        chooser.setInitialFileName(initialFileName);
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel/CSV File", "*.csv"));
 
         File file = chooser.showSaveDialog(salesRoot.getScene().getWindow());
@@ -540,13 +538,20 @@ public class SalesController {
 
         Thread t = new Thread(() -> {
             try {
-                List<Transaction> sales = orderDAO.getTransactions(start, endExclusive);
+                List<Transaction> sales = orderDAO.getTransactionsForMonths(picked);
 
                 if (sales.isEmpty()) {
+                    String periodDesc;
+                    if (picked.size() == 1) {
+                        YearMonth ym = picked.get(0);
+                        periodDesc = ym.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+                                + " " + ym.getYear();
+                    } else {
+                        periodDesc = "the selected " + picked.size() + " months ("
+                                + picked.get(0) + " to " + picked.get(picked.size() - 1) + ")";
+                    }
                     Platform.runLater(() -> AlertUtil.showInfo("No Data",
-                            "There are no transactions for "
-                                    + ym.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH)
-                                    + " " + ym.getYear() + "."));
+                            "There are no transactions for " + periodDesc + "."));
                     return;
                 }
 
@@ -575,6 +580,14 @@ public class SalesController {
         });
         t.setDaemon(true);
         t.start();
+    }
+
+    private static String generateExportFileName(List<YearMonth> months) {
+        if (months == null || months.isEmpty()) return "Sales_Export.csv";
+        if (months.size() == 1) return "Sales_" + months.get(0) + ".csv";
+        YearMonth first = months.get(0);
+        YearMonth last = months.get(months.size() - 1);
+        return "Sales_" + first + "_to_" + last + ".csv";
     }
 
     private static String csv(String s) {

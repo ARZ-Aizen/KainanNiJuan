@@ -15,7 +15,7 @@
            onMouseClicked="#onBackdropClicked">
 
     <!-- Card (clicks on it are swallowed so they don't dismiss the modal) -->
-    <VBox styleClass="mf-card" spacing="14" prefWidth="364"
+    <VBox styleClass="mf-card" spacing="14" prefWidth="380"
           maxWidth="-Infinity" maxHeight="-Infinity"
           onMouseClicked="#onCardClicked">
         <padding>
@@ -23,15 +23,17 @@
         </padding>
 
         <!-- Header -->
-        <VBox spacing="2">
+        <VBox spacing="3">
             <Label fx:id="titleLabel" styleClass="mf-title" text="Export Sales History"/>
-            <Label styleClass="mf-subtitle" text="Choose the month to export"/>
+            <Label fx:id="subtitleLabel" styleClass="mf-subtitle" text="Select one or more months to export" wrapText="true"/>
         </VBox>
 
         <!-- Quick picks -->
-        <HBox spacing="8">
+        <HBox spacing="6" alignment="CENTER_LEFT">
             <Button styleClass="mf-chip" text="This month" onAction="#onThisMonth"/>
             <Button styleClass="mf-chip" text="Last month" onAction="#onLastMonth"/>
+            <Button fx:id="selectYearChip" styleClass="mf-chip" text="Select Year" onAction="#onSelectYear"/>
+            <Button styleClass="mf-chip" text="Clear" onAction="#onClear"/>
         </HBox>
 
         <!-- Year selector -->
@@ -44,18 +46,18 @@
 
         <!-- Month grid: userData = month number (1-12) -->
         <GridPane fx:id="monthGrid" hgap="8" vgap="8">
-            <Button text="Jan" userData="1"  styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-            <Button text="Feb" userData="2"  styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-            <Button text="Mar" userData="3"  styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
-            <Button text="Apr" userData="4"  styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-            <Button text="May" userData="5"  styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-            <Button text="Jun" userData="6"  styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
-            <Button text="Jul" userData="7"  styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-            <Button text="Aug" userData="8"  styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-            <Button text="Sep" userData="9"  styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
-            <Button text="Oct" userData="10" styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
-            <Button text="Nov" userData="11" styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-            <Button text="Dec" userData="12" styleClass="mf-month" prefWidth="100" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="2" GridPane.rowIndex="3"/>
+            <Button text="Jan" userData="1"  styleClass="mf-month" prefWidth="104" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+            <Button text="Feb" userData="2"  styleClass="mf-month" prefWidth="104" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+            <Button text="Mar" userData="3"  styleClass="mf-month" prefWidth="104" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+            <Button text="Apr" userData="4"  styleClass="mf-month" prefWidth="104" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+            <Button text="May" userData="5"  styleClass="mf-month" prefWidth="104" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+            <Button text="Jun" userData="6"  styleClass="mf-month" prefWidth="104" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+            <Button text="Jul" userData="7"  styleClass="mf-month" prefWidth="104" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+            <Button text="Aug" userData="8"  styleClass="mf-month" prefWidth="104" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+            <Button text="Sep" userData="9"  styleClass="mf-month" prefWidth="104" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+            <Button text="Oct" userData="10" styleClass="mf-month" prefWidth="104" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+            <Button text="Nov" userData="11" styleClass="mf-month" prefWidth="104" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+            <Button text="Dec" userData="12" styleClass="mf-month" prefWidth="104" prefHeight="38" onAction="#onMonthClicked" GridPane.columnIndex="2" GridPane.rowIndex="3"/>
         </GridPane>
 
         <!-- Footer -->

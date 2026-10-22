@@ -17,6 +17,7 @@ import java.sql.*;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.time.temporal.TemporalAdjusters;
@@ -309,6 +310,70 @@ public class OrderDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setTimestamp(1, Timestamp.valueOf(from));
             ps.setTimestamp(2, Timestamp.valueOf(to));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    OrderStatus st = OrderStatus.fromString(rs.getString("status"));
+                    list.add(new Transaction(
+                            rs.getString("order_number"), rs.getString("order_type"), null,
+                            rs.getString("cashier_name"), rs.getString("cashier_role"),
+                            rs.getTimestamp("created_at").toLocalDateTime(),
+                            rs.getTimestamp("last_activity").toLocalDateTime(),
+                            rs.getBigDecimal("total"),
+                            st == null ? rs.getString("status") : st.getDisplayName(),
+                            rs.getString("payment_status")));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<Transaction> getTransactionsForMonths(List<YearMonth> months) {
+        if (months == null || months.isEmpty()) return List.of();
+
+        List<YearMonth> sorted = months.stream().distinct().sorted().toList();
+
+        List<LocalDateTime[]> intervals = new ArrayList<>();
+        LocalDateTime curStart = sorted.get(0).atDay(1).atStartOfDay();
+        LocalDateTime curEnd = sorted.get(0).plusMonths(1).atDay(1).atStartOfDay();
+
+        for (int i = 1; i < sorted.size(); i++) {
+            YearMonth next = sorted.get(i);
+            LocalDateTime nextStart = next.atDay(1).atStartOfDay();
+            LocalDateTime nextEnd = next.plusMonths(1).atDay(1).atStartOfDay();
+
+            if (nextStart.equals(curEnd)) {
+                curEnd = nextEnd;
+            } else {
+                intervals.add(new LocalDateTime[]{curStart, curEnd});
+                curStart = nextStart;
+                curEnd = nextEnd;
+            }
+        }
+        intervals.add(new LocalDateTime[]{curStart, curEnd});
+
+        StringBuilder sql = new StringBuilder("""
+            SELECT order_number, order_type, cashier_name, cashier_role,
+                   created_at, COALESCE(updated_at, created_at) AS last_activity,
+                   total, status, payment_status
+            FROM orders WHERE 
+        """);
+
+        for (int i = 0; i < intervals.size(); i++) {
+            if (i > 0) sql.append(" OR ");
+            sql.append("(created_at >= ? AND created_at < ?)");
+        }
+        sql.append(" ORDER BY created_at DESC");
+
+        List<Transaction> list = new ArrayList<>();
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int idx = 1;
+            for (LocalDateTime[] interval : intervals) {
+                ps.setTimestamp(idx++, Timestamp.valueOf(interval[0]));
+                ps.setTimestamp(idx++, Timestamp.valueOf(interval[1]));
+            }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     OrderStatus st = OrderStatus.fromString(rs.getString("status"));
