@@ -16,6 +16,7 @@ import javafx.stage.WindowEvent;
 import javafx.util.Duration;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public final class NavigationUtil {
 
@@ -71,8 +72,12 @@ public final class NavigationUtil {
             }
 
             try {
-                Image icon = new Image(NavigationUtil.class.getResourceAsStream("/com/kainanresto/images/id/KainanNiJuanLogo.png"));
-                stage.getIcons().setAll(icon);
+                if (NavigationUtil.class.getResource("/com/kainanresto/images/id/app-icon.png") != null) {
+                    stage.getIcons().add(new Image(Objects.requireNonNull(
+                            NavigationUtil.class.getResourceAsStream("/com/kainanresto/images/id/app-icon.png"))));
+                }
+                stage.getIcons().add(new Image(Objects.requireNonNull(
+                        NavigationUtil.class.getResourceAsStream("/com/kainanresto/images/id/KainanNiJuanLogo.png"))));
             } catch (Exception e) {
                 System.err.println("NavigationUtil: Could not load application icon - " + e.getMessage());
             }

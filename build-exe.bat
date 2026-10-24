@@ -51,6 +51,12 @@ mkdir "target\package-input"
 copy "target\libs\*.jar" "target\package-input\" >nul
 copy "target\KainanNiJuan-1.0-SNAPSHOT.jar" "target\package-input\" >nul
 
+:: Ensure application icon exists
+if not exist "app-icon.ico" (
+    echo [INFO] Generating app-icon.ico from logo...
+    powershell -ExecutionPolicy Bypass -File generate-icon.ps1
+)
+
 :: 5. Run jpackage
 echo.
 echo [4/4] Creating KainanNiJuan.exe using jpackage...
@@ -62,6 +68,7 @@ if exist "dist\KainanNiJuan" rmdir /s /q "dist\KainanNiJuan"
   --main-class "com.kainanresto.KainanNiJuan" ^
   --name "KainanNiJuan" ^
   --type app-image ^
+  --icon "app-icon.ico" ^
   --dest "dist"
 
 if %errorlevel% neq 0 (
@@ -70,7 +77,8 @@ if %errorlevel% neq 0 (
     exit /b %errorlevel%
 )
 
-:: Copy local configs if present
+:: Copy local configs and icon if present
+if exist "app-icon.ico" copy "app-icon.ico" "dist\KainanNiJuan\" >nul
 if exist "config.properties" copy "config.properties" "dist\KainanNiJuan\" >nul
 if exist "db.properties" (
     copy "db.properties" "dist\KainanNiJuan\" >nul

@@ -19,6 +19,10 @@ public class Launcher extends Application {
         stage.setResizable(false);
 
         try {
+            if (getClass().getResource("/com/kainanresto/images/id/app-icon.png") != null) {
+                stage.getIcons().add(new Image(Objects.requireNonNull(
+                        getClass().getResourceAsStream("/com/kainanresto/images/id/app-icon.png"))));
+            }
             stage.getIcons().add(new Image(Objects.requireNonNull(
                     getClass().getResourceAsStream("/com/kainanresto/images/id/KainanNiJuanLogo.png"))));
         } catch (Exception e) {
