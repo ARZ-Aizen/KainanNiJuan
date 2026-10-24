@@ -33,9 +33,12 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
+import com.kainanresto.controllers.main.admin.accounts.AdminAuthDialog;
+import javafx.beans.binding.Bindings;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -56,6 +59,10 @@ public class SalesController {
     @FXML private ScrollPane salesRootScroll;
     @FXML private VBox salesRoot;
 
+    // Active vs Archived Views
+    @FXML private VBox activeOrdersContainer, archivedOrdersContainer;
+    @FXML private Button viewArchiveBtn;
+
     // Orders History Elements
     @FXML private HBox ordersSearchBox, orderDatePill, orderStatusPill, orderPaymentPill, orderSortPill;
     @FXML private TextField ordersSearchField;
@@ -67,6 +74,13 @@ public class SalesController {
     @FXML private Label ordersTablePlaceholder;
     @FXML private TableColumn<Transaction, String> orderIdColumn, orderTypeColumn, orderCreatedColumn, orderTotalColumn, orderStatusColumn, orderPaymentColumn;
     @FXML private TableColumn<Transaction, Transaction> orderStaffColumn, orderActionsColumn;
+
+    // Archived Orders Elements
+    @FXML private TableView<Transaction> archivedOrdersTable;
+    @FXML private Label archivedOrdersPlaceholder;
+    @FXML private TableColumn<Transaction, String> archivedOrderIdCol, archivedOrderTypeCol, archivedOrderCreatedCol, archivedOrderTotalCol, archivedOrderStatusCol, archivedOrderPaymentCol;
+    @FXML private TableColumn<Transaction, Transaction> archivedOrderStaffCol, archivedOrderActionsCol;
+    private final ObservableList<Transaction> archivedOrderItems = FXCollections.observableArrayList();
 
     @FXML private HBox paginationBar;
     @FXML private Label paginationInfoLabel;
@@ -94,8 +108,15 @@ public class SalesController {
 
     @FXML
     public void initialize() {
+        if (salesRoot != null && salesRootScroll != null) {
+            salesRoot.minHeightProperty().bind(Bindings.createDoubleBinding(
+                    () -> Math.max(0.0, salesRootScroll.getViewportBounds().getHeight()),
+                    salesRootScroll.viewportBoundsProperty()
+            ));
+        }
         setupIcons();
         setupOrdersPage();
+        setupArchivedOrdersTable();
         loadSalesData();
     }
 
@@ -199,11 +220,11 @@ public class SalesController {
         ordersTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         ordersTable.setItems(displayedPageItems);
 
-        // Fixed height for 10 rows (10 * 58px = 580px + 38px header = 618px)
+        // Dynamic height that expands with available space (58px row height)
         ordersTable.setFixedCellSize(58.0);
-        ordersTable.setPrefHeight(618.0);
-        ordersTable.setMinHeight(618.0);
-        ordersTable.setMaxHeight(618.0);
+        ordersTable.setMinHeight(300.0);
+        ordersTable.setMaxHeight(Double.MAX_VALUE);
+        VBox.setVgrow(ordersTable, Priority.ALWAYS);
 
         // Forward scroll events to outer ScrollPane so scrolling over the table smoothly scrolls the page
         ordersTable.addEventFilter(ScrollEvent.ANY, event -> {
@@ -233,6 +254,56 @@ public class SalesController {
             hBar.setPrefHeight(0);
             hBar.setMaxHeight(0);
         }
+    }
+
+    private void setupArchivedOrdersTable() {
+        archivedOrderIdCol.setCellValueFactory(cd -> new ReadOnlyStringWrapper(cd.getValue().orderId()));
+        archivedOrderTypeCol.setCellValueFactory(cd -> new ReadOnlyStringWrapper(cd.getValue().orderType()));
+        archivedOrderStaffCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue()));
+        archivedOrderCreatedCol.setCellValueFactory(cd -> new ReadOnlyStringWrapper(formatOrderTimestamp(cd.getValue().lastActivityAt())));
+        archivedOrderTotalCol.setCellValueFactory(cd -> new ReadOnlyStringWrapper(formatPesoCompact(cd.getValue().total())));
+        archivedOrderStatusCol.setCellValueFactory(cd -> new ReadOnlyStringWrapper(cd.getValue().status()));
+        archivedOrderPaymentCol.setCellValueFactory(cd -> new ReadOnlyStringWrapper(cd.getValue().paymentStatus()));
+        archivedOrderActionsCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue()));
+
+        archivedOrderStaffCol.setCellFactory(col -> new StaffCell());
+        archivedOrderStatusCol.setCellFactory(col -> new ChipCell(true, SalesController::statusChipClass));
+        archivedOrderPaymentCol.setCellFactory(col -> new ChipCell(false, SalesController::paymentChipClass));
+        archivedOrderActionsCol.setCellFactory(col -> new ArchivedActionsCell());
+
+        archivedOrdersTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        archivedOrdersTable.setItems(archivedOrderItems);
+        archivedOrdersTable.setFixedCellSize(58.0);
+        archivedOrdersTable.setMinHeight(300.0);
+        archivedOrdersTable.setMaxHeight(Double.MAX_VALUE);
+        VBox.setVgrow(archivedOrdersTable, Priority.ALWAYS);
+    }
+
+    @FXML
+    private void onShowArchive() {
+        activeOrdersContainer.setVisible(false);
+        activeOrdersContainer.setManaged(false);
+        archivedOrdersContainer.setVisible(true);
+        archivedOrdersContainer.setManaged(true);
+        loadArchivedOrders();
+    }
+
+    @FXML
+    private void onShowActiveOrders() {
+        archivedOrdersContainer.setVisible(false);
+        archivedOrdersContainer.setManaged(false);
+        activeOrdersContainer.setVisible(true);
+        activeOrdersContainer.setManaged(true);
+        loadSalesData();
+    }
+
+    private void loadArchivedOrders() {
+        Thread t = new Thread(() -> {
+            List<Transaction> list = orderDAO.getArchivedTransactions();
+            Platform.runLater(() -> archivedOrderItems.setAll(list));
+        });
+        t.setDaemon(true);
+        t.start();
     }
 
     private void onFilterChanged() {
@@ -413,7 +484,16 @@ public class SalesController {
         MenuItem viewReceipt = new MenuItem("View Receipt");
         viewReceipt.setMnemonicParsing(false);
         viewReceipt.setOnAction(e -> viewReceipt(order));
-        menu.getItems().add(viewReceipt);
+
+        MenuItem editTransaction = new MenuItem("Edit Transaction");
+        editTransaction.setMnemonicParsing(false);
+        editTransaction.setOnAction(e -> editTransaction(order));
+
+        MenuItem archiveTransaction = new MenuItem("Archive Transaction");
+        archiveTransaction.setMnemonicParsing(false);
+        archiveTransaction.setOnAction(e -> archiveTransaction(order));
+
+        menu.getItems().addAll(viewReceipt, editTransaction, archiveTransaction);
 
         menu.setOnHidden(e -> {
             if (activeActionsMenu == menu) activeActionsMenu = null;
@@ -425,6 +505,85 @@ public class SalesController {
 
         activeActionsMenu = menu;
         menu.show(anchor, Side.BOTTOM, 0.0, 4.0);
+    }
+
+    private void editTransaction(Transaction order) {
+        Thread worker = new Thread(() -> {
+            try {
+                OrderReceipt receipt = orderDAO.findReceipt(order.orderId());
+                if (receipt == null) {
+                    Platform.runLater(() -> AlertUtil.showError("Edit Transaction",
+                            "Could not find the details for order " + order.orderId() + "."));
+                    return;
+                }
+                PaymentResult pay = orderDAO.findPayment(order.orderId());
+                Platform.runLater(() -> showEditTransactionModal(order, receipt, pay));
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                Platform.runLater(() -> AlertUtil.showError("Edit Transaction",
+                        "The transaction details could not be loaded."));
+            }
+        });
+        worker.setDaemon(true);
+        worker.start();
+    }
+
+    private void showEditTransactionModal(Transaction order, OrderReceipt receipt, PaymentResult pay) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/kainanresto/views/main/admin/sales/EditTransactionModalView.fxml"));
+            VBox root = loader.load();
+
+            EditTransactionModalController controller = loader.getController();
+            controller.setOrderData(order, receipt, pay, this::loadSalesData);
+
+            Stage stage = new Stage();
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.initStyle(javafx.stage.StageStyle.TRANSPARENT);
+
+            if (salesRoot.getScene() != null) {
+                stage.initOwner(salesRoot.getScene().getWindow());
+            }
+
+            var adminCss = getClass().getResource("/com/kainanresto/styles/main/AdminView.css");
+            if (adminCss != null) {
+                root.getStylesheets().add(adminCss.toExternalForm());
+            }
+
+            var modalCss = getClass().getResource("/com/kainanresto/styles/util/EditTransactionModalView.css");
+            if (modalCss != null) {
+                root.getStylesheets().add(modalCss.toExternalForm());
+            }
+
+            Scene scene = new Scene(root);
+            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+            stage.setScene(scene);
+            stage.show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            AlertUtil.showError("Error", "Could not load the edit transaction modal: " + e.getMessage());
+        }
+    }
+
+    private void archiveTransaction(Transaction order) {
+        Window owner = salesRoot != null && salesRoot.getScene() != null ? salesRoot.getScene().getWindow() : null;
+        if (!AdminAuthDialog.show(owner, "Authorize archiving Order #" + order.orderId())) {
+            return;
+        }
+
+        Thread t = new Thread(() -> {
+            boolean ok = orderDAO.archiveTransaction(order.orderId());
+            Platform.runLater(() -> {
+                if (ok) {
+                    AlertUtil.showInfo("Archived", "Transaction #" + order.orderId() + " has been archived.");
+                    loadSalesData();
+                } else {
+                    AlertUtil.showError("Error", "Could not archive transaction.");
+                }
+            });
+        });
+        t.setDaemon(true);
+        t.start();
     }
 
     private void viewReceipt(Transaction order) {
@@ -692,6 +851,121 @@ public class SalesController {
             super.updateItem(item, empty);
             setGraphic((empty || item == null) ? null : btn);
         }
+    }
+
+    private final class ArchivedActionsCell extends TableCell<Transaction, Transaction> {
+        private final Button restoreBtn = new Button();
+        private final Button deleteBtn = new Button();
+        private final Button receiptBtn = new Button();
+        private final HBox box = new HBox(6.0, restoreBtn, deleteBtn, receiptBtn);
+
+        ArchivedActionsCell() {
+            box.setAlignment(Pos.CENTER);
+
+            // Restore button
+            restoreBtn.getStyleClass().add("row-action-btn");
+            restoreBtn.setFocusTraversable(false);
+            restoreBtn.setTooltip(new Tooltip("Restore transaction"));
+            SVGPath restoreIcon = new SVGPath();
+            restoreIcon.setContent(Icons.ARROWS_CLOCKWISE);
+            restoreIcon.getStyleClass().addAll("phosphor-icon");
+            restoreIcon.setStyle("-fx-stroke: #8C6343; -fx-stroke-width: 2.0;");
+            double scale = 14.0 / 24.0;
+            restoreIcon.setScaleX(scale);
+            restoreIcon.setScaleY(scale);
+            restoreBtn.setGraphic(restoreIcon);
+            restoreBtn.setOnAction(e -> {
+                Transaction tx = getItem();
+                if (tx != null) restoreArchivedTransaction(tx);
+            });
+
+            // Delete button
+            deleteBtn.getStyleClass().add("row-action-btn");
+            deleteBtn.setFocusTraversable(false);
+            deleteBtn.setTooltip(new Tooltip("Permanently delete transaction"));
+            SVGPath trashIcon = new SVGPath();
+            trashIcon.setContent(Icons.TRASH_2);
+            trashIcon.getStyleClass().addAll("phosphor-icon");
+            trashIcon.setStyle("-fx-stroke: #E74C3C; -fx-stroke-width: 2.0;");
+            trashIcon.setScaleX(scale);
+            trashIcon.setScaleY(scale);
+            deleteBtn.setGraphic(trashIcon);
+            deleteBtn.setOnAction(e -> {
+                Transaction tx = getItem();
+                if (tx != null) permanentlyDeleteArchivedTransaction(tx);
+            });
+
+            // Receipt button
+            receiptBtn.getStyleClass().add("row-action-btn");
+            receiptBtn.setFocusTraversable(false);
+            receiptBtn.setTooltip(new Tooltip("View receipt"));
+            SVGPath receiptIcon = new SVGPath();
+            receiptIcon.setContent(Icons.RECEIPT_TEXT);
+            receiptIcon.getStyleClass().addAll("phosphor-icon");
+            receiptIcon.setStyle("-fx-stroke: #6E625C; -fx-stroke-width: 2.0;");
+            receiptIcon.setScaleX(scale);
+            receiptIcon.setScaleY(scale);
+            receiptBtn.setGraphic(receiptIcon);
+            receiptBtn.setOnAction(e -> {
+                Transaction tx = getItem();
+                if (tx != null) viewReceipt(tx);
+            });
+        }
+
+        @Override
+        protected void updateItem(Transaction item, boolean empty) {
+            super.updateItem(item, empty);
+            setGraphic((empty || item == null) ? null : box);
+        }
+    }
+
+    private void restoreArchivedTransaction(Transaction order) {
+        Window owner = salesRoot != null && salesRoot.getScene() != null ? salesRoot.getScene().getWindow() : null;
+        if (!AdminAuthDialog.show(owner, "Authorize restoring Order #" + order.orderId())) {
+            return;
+        }
+
+        Thread t = new Thread(() -> {
+            boolean ok = orderDAO.restoreTransaction(order.orderId());
+            Platform.runLater(() -> {
+                if (ok) {
+                    AlertUtil.showInfo("Restored", "Transaction #" + order.orderId() + " has been restored.");
+                    loadArchivedOrders();
+                    loadSalesData();
+                } else {
+                    AlertUtil.showError("Error", "Could not restore transaction.");
+                }
+            });
+        });
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private void permanentlyDeleteArchivedTransaction(Transaction order) {
+        if (!AlertUtil.showYesNoConfirmation("Permanently Delete",
+                "Permanently delete transaction #" + order.orderId() + "?",
+                "This action cannot be undone. All order items and history for this transaction will be permanently removed.")) {
+            return;
+        }
+
+        Window owner = salesRoot != null && salesRoot.getScene() != null ? salesRoot.getScene().getWindow() : null;
+        if (!AdminAuthDialog.show(owner, "Authorize permanently deleting Order #" + order.orderId())) {
+            return;
+        }
+
+        Thread t = new Thread(() -> {
+            boolean ok = orderDAO.deleteTransactionPermanently(order.orderId());
+            Platform.runLater(() -> {
+                if (ok) {
+                    AlertUtil.showInfo("Deleted", "Transaction #" + order.orderId() + " has been permanently deleted.");
+                    loadArchivedOrders();
+                } else {
+                    AlertUtil.showError("Error", "Could not delete transaction.");
+                }
+            });
+        });
+        t.setDaemon(true);
+        t.start();
     }
 
     private static final class FilterPill {

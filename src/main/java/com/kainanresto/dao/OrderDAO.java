@@ -26,6 +26,22 @@ import java.security.SecureRandom;
 
 public class OrderDAO {
 
+    static {
+        ensureArchiveColumn();
+    }
+
+    private static void ensureArchiveColumn() {
+        try (Connection conn = DatabaseConfig.getConnection();
+             Statement stmt = conn.createStatement()) {
+            try {
+                stmt.executeUpdate("ALTER TABLE orders ADD COLUMN is_deleted TINYINT(1) NOT NULL DEFAULT 0");
+            } catch (SQLException ignored) {
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     private static final String ORDER_CODE_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -175,14 +191,14 @@ public class OrderDAO {
         SELECT oi.order_id, oi.dish_id, oi.dish_name, oi.image_url, oi.unit_price, oi.quantity
         FROM order_items oi 
         JOIN orders o ON o.id = oi.order_id 
-        WHERE o.created_at >= ? OR o.status = 'PREPARING'
+        WHERE o.is_deleted = 0 AND (o.created_at >= ? OR o.status = 'PREPARING')
     """;
 
         String ordersSql = """
         SELECT id, order_number, order_type, status, created_at, cashier_name, discount_name,
                subtotal, service_charge_rate, service_charge, vat_rate, vat, total
         FROM orders 
-        WHERE created_at >= ? OR status = 'PREPARING' 
+        WHERE is_deleted = 0 AND (created_at >= ? OR status = 'PREPARING') 
         ORDER BY created_at DESC
     """;
 
@@ -303,7 +319,7 @@ public class OrderDAO {
             SELECT order_number, order_type, cashier_name, cashier_role,
                    created_at, COALESCE(updated_at, created_at) AS last_activity,
                    total, status, payment_status
-            FROM orders WHERE created_at >= ? AND created_at < ? ORDER BY created_at DESC
+            FROM orders WHERE is_deleted = 0 AND created_at >= ? AND created_at < ? ORDER BY created_at DESC
         """;
         List<Transaction> list = new ArrayList<>();
         try (Connection conn = DatabaseConfig.getConnection();
@@ -327,6 +343,225 @@ public class OrderDAO {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public List<Transaction> getArchivedTransactions() {
+        String sql = """
+            SELECT order_number, order_type, cashier_name, cashier_role,
+                   created_at, COALESCE(updated_at, created_at) AS last_activity,
+                   total, status, payment_status
+            FROM orders WHERE is_deleted = 1 ORDER BY updated_at DESC, created_at DESC
+        """;
+        List<Transaction> list = new ArrayList<>();
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                OrderStatus st = OrderStatus.fromString(rs.getString("status"));
+                list.add(new Transaction(
+                        rs.getString("order_number"), rs.getString("order_type"), null,
+                        rs.getString("cashier_name"), rs.getString("cashier_role"),
+                        rs.getTimestamp("created_at").toLocalDateTime(),
+                        rs.getTimestamp("last_activity").toLocalDateTime(),
+                        rs.getBigDecimal("total"),
+                        st == null ? rs.getString("status") : st.getDisplayName(),
+                        rs.getString("payment_status")));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public boolean archiveTransaction(String orderNumber) {
+        String sql = "UPDATE orders SET is_deleted = 1, updated_at = NOW() WHERE order_number = ?";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, orderNumber);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean restoreTransaction(String orderNumber) {
+        String sql = "UPDATE orders SET is_deleted = 0, updated_at = NOW() WHERE order_number = ?";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, orderNumber);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean deleteTransactionPermanently(String orderNumber) {
+        String sel = "SELECT id FROM orders WHERE order_number = ?";
+        String delItems = "DELETE FROM order_items WHERE order_id = ?";
+        String delOrder = "DELETE FROM orders WHERE id = ?";
+        try (Connection conn = DatabaseConfig.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                long orderId = -1;
+                try (PreparedStatement ps = conn.prepareStatement(sel)) {
+                    ps.setString(1, orderNumber);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) orderId = rs.getLong(1);
+                    }
+                }
+                if (orderId == -1) {
+                    conn.rollback();
+                    return false;
+                }
+                try (PreparedStatement ps = conn.prepareStatement(delItems)) {
+                    ps.setLong(1, orderId);
+                    ps.executeUpdate();
+                }
+                try (PreparedStatement ps = conn.prepareStatement(delOrder)) {
+                    ps.setLong(1, orderId);
+                    ps.executeUpdate();
+                }
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateTransaction(String orderNumber, String orderType, OrderStatus newStatus,
+                                     String discountName, ReceiptTotals totals, BigDecimal discountAmount,
+                                     List<ReceiptLine> newLines, List<ReceiptLine> oldLines, OrderStatus oldStatus) throws Exception {
+        String getOrderId = "SELECT id, cash_tendered FROM orders WHERE order_number = ?";
+        String updateOrder = """
+            UPDATE orders SET
+                order_type = ?, status = ?, payment_status = ?, discount_name = ?,
+                subtotal = ?, discount_amount = ?, service_charge_rate = ?, service_charge = ?,
+                vat_rate = ?, vat = ?, total = ?, change_amount = ?, updated_at = NOW()
+            WHERE id = ?
+        """;
+        String deleteItems = "DELETE FROM order_items WHERE order_id = ?";
+        String insertItem = "INSERT INTO order_items (order_id, dish_id, dish_name, image_url, unit_price, quantity) VALUES (?,?,?,?,?,?)";
+        String deductStock = "UPDATE dishes SET quantity = quantity - ? WHERE id = ? AND quantity >= ?";
+        String restoreStock = "UPDATE dishes SET quantity = quantity + ? WHERE id = ?";
+
+        try (Connection conn = DatabaseConfig.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                long orderId = -1;
+                BigDecimal cashTendered = null;
+                try (PreparedStatement ps = conn.prepareStatement(getOrderId)) {
+                    ps.setString(1, orderNumber);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            orderId = rs.getLong("id");
+                            cashTendered = rs.getBigDecimal("cash_tendered");
+                        }
+                    }
+                }
+                if (orderId == -1) {
+                    conn.rollback();
+                    return false;
+                }
+
+                // Inventory adjustments
+                Map<Long, Integer> deltas = new HashMap<>();
+                if (oldStatus != OrderStatus.CANCELLED && oldLines != null) {
+                    for (ReceiptLine l : oldLines) {
+                        deltas.merge(l.dishId(), -l.quantity(), Integer::sum);
+                    }
+                }
+                if (newStatus != OrderStatus.CANCELLED && newLines != null) {
+                    for (ReceiptLine l : newLines) {
+                        deltas.merge(l.dishId(), l.quantity(), Integer::sum);
+                    }
+                }
+
+                try (PreparedStatement deductPs = conn.prepareStatement(deductStock);
+                     PreparedStatement restorePs = conn.prepareStatement(restoreStock)) {
+                    for (Map.Entry<Long, Integer> entry : deltas.entrySet()) {
+                        long dishId = entry.getKey();
+                        int delta = entry.getValue();
+                        if (delta > 0) {
+                            deductPs.setInt(1, delta);
+                            deductPs.setLong(2, dishId);
+                            deductPs.setInt(3, delta);
+                            if (deductPs.executeUpdate() == 0) {
+                                conn.rollback();
+                                throw new IllegalStateException("Insufficient stock for dish ID #" + dishId + ".");
+                            }
+                        } else if (delta < 0) {
+                            restorePs.setInt(1, -delta);
+                            restorePs.setLong(2, dishId);
+                            restorePs.executeUpdate();
+                        }
+                    }
+                }
+
+                // Calculate change_amount
+                BigDecimal changeAmount = BigDecimal.ZERO;
+                if (cashTendered != null) {
+                    if (cashTendered.compareTo(totals.total()) >= 0) {
+                        changeAmount = cashTendered.subtract(totals.total());
+                    } else {
+                        changeAmount = BigDecimal.ZERO;
+                    }
+                }
+
+                String paymentStatus = newStatus == OrderStatus.CANCELLED ? "Refunded" : "Paid";
+
+                try (PreparedStatement ps = conn.prepareStatement(updateOrder)) {
+                    int i = 1;
+                    ps.setString(i++, orderType);
+                    ps.setString(i++, newStatus.name());
+                    ps.setString(i++, paymentStatus);
+                    ps.setString(i++, discountName);
+                    ps.setBigDecimal(i++, totals.subtotal());
+                    ps.setBigDecimal(i++, discountAmount);
+                    ps.setBigDecimal(i++, totals.serviceChargeRate());
+                    ps.setBigDecimal(i++, totals.serviceCharge());
+                    ps.setBigDecimal(i++, totals.vatRate());
+                    ps.setBigDecimal(i++, totals.vat());
+                    ps.setBigDecimal(i++, totals.total());
+                    ps.setBigDecimal(i++, changeAmount);
+                    ps.setLong(i, orderId);
+                    ps.executeUpdate();
+                }
+
+                // Delete old items and insert new items
+                try (PreparedStatement ps = conn.prepareStatement(deleteItems)) {
+                    ps.setLong(1, orderId);
+                    ps.executeUpdate();
+                }
+
+                if (newLines != null && !newLines.isEmpty()) {
+                    try (PreparedStatement ps = conn.prepareStatement(insertItem)) {
+                        for (ReceiptLine l : newLines) {
+                            ps.setLong(1, orderId);
+                            ps.setLong(2, l.dishId());
+                            ps.setString(3, l.name());
+                            ps.setString(4, l.imageUrl());
+                            ps.setBigDecimal(5, l.unitPrice());
+                            ps.setInt(6, l.quantity());
+                            ps.addBatch();
+                        }
+                        ps.executeBatch();
+                    }
+                }
+
+                conn.commit();
+                return true;
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            }
+        }
     }
 
     public List<Transaction> getTransactionsForMonths(List<YearMonth> months) {
@@ -357,14 +592,14 @@ public class OrderDAO {
             SELECT order_number, order_type, cashier_name, cashier_role,
                    created_at, COALESCE(updated_at, created_at) AS last_activity,
                    total, status, payment_status
-            FROM orders WHERE 
+            FROM orders WHERE is_deleted = 0 AND (
         """);
 
         for (int i = 0; i < intervals.size(); i++) {
             if (i > 0) sql.append(" OR ");
             sql.append("(created_at >= ? AND created_at < ?)");
         }
-        sql.append(" ORDER BY created_at DESC");
+        sql.append(") ORDER BY created_at DESC");
 
         List<Transaction> list = new ArrayList<>();
         try (Connection conn = DatabaseConfig.getConnection();
@@ -398,7 +633,7 @@ public class OrderDAO {
             SELECT order_number, order_type, cashier_name, cashier_role,
                    created_at, COALESCE(updated_at, created_at) AS last_activity,
                    total, status, payment_status
-            FROM orders ORDER BY created_at DESC LIMIT ?
+            FROM orders WHERE is_deleted = 0 ORDER BY created_at DESC LIMIT ?
         """;
         List<Transaction> list = new ArrayList<>();
         try (Connection conn = DatabaseConfig.getConnection();

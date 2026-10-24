@@ -1,0 +1,303 @@
+/* =========================================================================
+   Edit Transaction Modal Stylesheet
+   Palette: #8C6343 (Primary), #B9926D (Secondary), #D5B392 (Accent),
+            #F9F4EC (Cream Page), #FFFFFF (Cards), #2E2520 (Dark Text),
+            #6E625C (Muted Text), #EAE1D4 (Borders), #FCF7F0 (Input Fill)
+   ========================================================================= */
+
+/* Root Modal Card */
+.edit-modal-root {
+    -fx-background-color: #F9F4EC;
+    -fx-background-radius: 20px;
+    -fx-border-color: #8C6343;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 20px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.28), 22, 0, 0, 8);
+}
+
+/* Header */
+.edit-modal-header {
+    -fx-padding: 20px 24px 16px 24px;
+    -fx-border-color: transparent transparent #EAE1D4 transparent;
+    -fx-border-width: 0 0 1px 0;
+}
+.edit-modal-title {
+    -fx-font-family: 'Roboto', 'Inter', sans-serif;
+    -fx-font-size: 20px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #2E2520;
+}
+.edit-modal-subtitle {
+    -fx-font-family: 'Inter', sans-serif;
+    -fx-font-size: 13px;
+    -fx-font-weight: 400;
+    -fx-text-fill: #6E625C;
+}
+.edit-modal-close-btn {
+    -fx-background-color: transparent;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #6E625C;
+    -fx-cursor: hand;
+    -fx-padding: 4px 8px;
+    -fx-background-radius: 6px;
+}
+.edit-modal-close-btn:hover {
+    -fx-background-color: #EFE4D6;
+    -fx-text-fill: #2E2520;
+}
+
+/* Inner White Cards */
+.edit-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 14px;
+    -fx-border-color: #EAE1D4;
+    -fx-border-width: 1px;
+    -fx-border-radius: 14px;
+    -fx-padding: 18px;
+    -fx-effect: dropshadow(gaussian, rgba(140, 99, 67, 0.05), 14, 0, 0, 4);
+}
+.edit-card-title {
+    -fx-font-family: 'Roboto', 'Inter', sans-serif;
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #2E2520;
+}
+.edit-field-label {
+    -fx-font-family: 'Inter', sans-serif;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #5D4037;
+}
+
+/* Custom ComboBoxes */
+.edit-combo {
+    -fx-background-color: #FCF7F0;
+    -fx-background-insets: 0;
+    -fx-background-radius: 8px;
+    -fx-border-color: #E2D3C7;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 8px;
+    -fx-padding: 4px 10px;
+    -fx-font-family: 'Inter', sans-serif;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.edit-combo:hover {
+    -fx-border-color: #B9926D;
+}
+.edit-combo:focused,
+.edit-combo:showing {
+    -fx-border-color: #8C6343;
+    -fx-background-color: #FFFFFF;
+}
+.edit-combo .list-cell {
+    -fx-text-fill: #2E2520;
+    -fx-background-color: transparent;
+    -fx-font-size: 13px;
+    -fx-padding: 2px 4px;
+}
+.edit-combo .arrow-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0 4px;
+}
+.edit-combo .arrow {
+    -fx-background-color: #8C6343;
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+}
+.edit-combo .combo-box-popup .list-view {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 8px;
+    -fx-border-color: #E2D3C7;
+    -fx-border-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 10, 0, 0, 4);
+    -fx-padding: 4px;
+}
+.edit-combo .combo-box-popup .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #2E2520;
+    -fx-padding: 8px 12px;
+    -fx-background-radius: 6px;
+}
+.edit-combo .combo-box-popup .list-cell:filled:hover,
+.edit-combo .combo-box-popup .list-cell:filled:selected {
+    -fx-background-color: #FCF7F0;
+    -fx-text-fill: #8C6343;
+    -fx-font-weight: 600;
+}
+
+/* Custom Input Field */
+.edit-input {
+    -fx-background-color: #FCF7F0;
+    -fx-background-insets: 0;
+    -fx-background-radius: 8px;
+    -fx-border-color: #E2D3C7;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 8px;
+    -fx-padding: 7px 10px;
+    -fx-font-family: 'Inter', sans-serif;
+    -fx-font-size: 13px;
+    -fx-text-fill: #2E2520;
+    -fx-font-weight: 700;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.edit-input:hover {
+    -fx-border-color: #B9926D;
+}
+.edit-input:focused {
+    -fx-border-color: #8C6343;
+    -fx-background-color: #FFFFFF;
+}
+
+/* Stepper [-] [ Qty ] [+] */
+.modal-stepper-btn {
+    -fx-background-color: #F2EAE0;
+    -fx-background-insets: 0;
+    -fx-background-radius: 6px;
+    -fx-border-color: #D5B392;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-text-fill: #8C6343;
+    -fx-font-family: 'Inter', sans-serif;
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.modal-stepper-btn:hover {
+    -fx-background-color: #E9DCCB;
+    -fx-border-color: #8C6343;
+}
+.modal-stepper-btn:pressed {
+    -fx-background-color: #DFCDB6;
+}
+
+/* Delete Trash Button */
+.modal-delete-btn {
+    -fx-background-color: #FFF5F5;
+    -fx-background-insets: 0;
+    -fx-background-radius: 6px;
+    -fx-border-color: #FCD9D9;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.modal-delete-btn:hover {
+    -fx-background-color: #FDE8E8;
+    -fx-border-color: #E74C3C;
+}
+
+/* Item Row */
+.modal-item-row {
+    -fx-background-color: #FAFAFA;
+    -fx-background-radius: 8px;
+    -fx-border-color: #EAE1D4;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-padding: 8px 12px;
+}
+.modal-item-row:hover {
+    -fx-background-color: #FCF9F5;
+    -fx-border-color: #D5B392;
+}
+
+/* Add Item Button */
+.modal-add-btn {
+    -fx-background-color: #8C6343;
+    -fx-background-insets: 0;
+    -fx-background-radius: 8px;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-family: 'Inter', sans-serif;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-padding: 7px 16px;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.modal-add-btn:hover {
+    -fx-background-color: #745136;
+}
+
+/* Footer & Action Buttons */
+.edit-modal-footer {
+    -fx-background-color: #F9F4EC;
+    -fx-background-radius: 0 0 20px 20px;
+    -fx-border-color: #EAE1D4 transparent transparent transparent;
+    -fx-border-width: 1px 0 0 0;
+    -fx-padding: 16px 24px 20px 24px;
+}
+.edit-cancel-btn {
+    -fx-background-color: transparent;
+    -fx-border-color: #8C6343;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-text-fill: #8C6343;
+    -fx-font-family: 'Inter', sans-serif;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-padding: 8px 22px;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.edit-cancel-btn:hover {
+    -fx-background-color: rgba(140, 99, 67, 0.08);
+}
+.edit-save-btn {
+    -fx-background-color: #8C6343;
+    -fx-background-insets: 0;
+    -fx-background-radius: 8px;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-family: 'Inter', sans-serif;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-padding: 9px 24px;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.edit-save-btn:hover {
+    -fx-background-color: #745136;
+}
+
+/* Scrollbar */
+.receipt-scroll,
+.receipt-scroll > .viewport,
+.receipt-scroll > .corner {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+.receipt-scroll > .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 8px;
+    -fx-padding: 4px 2px 4px 0;
+}
+.receipt-scroll > .scroll-bar:vertical > .track,
+.receipt-scroll > .scroll-bar:vertical > .track-background {
+    -fx-background-color: transparent;
+}
+.receipt-scroll > .scroll-bar:vertical > .thumb {
+    -fx-background-color: #D5B392;
+    -fx-background-radius: 8px;
+}
+.receipt-scroll > .scroll-bar:vertical > .thumb:hover {
+    -fx-background-color: #B9926D;
+}
+.receipt-scroll > .scroll-bar > .increment-button,
+.receipt-scroll > .scroll-bar > .decrement-button {
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+    -fx-opacity: 0;
+}

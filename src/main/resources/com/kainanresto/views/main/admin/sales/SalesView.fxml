@@ -7,77 +7,112 @@
             styleClass="dashboard-scroll" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.kainanresto.controllers.main.admin.sales.SalesController">
     <content>
-        <VBox fx:id="salesRoot" styleClass="orders-page" spacing="20.0">
+        <VBox fx:id="salesRoot" styleClass="orders-page" spacing="20.0" maxHeight="Infinity">
 
-            <!-- Orders Search + filters toolbar -->
-            <HBox styleClass="orders-toolbar-card" alignment="CENTER_LEFT" spacing="16.0">
-                <HBox fx:id="ordersSearchBox" styleClass="search-box, search-box-tinted, search-box-fluid" alignment="CENTER_LEFT" spacing="10.0" HBox.hgrow="ALWAYS">
-                    <StackPane styleClass="icon-host-14">
-                        <SVGPath fx:id="ordersSearchIcon" styleClass="phosphor-icon, icon-muted" />
-                    </StackPane>
-                    <TextField fx:id="ordersSearchField" promptText="Search Order ID or customer..." styleClass="search-input" HBox.hgrow="ALWAYS" />
+            <!-- ============================== ACTIVE ORDERS VIEW ============================== -->
+            <VBox fx:id="activeOrdersContainer" spacing="20.0" VBox.vgrow="ALWAYS" maxHeight="Infinity">
+
+                <!-- Orders Search + filters toolbar -->
+                <HBox styleClass="orders-toolbar-card" alignment="CENTER_LEFT" spacing="16.0">
+                    <HBox fx:id="ordersSearchBox" styleClass="search-box, search-box-tinted, search-box-fluid" alignment="CENTER_LEFT" spacing="10.0" HBox.hgrow="ALWAYS">
+                        <StackPane styleClass="icon-host-14">
+                            <SVGPath fx:id="ordersSearchIcon" styleClass="phosphor-icon, icon-muted" />
+                        </StackPane>
+                        <TextField fx:id="ordersSearchField" promptText="Search Order ID or customer..." styleClass="search-input" HBox.hgrow="ALWAYS" />
+                    </HBox>
+
+                    <HBox alignment="CENTER_RIGHT" spacing="10.0">
+                        <HBox fx:id="orderDatePill" styleClass="filter-pill" alignment="CENTER_LEFT" spacing="8.0">
+                            <Label text="Date:" styleClass="filter-pill-label" />
+                            <Label fx:id="orderDateValueLabel" text="—" styleClass="filter-pill-value" />
+                            <StackPane styleClass="icon-host-14"><SVGPath styleClass="phosphor-icon, icon-muted, filter-chevron" /></StackPane>
+                        </HBox>
+                        <HBox fx:id="orderStatusPill" styleClass="filter-pill" alignment="CENTER_LEFT" spacing="8.0">
+                            <Label text="Status:" styleClass="filter-pill-label" />
+                            <Label fx:id="orderStatusValueLabel" text="—" styleClass="filter-pill-value" />
+                            <StackPane styleClass="icon-host-14"><SVGPath styleClass="phosphor-icon, icon-muted, filter-chevron" /></StackPane>
+                        </HBox>
+                        <HBox fx:id="orderPaymentPill" styleClass="filter-pill" alignment="CENTER_LEFT" spacing="8.0">
+                            <Label text="Payment:" styleClass="filter-pill-label" />
+                            <Label fx:id="orderPaymentValueLabel" text="—" styleClass="filter-pill-value" />
+                            <StackPane styleClass="icon-host-14"><SVGPath styleClass="phosphor-icon, icon-muted, filter-chevron" /></StackPane>
+                        </HBox>
+                        <HBox fx:id="orderSortPill" styleClass="filter-pill" alignment="CENTER_LEFT" spacing="8.0">
+                            <Label text="Sort:" styleClass="filter-pill-label" />
+                            <Label fx:id="orderSortValueLabel" text="Newest First" styleClass="filter-pill-value" />
+                            <StackPane styleClass="icon-host-14"><SVGPath styleClass="phosphor-icon, icon-muted, filter-chevron" /></StackPane>
+                        </HBox>
+                        <Button fx:id="clearOrderFiltersBtn" text="Clear Filters" onAction="#onClearOrderFilters" styleClass="btn-text" mnemonicParsing="false" />
+                        <Button fx:id="viewArchiveBtn" text="View Archive" onAction="#onShowArchive" styleClass="btn-text" mnemonicParsing="false" />
+                        <Button fx:id="exportSalesBtn" text="Export Sales" onAction="#onExportSales" styleClass="btn-primary" mnemonicParsing="false" contentDisplay="LEFT" graphicTextGap="8.0">
+                            <graphic>
+                                <StackPane styleClass="icon-host-16">
+                                    <SVGPath fx:id="exportSalesIcon" styleClass="phosphor-icon" />
+                                </StackPane>
+                            </graphic>
+                        </Button>
+                    </HBox>
                 </HBox>
 
-                <HBox alignment="CENTER_RIGHT" spacing="10.0">
-                    <HBox fx:id="orderDatePill" styleClass="filter-pill" alignment="CENTER_LEFT" spacing="8.0">
-                        <Label text="Date:" styleClass="filter-pill-label" />
-                        <Label fx:id="orderDateValueLabel" text="—" styleClass="filter-pill-value" />
-                        <StackPane styleClass="icon-host-14"><SVGPath styleClass="phosphor-icon, icon-muted, filter-chevron" /></StackPane>
-                    </HBox>
-                    <HBox fx:id="orderStatusPill" styleClass="filter-pill" alignment="CENTER_LEFT" spacing="8.0">
-                        <Label text="Status:" styleClass="filter-pill-label" />
-                        <Label fx:id="orderStatusValueLabel" text="—" styleClass="filter-pill-value" />
-                        <StackPane styleClass="icon-host-14"><SVGPath styleClass="phosphor-icon, icon-muted, filter-chevron" /></StackPane>
-                    </HBox>
-                    <HBox fx:id="orderPaymentPill" styleClass="filter-pill" alignment="CENTER_LEFT" spacing="8.0">
-                        <Label text="Payment:" styleClass="filter-pill-label" />
-                        <Label fx:id="orderPaymentValueLabel" text="—" styleClass="filter-pill-value" />
-                        <StackPane styleClass="icon-host-14"><SVGPath styleClass="phosphor-icon, icon-muted, filter-chevron" /></StackPane>
-                    </HBox>
-                    <HBox fx:id="orderSortPill" styleClass="filter-pill" alignment="CENTER_LEFT" spacing="8.0">
-                        <Label text="Sort:" styleClass="filter-pill-label" />
-                        <Label fx:id="orderSortValueLabel" text="Newest First" styleClass="filter-pill-value" />
-                        <StackPane styleClass="icon-host-14"><SVGPath styleClass="phosphor-icon, icon-muted, filter-chevron" /></StackPane>
-                    </HBox>
-                    <Button fx:id="clearOrderFiltersBtn" text="Clear Filters" onAction="#onClearOrderFilters" styleClass="btn-text" mnemonicParsing="false" />
-                    <Button fx:id="exportSalesBtn" text="Export Sales" onAction="#onExportSales" styleClass="btn-primary" mnemonicParsing="false" contentDisplay="LEFT" graphicTextGap="8.0">
-                        <graphic>
-                            <StackPane styleClass="icon-host-16">
-                                <SVGPath fx:id="exportSalesIcon" styleClass="phosphor-icon" />
-                            </StackPane>
-                        </graphic>
-                    </Button>
-                </HBox>
-            </HBox>
+                <!-- Active Orders table -->
+                <VBox styleClass="table-card" spacing="14.0" VBox.vgrow="ALWAYS" maxHeight="Infinity">
+                    <TableView fx:id="ordersTable" styleClass="orders-table, orders-table-fixed" fixedCellSize="58.0" minHeight="300.0" maxHeight="Infinity" VBox.vgrow="ALWAYS" focusTraversable="false">
+                        <placeholder>
+                            <Label fx:id="ordersTablePlaceholder" text="" styleClass="dashboard-placeholder" />
+                        </placeholder>
+                        <columns>
+                            <TableColumn fx:id="orderIdColumn" text="ORDER ID" prefWidth="100.0" minWidth="90.0" sortable="false" reorderable="false" styleClass="col-first, col-id" />
+                            <TableColumn fx:id="orderTypeColumn" text="TYPE" prefWidth="100.0" minWidth="80.0" sortable="false" reorderable="false" styleClass="col-type" />
+                            <TableColumn fx:id="orderStaffColumn" text="STAFF" prefWidth="180.0" minWidth="120.0" sortable="false" reorderable="false" />
+                            <TableColumn fx:id="orderCreatedColumn" text="CREATED / LAST EDIT" prefWidth="180.0" minWidth="150.0" sortable="false" reorderable="false" styleClass="col-time" />
+                            <TableColumn fx:id="orderTotalColumn" text="TOTAL" prefWidth="100.0" minWidth="80.0" sortable="false" reorderable="false" styleClass="col-total" />
+                            <TableColumn fx:id="orderStatusColumn" text="STATUS" prefWidth="120.0" minWidth="110.0" sortable="false" reorderable="false" />
+                            <TableColumn fx:id="orderPaymentColumn" text="PAYMENT" prefWidth="120.0" minWidth="100.0" sortable="false" reorderable="false" />
+                            <TableColumn fx:id="orderActionsColumn" text="ACTIONS" prefWidth="72.0" minWidth="72.0" maxWidth="72.0" resizable="false" sortable="false" reorderable="false" styleClass="col-center" />
+                        </columns>
+                    </TableView>
 
-            <!-- Restored Orders table: non-scrollable internally since it has pagination -->
-            <VBox styleClass="table-card" spacing="14.0">
-                <TableView fx:id="ordersTable" styleClass="orders-table, orders-table-fixed" fixedCellSize="58.0" minHeight="618.0" prefHeight="618.0" maxHeight="618.0" focusTraversable="false">
-                    <placeholder>
-                        <Label fx:id="ordersTablePlaceholder" text="" styleClass="dashboard-placeholder" />
-                    </placeholder>
-                    <columns>
-                        <TableColumn fx:id="orderIdColumn" text="ORDER ID" prefWidth="100.0" minWidth="90.0" sortable="false" reorderable="false" styleClass="col-first, col-id" />
-                        <TableColumn fx:id="orderTypeColumn" text="TYPE" prefWidth="100.0" minWidth="80.0" sortable="false" reorderable="false" styleClass="col-type" />
-                        <TableColumn fx:id="orderStaffColumn" text="STAFF" prefWidth="180.0" minWidth="120.0" sortable="false" reorderable="false" />
-                        <TableColumn fx:id="orderCreatedColumn" text="CREATED / LAST EDIT" prefWidth="180.0" minWidth="150.0" sortable="false" reorderable="false" styleClass="col-time" />
-                        <TableColumn fx:id="orderTotalColumn" text="TOTAL" prefWidth="100.0" minWidth="80.0" sortable="false" reorderable="false" styleClass="col-total" />
-                        <TableColumn fx:id="orderStatusColumn" text="STATUS" prefWidth="120.0" minWidth="110.0" sortable="false" reorderable="false" />
-                        <TableColumn fx:id="orderPaymentColumn" text="PAYMENT" prefWidth="120.0" minWidth="100.0" sortable="false" reorderable="false" />
-                        <TableColumn fx:id="orderActionsColumn" text="ACTIONS" prefWidth="72.0" minWidth="72.0" maxWidth="72.0" resizable="false" sortable="false" reorderable="false" styleClass="col-center" />
-                    </columns>
-                </TableView>
+                    <!-- Restored Pagination Bar -->
+                    <HBox fx:id="paginationBar" alignment="CENTER_LEFT" spacing="12.0" styleClass="table-pagination-bar">
+                        <Label fx:id="paginationInfoLabel" text="Showing 0 of 0 orders" styleClass="pagination-info" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <HBox alignment="CENTER_RIGHT" spacing="6.0">
+                            <Button fx:id="prevPageBtn" text="Previous" styleClass="pagination-btn, pagination-btn-nav" onAction="#onPrevPage" mnemonicParsing="false" />
+                            <HBox fx:id="pageNumbersBox" alignment="CENTER" spacing="4.0" />
+                            <Button fx:id="nextPageBtn" text="Next" styleClass="pagination-btn, pagination-btn-nav" onAction="#onNextPage" mnemonicParsing="false" />
+                        </HBox>
+                    </HBox>
+                </VBox>
+            </VBox>
 
-                <!-- Restored Pagination Bar -->
-                <HBox fx:id="paginationBar" alignment="CENTER_LEFT" spacing="12.0" styleClass="table-pagination-bar">
-                    <Label fx:id="paginationInfoLabel" text="Showing 0 of 0 orders" styleClass="pagination-info" />
+            <!-- ============================== ARCHIVED ORDERS VIEW ============================== -->
+            <VBox fx:id="archivedOrdersContainer" spacing="20.0" visible="false" managed="false" VBox.vgrow="ALWAYS" maxHeight="Infinity">
+                <HBox styleClass="orders-toolbar-card" alignment="CENTER_LEFT" spacing="16.0">
+                    <VBox spacing="2">
+                        <Label text="Archived Transactions" styleClass="page-title" style="-fx-font-size: 18px;"/>
+                        <Label text="View, restore, or permanently delete archived transaction records." styleClass="page-subtitle"/>
+                    </VBox>
                     <Region HBox.hgrow="ALWAYS" />
-                    <HBox alignment="CENTER_RIGHT" spacing="6.0">
-                        <Button fx:id="prevPageBtn" text="Previous" styleClass="pagination-btn, pagination-btn-nav" onAction="#onPrevPage" mnemonicParsing="false" />
-                        <HBox fx:id="pageNumbersBox" alignment="CENTER" spacing="4.0" />
-                        <Button fx:id="nextPageBtn" text="Next" styleClass="pagination-btn, pagination-btn-nav" onAction="#onNextPage" mnemonicParsing="false" />
-                    </HBox>
+                    <Button text="Back to Active Orders" styleClass="archive-back-btn" onAction="#onShowActiveOrders" mnemonicParsing="false" />
                 </HBox>
+
+                <VBox styleClass="table-card" spacing="14.0" VBox.vgrow="ALWAYS" maxHeight="Infinity">
+                    <TableView fx:id="archivedOrdersTable" styleClass="orders-table, orders-table-fixed" fixedCellSize="58.0" minHeight="300.0" maxHeight="Infinity" VBox.vgrow="ALWAYS" focusTraversable="false">
+                        <placeholder>
+                            <Label fx:id="archivedOrdersPlaceholder" text="No archived transactions found." styleClass="dashboard-placeholder" />
+                        </placeholder>
+                        <columns>
+                            <TableColumn fx:id="archivedOrderIdCol" text="ORDER ID" prefWidth="100.0" minWidth="90.0" sortable="false" reorderable="false" styleClass="col-first, col-id" />
+                            <TableColumn fx:id="archivedOrderTypeCol" text="TYPE" prefWidth="100.0" minWidth="80.0" sortable="false" reorderable="false" styleClass="col-type" />
+                            <TableColumn fx:id="archivedOrderStaffCol" text="STAFF" prefWidth="180.0" minWidth="120.0" sortable="false" reorderable="false" />
+                            <TableColumn fx:id="archivedOrderCreatedCol" text="CREATED / ARCHIVED" prefWidth="180.0" minWidth="150.0" sortable="false" reorderable="false" styleClass="col-time" />
+                            <TableColumn fx:id="archivedOrderTotalCol" text="TOTAL" prefWidth="100.0" minWidth="80.0" sortable="false" reorderable="false" styleClass="col-total" />
+                            <TableColumn fx:id="archivedOrderStatusCol" text="STATUS" prefWidth="120.0" minWidth="110.0" sortable="false" reorderable="false" />
+                            <TableColumn fx:id="archivedOrderPaymentCol" text="PAYMENT" prefWidth="120.0" minWidth="100.0" sortable="false" reorderable="false" />
+                            <TableColumn fx:id="archivedOrderActionsCol" text="ACTIONS" prefWidth="120.0" minWidth="120.0" maxWidth="120.0" resizable="false" sortable="false" reorderable="false" styleClass="col-center" />
+                        </columns>
+                    </TableView>
+                </VBox>
             </VBox>
 
         </VBox>

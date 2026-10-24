@@ -15,7 +15,7 @@ import java.util.*;
 public class TransactionDAO {
 
     public BigDecimal getTodaysSales() {
-        String sql = "SELECT COALESCE(SUM(total), 0) FROM orders WHERE status <> 'CANCELLED' AND created_at >= CURDATE()";
+        String sql = "SELECT COALESCE(SUM(total), 0) FROM orders WHERE is_deleted = 0 AND status <> 'CANCELLED' AND created_at >= CURDATE()";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -27,8 +27,8 @@ public class TransactionDAO {
     }
 
     public BigDecimal getSalesDeltaPercent() {
-        String sqlToday = "SELECT COALESCE(SUM(total), 0) FROM orders WHERE status <> 'CANCELLED' AND created_at >= CURDATE()";
-        String sqlYesterday = "SELECT COALESCE(SUM(total), 0) FROM orders WHERE status <> 'CANCELLED' AND created_at >= CURDATE() - INTERVAL 1 DAY AND created_at < CURDATE()";
+        String sqlToday = "SELECT COALESCE(SUM(total), 0) FROM orders WHERE is_deleted = 0 AND status <> 'CANCELLED' AND created_at >= CURDATE()";
+        String sqlYesterday = "SELECT COALESCE(SUM(total), 0) FROM orders WHERE is_deleted = 0 AND status <> 'CANCELLED' AND created_at >= CURDATE() - INTERVAL 1 DAY AND created_at < CURDATE()";
 
         try (Connection conn = DatabaseConfig.getConnection()) {
             BigDecimal today = BigDecimal.ZERO;
@@ -53,12 +53,12 @@ public class TransactionDAO {
     }
 
     public int getTransactionsCountToday() {
-        String sql = "SELECT COUNT(*) FROM orders WHERE created_at >= CURDATE()";
+        String sql = "SELECT COUNT(*) FROM orders WHERE is_deleted = 0 AND created_at >= CURDATE()";
         return queryInt(sql);
     }
 
     public int getOrdersCountByStatusToday(String status) {
-        String sql = "SELECT COUNT(*) FROM orders WHERE status = ? AND created_at >= CURDATE()";
+        String sql = "SELECT COUNT(*) FROM orders WHERE is_deleted = 0 AND status = ? AND created_at >= CURDATE()";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, status);
@@ -72,7 +72,7 @@ public class TransactionDAO {
     }
 
     public int getActivePreparingOrdersCount() {
-        String sql = "SELECT COUNT(*) FROM orders WHERE status = 'PREPARING'";
+        String sql = "SELECT COUNT(*) FROM orders WHERE is_deleted = 0 AND status = 'PREPARING'";
         return queryInt(sql);
     }
 
@@ -92,19 +92,19 @@ public class TransactionDAO {
             case TODAY -> """
                 SELECT HOUR(created_at) AS hr, COALESCE(SUM(total), 0) AS sales
                 FROM orders
-                WHERE status <> 'CANCELLED' AND created_at >= CURDATE()
+                WHERE is_deleted = 0 AND status <> 'CANCELLED' AND created_at >= CURDATE()
                 GROUP BY HOUR(created_at) ORDER BY hr ASC
             """;
             case WEEK -> """
                 SELECT DATE(created_at) AS dt, COALESCE(SUM(total), 0) AS sales
                 FROM orders
-                WHERE status <> 'CANCELLED' AND created_at >= CURDATE() - INTERVAL 6 DAY
+                WHERE is_deleted = 0 AND status <> 'CANCELLED' AND created_at >= CURDATE() - INTERVAL 6 DAY
                 GROUP BY DATE(created_at) ORDER BY dt ASC
             """;
             case MONTH -> """
                 SELECT DATE(created_at) AS dt, COALESCE(SUM(total), 0) AS sales
                 FROM orders
-                WHERE status <> 'CANCELLED' AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
+                WHERE is_deleted = 0 AND status <> 'CANCELLED' AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
                 GROUP BY DATE(created_at) ORDER BY dt ASC
             """;
         };
@@ -143,9 +143,9 @@ public class TransactionDAO {
 
     public int getRangeOrderCount(Range range) {
         String sql = switch (range) {
-            case TODAY -> "SELECT COUNT(*) FROM orders WHERE status <> 'CANCELLED' AND created_at >= CURDATE()";
-            case WEEK -> "SELECT COUNT(*) FROM orders WHERE status <> 'CANCELLED' AND created_at >= CURDATE() - INTERVAL 6 DAY";
-            case MONTH -> "SELECT COUNT(*) FROM orders WHERE status <> 'CANCELLED' AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')";
+            case TODAY -> "SELECT COUNT(*) FROM orders WHERE is_deleted = 0 AND status <> 'CANCELLED' AND created_at >= CURDATE()";
+            case WEEK -> "SELECT COUNT(*) FROM orders WHERE is_deleted = 0 AND status <> 'CANCELLED' AND created_at >= CURDATE() - INTERVAL 6 DAY";
+            case MONTH -> "SELECT COUNT(*) FROM orders WHERE is_deleted = 0 AND status <> 'CANCELLED' AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')";
         };
         return queryInt(sql);
     }
@@ -155,7 +155,7 @@ public class TransactionDAO {
             SELECT oi.dish_name, SUM(oi.quantity) AS total_sold
             FROM order_items oi
             JOIN orders o ON o.id = oi.order_id
-            WHERE o.status <> 'CANCELLED'
+            WHERE o.is_deleted = 0 AND o.status <> 'CANCELLED'
             GROUP BY oi.dish_name
             ORDER BY total_sold DESC
             LIMIT ?
@@ -176,17 +176,17 @@ public class TransactionDAO {
     }
 
     public BigDecimal getWeeklySales() {
-        String sql = "SELECT COALESCE(SUM(total), 0) FROM orders WHERE status <> 'CANCELLED' AND created_at >= CURDATE() - INTERVAL 6 DAY";
+        String sql = "SELECT COALESCE(SUM(total), 0) FROM orders WHERE is_deleted = 0 AND status <> 'CANCELLED' AND created_at >= CURDATE() - INTERVAL 6 DAY";
         return executeSalesQuery(sql);
     }
 
     public BigDecimal getMonthlySales() {
-        String sql = "SELECT COALESCE(SUM(total), 0) FROM orders WHERE status <> 'CANCELLED' AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())";
+        String sql = "SELECT COALESCE(SUM(total), 0) FROM orders WHERE is_deleted = 0 AND status <> 'CANCELLED' AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())";
         return executeSalesQuery(sql);
     }
 
     public BigDecimal getYearlySales() {
-        String sql = "SELECT COALESCE(SUM(total), 0) FROM orders WHERE status <> 'CANCELLED' AND YEAR(created_at) = YEAR(CURDATE())";
+        String sql = "SELECT COALESCE(SUM(total), 0) FROM orders WHERE is_deleted = 0 AND status <> 'CANCELLED' AND YEAR(created_at) = YEAR(CURDATE())";
         return executeSalesQuery(sql);
     }
 
