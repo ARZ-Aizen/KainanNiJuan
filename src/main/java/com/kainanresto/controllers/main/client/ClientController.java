@@ -246,8 +246,16 @@ public class ClientController {
 
             if (existingLine.isPresent()) {
                 ReceiptLine line = existingLine.get();
+                if (line.quantity() + 1 > dish.quantity()) {
+                    AlertUtil.showWarning("Stock Limit", "Cannot add more \"" + dish.name() + "\". Only " + dish.quantity() + " available in stock.");
+                    return;
+                }
                 updateCartItem(line, line.quantity() + 1);
             } else {
+                if (dish.quantity() <= 0) {
+                    AlertUtil.showWarning("Out of Stock", "\"" + dish.name() + "\" is currently out of stock.");
+                    return;
+                }
                 currentCart.add(new ReceiptLine(dish.id(), dish.name(), dish.imageUrl(), dish.price(), 1));
             }
             refreshReceiptUI();
@@ -255,8 +263,22 @@ public class ClientController {
 
         posViewController.setOnReceiptQuantityChange((line, newQty) -> {
             if (newQty <= 0) {
-                currentCart.remove(line);
+                boolean confirm = AlertUtil.showYesNoConfirmation(
+                        "Remove Item",
+                        "Remove \"" + line.name() + "\"?",
+                        "Are you sure you want to remove this dish from the order?"
+                );
+                if (confirm) {
+                    currentCart.remove(line);
+                }
             } else {
+                Optional<Dishes> dishOpt = productDAO.getAllDishes().stream()
+                        .filter(d -> d.id() == line.dishId())
+                        .findFirst();
+                if (dishOpt.isPresent() && newQty > dishOpt.get().quantity()) {
+                    AlertUtil.showWarning("Stock Limit", "Cannot set quantity to " + newQty + ". Only " + dishOpt.get().quantity() + " available in stock.");
+                    return;
+                }
                 updateCartItem(line, newQty);
             }
             refreshReceiptUI();
@@ -363,7 +385,10 @@ public class ClientController {
     }
 
     private void onProceedToPayment() {
-        if (currentCart.isEmpty() || lastTotals == null) return;
+        if (currentCart.isEmpty() || lastTotals == null) {
+            AlertUtil.showWarning("Empty Order", "Please add at least one dish to the order before proceeding to payment.");
+            return;
+        }
 
         Stage owner = (Stage) appRoot.getScene().getWindow();
         String orderNumber = nextOrderNumber();
@@ -437,12 +462,15 @@ public class ClientController {
         omViewController.setOnCompleteOrder(order -> {
             if (!orderDAO.updateStatus(order.orderNumber(), OrderStatus.COMPLETED)) {
                 AlertUtil.showError("Error", "Could not save the status change.");
+            } else {
+                AlertUtil.showInfo("Order Completed", "Order #" + order.orderNumber() + " has been completed.");
             }
         });
         omViewController.setOnCancelOrder(order -> {
             if (!orderDAO.updateStatus(order.orderNumber(), OrderStatus.CANCELLED)) {
                 AlertUtil.showError("Error", "Could not cancel the order in the database.");
             } else {
+                AlertUtil.showInfo("Order Cancelled", "Order #" + order.orderNumber() + " has been cancelled and refunded.");
                 if (!isSupervisor()) {
                     loadPosData();
                 }

@@ -6,7 +6,7 @@
       fx:controller="com.kainanresto.controllers.main.admin.sales.EditTransactionModalController"
       stylesheets="@../../../../styles/util/EditTransactionModalView.css"
       styleClass="edit-modal-root"
-      spacing="0" prefWidth="860" prefHeight="700">
+      spacing="0" prefWidth="860">
 
     <!-- Modal Header -->
     <HBox alignment="CENTER_LEFT" styleClass="edit-modal-header">
@@ -21,7 +21,7 @@
     </HBox>
 
     <!-- Modal Body -->
-    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS"
+    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="NEVER" VBox.vgrow="ALWAYS"
                 styleClass="receipt-scroll"
                 style="-fx-background-color: transparent; -fx-padding: 0; -fx-border-color: transparent;">
         <HBox spacing="20" style="-fx-padding: 20 24 16 24;">
@@ -59,17 +59,17 @@
                                style="-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #8C6343;"/>
                     </HBox>
 
-                    <!-- Items Header -->
-                    <HBox alignment="CENTER_LEFT" style="-fx-padding: 0 4 4 4;">
-                        <Label text="Dish" prefWidth="200" HBox.hgrow="ALWAYS"
+                    <!-- Items Header aligned precisely with item rows -->
+                    <HBox alignment="CENTER_LEFT" spacing="8" style="-fx-padding: 0 12 6 12;">
+                        <Label text="Dish" minWidth="120" HBox.hgrow="ALWAYS"
                                style="-fx-font-family: 'Inter'; -fx-font-size: 12px; -fx-font-weight: 700; -fx-text-fill: #8C6343;"/>
-                        <Label text="Price" prefWidth="75" alignment="CENTER_RIGHT"
+                        <Label text="Price" prefWidth="70" minWidth="70" maxWidth="70" alignment="CENTER_RIGHT"
                                style="-fx-font-family: 'Inter'; -fx-font-size: 12px; -fx-font-weight: 700; -fx-text-fill: #8C6343;"/>
-                        <Label text="Quantity" prefWidth="110" alignment="CENTER"
+                        <Label text="Quantity" prefWidth="96" minWidth="96" maxWidth="96" alignment="CENTER"
                                style="-fx-font-family: 'Inter'; -fx-font-size: 12px; -fx-font-weight: 700; -fx-text-fill: #8C6343;"/>
-                        <Label text="Total" prefWidth="85" alignment="CENTER_RIGHT"
+                        <Label text="Total" prefWidth="80" minWidth="80" maxWidth="80" alignment="CENTER_RIGHT"
                                style="-fx-font-family: 'Inter'; -fx-font-size: 12px; -fx-font-weight: 700; -fx-text-fill: #8C6343;"/>
-                        <Label text="" prefWidth="36" alignment="CENTER"/>
+                        <Region prefWidth="28" minWidth="28" maxWidth="28"/>
                     </HBox>
 
                     <!-- Items Container -->
@@ -84,10 +84,10 @@
                         <HBox spacing="10" alignment="CENTER_LEFT">
                             <ComboBox fx:id="addDishCombo" promptText="Select a dish to add..."
                                       HBox.hgrow="ALWAYS" maxWidth="Infinity" styleClass="edit-combo"/>
-                            <TextField fx:id="addDishQtyField" text="1" prefWidth="54" alignment="CENTER"
+                            <TextField fx:id="addDishQtyField" text="1" prefWidth="54" minWidth="54" maxWidth="54" alignment="CENTER"
                                        styleClass="edit-input"/>
                             <Button fx:id="addDishBtn" text="+ Add" onAction="#onAddDish"
-                                    styleClass="modal-add-btn" mnemonicParsing="false"/>
+                                    minWidth="76" prefWidth="76" styleClass="modal-add-btn" mnemonicParsing="false"/>
                         </HBox>
                     </VBox>
                 </VBox>
@@ -110,13 +110,13 @@
                         <Label text="Discount cards (1 card = 1 dish)"
                                style="-fx-font-family: 'Inter'; -fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #6E625C;"/>
                         <HBox alignment="CENTER_LEFT" spacing="8">
-                            <Button onAction="#onDiscountCardsMinus" text="−"
-                                    styleClass="modal-stepper-btn" prefWidth="32" prefHeight="32"
+                            <Button onAction="#onDiscountCardsMinus" text="-"
+                                    styleClass="modal-stepper-btn" minWidth="32" minHeight="32" prefWidth="32" prefHeight="32"
                                     mnemonicParsing="false"/>
                             <Label fx:id="discountCardsLabel" text="1" alignment="CENTER" prefWidth="36"
                                    style="-fx-font-family: 'Inter'; -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2E2520;"/>
                             <Button onAction="#onDiscountCardsPlus" text="+"
-                                    styleClass="modal-stepper-btn" prefWidth="32" prefHeight="32"
+                                    styleClass="modal-stepper-btn" minWidth="32" minHeight="32" prefWidth="32" prefHeight="32"
                                     mnemonicParsing="false"/>
                         </HBox>
                     </VBox>

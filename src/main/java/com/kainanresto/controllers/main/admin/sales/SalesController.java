@@ -566,6 +566,12 @@ public class SalesController {
     }
 
     private void archiveTransaction(Transaction order) {
+        if (!AlertUtil.showYesNoConfirmation("Archive Transaction",
+                "Archive transaction #" + order.orderId() + "?",
+                "This transaction will be moved to the archive.")) {
+            return;
+        }
+
         Window owner = salesRoot != null && salesRoot.getScene() != null ? salesRoot.getScene().getWindow() : null;
         if (!AdminAuthDialog.show(owner, "Authorize archiving Order #" + order.orderId())) {
             return;
@@ -920,6 +926,12 @@ public class SalesController {
     }
 
     private void restoreArchivedTransaction(Transaction order) {
+        if (!AlertUtil.showYesNoConfirmation("Restore Transaction",
+                "Restore transaction #" + order.orderId() + "?",
+                "This transaction will be restored to active transactions.")) {
+            return;
+        }
+
         Window owner = salesRoot != null && salesRoot.getScene() != null ? salesRoot.getScene().getWindow() : null;
         if (!AdminAuthDialog.show(owner, "Authorize restoring Order #" + order.orderId())) {
             return;

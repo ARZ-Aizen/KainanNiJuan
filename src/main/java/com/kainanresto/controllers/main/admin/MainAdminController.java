@@ -707,11 +707,15 @@ public class MainAdminController {
         omc.setOnCompleteOrder(order -> {
             if (!orderDAO.updateStatus(order.orderNumber(), OrderStatus.COMPLETED)) {
                 AlertUtil.showError("Error", "Could not save the status change.");
+            } else {
+                AlertUtil.showInfo("Order Completed", "Order #" + order.orderNumber() + " has been completed.");
             }
         });
         omc.setOnCancelOrder(order -> {
             if (!orderDAO.updateStatus(order.orderNumber(), OrderStatus.CANCELLED)) {
                 AlertUtil.showError("Error", "Could not cancel the order in the database.");
+            } else {
+                AlertUtil.showInfo("Order Cancelled", "Order #" + order.orderNumber() + " has been cancelled and refunded.");
             }
         });
     }

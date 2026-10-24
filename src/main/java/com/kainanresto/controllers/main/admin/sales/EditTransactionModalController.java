@@ -81,7 +81,9 @@ public class EditTransactionModalController {
 
     @FXML
     public void initialize() {
-        orderTypeCombo.getItems().setAll("Dine in", "Take out");
+        orderTypeCombo.getItems().setAll("Dine in");
+        orderTypeCombo.setValue("Dine in");
+        orderTypeCombo.setDisable(true);
         orderStatusCombo.getItems().setAll(OrderStatus.PREPARING, OrderStatus.COMPLETED, OrderStatus.CANCELLED);
 
         discountCombo.getItems().setAll("None", "Senior Citizen (20%)", "PWD (20%)");
@@ -121,13 +123,8 @@ public class EditTransactionModalController {
         String staff = receipt.cashierName() == null ? "—" : receipt.cashierName();
         modalSubtitleLabel.setText("Order #" + receipt.orderNumber() + " • " + dateStr + " • Staff: " + staff);
 
-        // Populate order type
-        String type = receipt.orderType();
-        if (type != null && ("Take out".equalsIgnoreCase(type) || "Takeout".equalsIgnoreCase(type))) {
-            orderTypeCombo.setValue("Take out");
-        } else {
-            orderTypeCombo.setValue("Dine in");
-        }
+        // Populate order type - all orders in Kainan Ni Juan are strictly Dine in
+        orderTypeCombo.setValue("Dine in");
 
         // Populate status
         orderStatusCombo.setValue(receipt.status() != null ? receipt.status() : OrderStatus.COMPLETED);
@@ -315,42 +312,54 @@ public class EditTransactionModalController {
         // Dish name
         Label name = new Label(line.name());
         name.setStyle("-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #2E2520;");
-        name.setPrefWidth(200);
+        name.setMinWidth(120);
         name.setWrapText(true);
         HBox.setHgrow(name, Priority.ALWAYS);
 
         // Price
         Label price = new Label(formatPeso(line.unitPrice()));
         price.setStyle("-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-text-fill: #6E625C;");
-        price.setPrefWidth(75);
+        price.setPrefWidth(70);
+        price.setMinWidth(70);
+        price.setMaxWidth(70);
         price.setAlignment(Pos.CENTER_RIGHT);
 
         // Stepper: [-] [ Qty ] [+]
-        Button minusBtn = new Button("−");
+        Button minusBtn = new Button("-");
         minusBtn.getStyleClass().setAll("modal-stepper-btn");
-        minusBtn.setPrefSize(28, 28);
+        minusBtn.setPrefSize(26, 26);
+        minusBtn.setMinSize(26, 26);
+        minusBtn.setMaxSize(26, 26);
         minusBtn.setFocusTraversable(false);
         minusBtn.setOnAction(e -> updateItemQuantity(line, line.quantity() - 1));
 
         Label qtyLabel = new Label(String.valueOf(line.quantity()));
         qtyLabel.setStyle("-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #2E2520;");
-        qtyLabel.setPrefWidth(30);
+        qtyLabel.setPrefWidth(32);
+        qtyLabel.setMinWidth(32);
+        qtyLabel.setMaxWidth(32);
         qtyLabel.setAlignment(Pos.CENTER);
 
         Button plusBtn = new Button("+");
         plusBtn.getStyleClass().setAll("modal-stepper-btn");
-        plusBtn.setPrefSize(28, 28);
+        plusBtn.setPrefSize(26, 26);
+        plusBtn.setMinSize(26, 26);
+        plusBtn.setMaxSize(26, 26);
         plusBtn.setFocusTraversable(false);
         plusBtn.setOnAction(e -> updateItemQuantity(line, line.quantity() + 1));
 
-        HBox stepper = new HBox(3, minusBtn, qtyLabel, plusBtn);
+        HBox stepper = new HBox(4, minusBtn, qtyLabel, plusBtn);
         stepper.setAlignment(Pos.CENTER);
-        stepper.setPrefWidth(110);
+        stepper.setPrefWidth(96);
+        stepper.setMinWidth(96);
+        stepper.setMaxWidth(96);
 
         // Line total
         Label lineTotal = new Label(formatPeso(line.lineTotal()));
         lineTotal.setStyle("-fx-font-family: 'Inter'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #2E2520;");
-        lineTotal.setPrefWidth(85);
+        lineTotal.setPrefWidth(80);
+        lineTotal.setMinWidth(80);
+        lineTotal.setMaxWidth(80);
         lineTotal.setAlignment(Pos.CENTER_RIGHT);
 
         // Delete button
@@ -358,6 +367,8 @@ public class EditTransactionModalController {
         deleteBtn.getStyleClass().setAll("modal-delete-btn");
         deleteBtn.setFocusTraversable(false);
         deleteBtn.setPrefSize(28, 28);
+        deleteBtn.setMinSize(28, 28);
+        deleteBtn.setMaxSize(28, 28);
 
         SVGPath trashIcon = new SVGPath();
         trashIcon.setContent(Icons.TRASH_2);
@@ -380,6 +391,28 @@ public class EditTransactionModalController {
             removeItem(oldLine);
             return;
         }
+
+        Optional<Dishes> dishOpt = availableDishes.stream()
+                .filter(d -> d.id() == oldLine.dishId())
+                .findFirst();
+
+        if (dishOpt.isPresent()) {
+            Dishes dish = dishOpt.get();
+            int originalQty = (originalReceipt != null && originalReceipt.lines() != null)
+                    ? originalReceipt.lines().stream()
+                        .filter(l -> l.dishId() == dish.id())
+                        .mapToInt(ReceiptLine::quantity)
+                        .sum()
+                    : 0;
+            int netAdditional = newQty - originalQty;
+            if (netAdditional > dish.quantity()) {
+                int maxAllowed = Math.max(0, dish.quantity() + originalQty);
+                AlertUtil.showWarning("Stock Limit", "Cannot set quantity to " + newQty + ". Only " + maxAllowed + " units available based on current inventory.");
+                showError("Only " + maxAllowed + " units available for \"" + dish.name() + "\".");
+                return;
+            }
+        }
+
         int index = workingLines.indexOf(oldLine);
         if (index >= 0) {
             workingLines.set(index, new ReceiptLine(
@@ -397,9 +430,20 @@ public class EditTransactionModalController {
 
     private void removeItem(ReceiptLine line) {
         if (workingLines.size() <= 1) {
+            AlertUtil.showWarning("Cannot Remove Item", "Order must contain at least one dish. You cannot delete the last item.");
             showError("Order must contain at least one dish. You cannot delete the last item.");
             return;
         }
+
+        boolean confirm = AlertUtil.showYesNoConfirmation(
+                "Remove Dish",
+                "Remove \"" + line.name() + "\"?",
+                "Are you sure you want to remove this dish from the order?"
+        );
+        if (!confirm) {
+            return;
+        }
+
         workingLines.remove(line);
         refreshItemsUI();
         recalculateTotals();
@@ -410,6 +454,7 @@ public class EditTransactionModalController {
     private void onAddDish() {
         Dishes selected = addDishCombo.getValue();
         if (selected == null) {
+            AlertUtil.showWarning("Dish Selection", "Please select a dish to add.");
             showError("Please select a dish to add.");
             return;
         }
@@ -418,10 +463,39 @@ public class EditTransactionModalController {
         try {
             String txt = addDishQtyField.getText().trim();
             if (!txt.isEmpty()) {
-                qty = Math.max(1, Integer.parseInt(txt));
+                qty = Integer.parseInt(txt);
             }
         } catch (NumberFormatException ignored) {
             qty = 1;
+        }
+
+        if (qty <= 0) {
+            AlertUtil.showWarning("Invalid Quantity", "Quantity must be at least 1.");
+            showError("Quantity must be at least 1.");
+            return;
+        }
+
+        int alreadyInOrder = workingLines.stream()
+                .filter(l -> l.dishId() == selected.id())
+                .mapToInt(ReceiptLine::quantity)
+                .sum();
+
+        int originalQty = (originalReceipt != null && originalReceipt.lines() != null)
+                ? originalReceipt.lines().stream()
+                    .filter(l -> l.dishId() == selected.id())
+                    .mapToInt(ReceiptLine::quantity)
+                    .sum()
+                : 0;
+
+        int netAdditionalQty = (alreadyInOrder + qty) - originalQty;
+        if (netAdditionalQty > selected.quantity()) {
+            int maxCanAdd = Math.max(0, selected.quantity() + originalQty - alreadyInOrder);
+            String msg = maxCanAdd > 0
+                    ? "Cannot add " + qty + " of \"" + selected.name() + "\". Only " + maxCanAdd + " additional units can be added based on current stock (" + selected.quantity() + " available)."
+                    : "Cannot add more \"" + selected.name() + "\". Available stock (" + selected.quantity() + ") is exhausted.";
+            AlertUtil.showWarning("Stock Limit", msg);
+            showError(msg);
+            return;
         }
 
         // Check if dish already exists in order
@@ -452,7 +526,17 @@ public class EditTransactionModalController {
     @FXML
     private void onSaveChanges() {
         if (workingLines.isEmpty()) {
+            AlertUtil.showWarning("Empty Order", "The order cannot be empty. Please add at least one dish.");
             showError("The order cannot be empty. Please add at least one dish.");
+            return;
+        }
+
+        boolean confirm = AlertUtil.showYesNoConfirmation(
+                "Save Changes",
+                "Update Order #" + originalReceipt.orderNumber() + "?",
+                "Are you sure you want to save all changes to this transaction?"
+        );
+        if (!confirm) {
             return;
         }
 
@@ -490,6 +574,7 @@ public class EditTransactionModalController {
                             onSaveSuccess.run();
                         }
                     } else {
+                        AlertUtil.showError("Update Failed", "Failed to update transaction in database.");
                         showError("Failed to update transaction in database.");
                     }
                 });
@@ -497,7 +582,9 @@ public class EditTransactionModalController {
                 ex.printStackTrace();
                 Platform.runLater(() -> {
                     saveBtn.setDisable(false);
-                    showError(ex.getMessage() != null ? ex.getMessage() : "Error saving changes.");
+                    String msg = ex.getMessage() != null ? ex.getMessage() : "Error saving changes.";
+                    AlertUtil.showError("Save Error", msg);
+                    showError(msg);
                 });
             }
         });
@@ -507,7 +594,40 @@ public class EditTransactionModalController {
 
     @FXML
     private void onCancel() {
+        if (hasUnsavedChanges()) {
+            boolean discard = AlertUtil.showYesNoConfirmation(
+                    "Discard Changes",
+                    "Discard unsaved changes?",
+                    "You have unsaved changes to this transaction. Are you sure you want to close without saving?"
+            );
+            if (!discard) {
+                return;
+            }
+        }
         closeModal();
+    }
+
+    private boolean hasUnsavedChanges() {
+        if (originalReceipt == null) return false;
+
+        OrderStatus newStatus = orderStatusCombo.getValue();
+        if (newStatus != originalReceipt.status()) return true;
+
+        String origDisc = originalReceipt.discountName() == null ? "None" : originalReceipt.discountName();
+        String newDisc = discountCombo.getValue() == null ? "None" : discountCombo.getValue();
+        if (!origDisc.equalsIgnoreCase(newDisc)) return true;
+
+        List<ReceiptLine> origLines = originalReceipt.lines() == null ? List.of() : originalReceipt.lines();
+        if (workingLines.size() != origLines.size()) return true;
+
+        for (int i = 0; i < workingLines.size(); i++) {
+            ReceiptLine w = workingLines.get(i);
+            ReceiptLine o = origLines.get(i);
+            if (w.dishId() != o.dishId() || w.quantity() != o.quantity()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void closeModal() {

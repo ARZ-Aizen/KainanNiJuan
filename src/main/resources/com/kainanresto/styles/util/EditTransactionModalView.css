@@ -93,6 +93,12 @@
     -fx-border-color: #8C6343;
     -fx-background-color: #FFFFFF;
 }
+.edit-combo:disabled {
+    -fx-opacity: 0.90;
+    -fx-background-color: #F7EFE6;
+    -fx-border-color: #E8DCCF;
+    -fx-cursor: default;
+}
 .edit-combo .list-cell {
     -fx-text-fill: #2E2520;
     -fx-background-color: transparent;
@@ -107,6 +113,9 @@
     -fx-background-color: #8C6343;
     -fx-scale-x: 1.1;
     -fx-scale-y: 1.1;
+}
+.edit-combo:disabled .arrow {
+    -fx-background-color: #A08C7D;
 }
 .edit-combo .combo-box-popup .list-view {
     -fx-background-color: #FFFFFF;
@@ -163,8 +172,10 @@
     -fx-border-radius: 6px;
     -fx-text-fill: #8C6343;
     -fx-font-family: 'Inter', sans-serif;
-    -fx-font-size: 14px;
+    -fx-font-size: 15px;
     -fx-font-weight: 700;
+    -fx-alignment: center;
+    -fx-text-alignment: center;
     -fx-padding: 0;
     -fx-cursor: hand;
     -fx-focus-color: transparent;
@@ -187,6 +198,7 @@
     -fx-border-width: 1px;
     -fx-border-radius: 6px;
     -fx-padding: 0;
+    -fx-alignment: center;
     -fx-cursor: hand;
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
@@ -271,33 +283,31 @@
     -fx-background-color: #745136;
 }
 
-/* Scrollbar */
+/* Complete Scrollbar Elimination */
 .receipt-scroll,
 .receipt-scroll > .viewport,
 .receipt-scroll > .corner {
     -fx-background-color: transparent;
     -fx-background: transparent;
 }
-.receipt-scroll > .scroll-bar:vertical {
-    -fx-background-color: transparent;
-    -fx-pref-width: 8px;
-    -fx-padding: 4px 2px 4px 0;
-}
-.receipt-scroll > .scroll-bar:vertical > .track,
-.receipt-scroll > .scroll-bar:vertical > .track-background {
-    -fx-background-color: transparent;
-}
-.receipt-scroll > .scroll-bar:vertical > .thumb {
-    -fx-background-color: #D5B392;
-    -fx-background-radius: 8px;
-}
-.receipt-scroll > .scroll-bar:vertical > .thumb:hover {
-    -fx-background-color: #B9926D;
-}
-.receipt-scroll > .scroll-bar > .increment-button,
-.receipt-scroll > .scroll-bar > .decrement-button {
-    -fx-padding: 0;
+.receipt-scroll > .scroll-bar:vertical,
+.receipt-scroll > .scroll-bar:horizontal {
+    -fx-pref-width: 0;
+    -fx-max-width: 0;
     -fx-pref-height: 0;
     -fx-max-height: 0;
+    -fx-opacity: 0;
+    -fx-padding: 0;
+}
+.receipt-scroll > .scroll-bar:vertical > .thumb,
+.receipt-scroll > .scroll-bar:vertical > .track,
+.receipt-scroll > .scroll-bar:vertical > .track-background,
+.receipt-scroll > .scroll-bar > .increment-button,
+.receipt-scroll > .scroll-bar > .decrement-button {
+    -fx-pref-width: 0;
+    -fx-max-width: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+    -fx-padding: 0;
     -fx-opacity: 0;
 }

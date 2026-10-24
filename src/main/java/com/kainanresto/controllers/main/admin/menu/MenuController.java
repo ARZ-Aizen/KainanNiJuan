@@ -738,8 +738,10 @@ public class MenuController {
 
         if (productDAO.addCategory(name)) {
             addCategoryNameField.clear();
+            AlertUtil.showInfo("Category Added", "Category \"" + name + "\" was created successfully.");
             loadMenuManagementData(() -> addDishCategoryCombo.setValue(name));
         } else {
+            AlertUtil.showError("Database Error", "Failed to create category \"" + name + "\".");
             setAddCategoryError("Database error creating category.");
         }
     }
@@ -754,6 +756,7 @@ public class MenuController {
             if (!AdminAuthDialog.show(window, "Authorize Category Archiving")) return;
 
             if (productDAO.archiveCategory(name)) {
+                AlertUtil.showInfo("Category Archived", "Category \"" + name + "\" has been moved to the archive.");
                 loadMenuManagementData();
             } else {
                 AlertUtil.showError("Database Error", "Failed to archive category.");

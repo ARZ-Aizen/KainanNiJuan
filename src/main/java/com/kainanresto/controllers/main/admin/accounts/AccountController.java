@@ -1123,7 +1123,12 @@ public class AccountController {
                         if (!AdminAuthDialog.show(window, "Authorize Account Restoration"))
                             return;
 
-                        userDAO.restoreUser((int) current.id());
+                        UserDAO.OperationResult res = userDAO.restoreUser((int) current.id());
+                        if (res == UserDAO.OperationResult.SUCCESS) {
+                            AlertUtil.showInfo("Account Restored", "Account @" + current.username() + " has been restored.");
+                        } else {
+                            AlertUtil.showError("Database Error", "Failed to restore account @" + current.username() + ".");
+                        }
                         onShowArchive();
                     }
                 });
@@ -1143,7 +1148,12 @@ public class AccountController {
                         if (!AdminAuthDialog.show(window, "Authorize Permanent Deletion"))
                             return;
 
-                        userDAO.permanentDeleteUser((int) current.id());
+                        UserDAO.OperationResult res = userDAO.permanentDeleteUser((int) current.id());
+                        if (res == UserDAO.OperationResult.SUCCESS) {
+                            AlertUtil.showInfo("Account Deleted", "Account @" + current.username() + " has been permanently deleted.");
+                        } else {
+                            AlertUtil.showError("Database Error", "Failed to permanently delete account @" + current.username() + ".");
+                        }
                         onShowArchive();
                     }
                 });
