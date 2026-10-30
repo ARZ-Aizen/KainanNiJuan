@@ -33,7 +33,7 @@ Before running the application, ensure you have the following installed:
 
 ### 1. Database Configuration (Server Machine)
    * Open your MariaDB terminal or client on the main server machine.
-   * Create a new database for the application (e.g., `kainan_ni_juan_db`).
+   * Import database for the application (e.g., `kainan_pos').
    * Import the provided SQL schema file to generate the required tables.
    * *Note: Ensure your MariaDB user privileges and firewall settings allow remote connections from the client machines.*
 
